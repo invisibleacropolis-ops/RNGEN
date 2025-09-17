@@ -12,11 +12,13 @@ signal generation_failed(request_config: Dictionary, error: Dictionary, metadata
 
 const NameGeneratorScript := preload("res://name_generator/NameGenerator.gd")
 const RNGManagerScript := preload("res://name_generator/RNGManager.gd")
+const DebugRNG := preload("res://name_generator/tools/DebugRNG.gd")
 
 var _name_generator: Object = null
 var _rng_manager: Object = null
 var _fallback_master_seed: int = 0
 var _fallback_streams: Dictionary = {}
+var _debug_rng: DebugRNG = null
 
 func _ready() -> void:
     ## Capture singleton references once the node enters the scene tree.
@@ -151,6 +153,7 @@ func _refresh_name_generator() -> void:
         var candidate := Engine.get_singleton("NameGenerator")
         if candidate != null and candidate.has_method("generate"):
             _name_generator = candidate
+            _propagate_debug_rng_to_generator()
 
 func _refresh_rng_manager() -> void:
     _rng_manager = null
@@ -198,7 +201,9 @@ func _resolve_stream_name(
     override_rng: RandomNumberGenerator
 ) -> String:
     if config.has("rng_stream"):
-        return String(config["rng_stream"])
+        var provided := String(config["rng_stream"])
+        _record_debug_stream_usage(provided, strategy_id, config.get("seed", null), "explicit_config_override")
+        return provided
 
     if override_rng != null:
         return ""
@@ -207,9 +212,13 @@ func _resolve_stream_name(
         var seed_string := String(config["seed"]).strip_edges()
         if seed_string.is_empty():
             seed_string = "seed"
-        return "%s::%s" % [strategy_id, seed_string]
+        var seeded := "%s::%s" % [strategy_id, seed_string]
+        _record_debug_stream_usage(seeded, strategy_id, config.get("seed", null), "seed_derived")
+        return seeded
 
-    return "%s::%s" % [NameGeneratorScript.DEFAULT_STREAM_PREFIX, strategy_id]
+    var fallback := "%s::%s" % [NameGeneratorScript.DEFAULT_STREAM_PREFIX, strategy_id]
+    _record_debug_stream_usage(fallback, strategy_id, config.get("seed", null), "default_prefix")
+    return fallback
 
 func _duplicate_variant(value: Variant) -> Variant:
     if value is Dictionary:
@@ -217,3 +226,44 @@ func _duplicate_variant(value: Variant) -> Variant:
     if value is Array:
         return (value as Array).duplicate(true)
     return value
+
+func set_debug_rng(debug_rng: DebugRNG, attach_to_debug: bool = true) -> void:
+    ## Allow external tooling to register a DebugRNG observer for middleware
+    ## events and stream derivations.
+    if _debug_rng == debug_rng:
+        return
+
+    if _debug_rng != null and _debug_rng.has_method("detach_from_processor"):
+        _debug_rng.detach_from_processor(self)
+
+    _debug_rng = debug_rng
+
+    if _debug_rng != null:
+        if attach_to_debug and _debug_rng.has_method("attach_to_processor"):
+            _debug_rng.attach_to_processor(self, DebugRNG.DEFAULT_LOG_PATH, false)
+        _propagate_debug_rng_to_generator()
+        return
+
+    var generator := _get_name_generator()
+    if generator != null and generator.has_method("set_debug_rng"):
+        generator.call("set_debug_rng", null)
+
+func get_debug_rng() -> DebugRNG:
+    return _debug_rng
+
+func _propagate_debug_rng_to_generator() -> void:
+    if _debug_rng == null:
+        return
+    var generator := _get_name_generator()
+    if generator != null and generator.has_method("set_debug_rng"):
+        generator.call("set_debug_rng", _debug_rng)
+
+func _record_debug_stream_usage(stream_name: String, strategy_id: String, seed: Variant, source: String) -> void:
+    if _debug_rng == null or stream_name == "" or not _debug_rng.has_method("record_stream_usage"):
+        return
+    var context := {
+        "strategy_id": strategy_id,
+        "seed": seed,
+        "source": source,
+    }
+    _debug_rng.record_stream_usage(stream_name, context)

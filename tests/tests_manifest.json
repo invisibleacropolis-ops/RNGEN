@@ -9,6 +9,10 @@
       "path": "res://name_generator/tests/test_hybrid_strategy.gd"
     },
     {
+      "name": "Debug RNG Suite",
+      "path": "res://name_generator/tests/test_debug_rng.gd"
+    },
+    {
       "name": "RNG Processor Suite",
       "path": "res://name_generator/tests/test_rng_processor.gd"
     }
