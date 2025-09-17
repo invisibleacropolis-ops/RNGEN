@@ -1,0 +1,8 @@
+{
+  "suites": [
+    {
+      "name": "Generator Strategy Suite",
+      "path": "res://name_generator/tests/test_generator_strategy.gd"
+    }
+  ]
+}
