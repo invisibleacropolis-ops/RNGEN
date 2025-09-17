@@ -39,7 +39,10 @@
     {
       "id": "utils_array_utils",
       "path": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
-
+    },
+    {
+      "id": "wordlist_strategy",
+      "path": "res://tests/diagnostics/wordlist_strategy_diagnostic.gd"
     }
   ]
 }
