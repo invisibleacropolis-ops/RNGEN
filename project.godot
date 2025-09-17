@@ -34,3 +34,7 @@ imported_folders=PackedStringArray(
         "res://name_generator/tests"
 )
 
+
+[autoload]
+RNGManager="*res://name_generator/RNGManager.gd"
+NameGenerator="*res://name_generator/NameGenerator.gd"
