@@ -59,12 +59,11 @@ func load_state(payload: Variant) -> void:
     if not data.has(_STATE_STREAMS):
         return
 
-    var streams_payload := data[_STATE_STREAMS]
-    if typeof(streams_payload) != TYPE_DICTIONARY:
+    if not (data[_STATE_STREAMS] is Dictionary):
         push_warning("RNGManager.load_state streams payload must be a Dictionary.")
         return
 
-    var streams: Dictionary = streams_payload
+    var streams: Dictionary = data[_STATE_STREAMS]
     for key in streams.keys():
         var rng: RandomNumberGenerator = get_rng(String(key))
         rng.state = int(streams[key])

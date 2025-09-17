@@ -38,7 +38,7 @@ func _ensure_dictionary(value: Variant, context: String = "config") -> Generator
             "%s must be provided as a Dictionary." % context,
             {
                 "received_type": typeof(value),
-                "type_name": Variant.get_type_name(typeof(value)),
+                "type_name": type_string(typeof(value)),
             },
         )
     return null
@@ -102,13 +102,13 @@ func _validate_optional_key_types(config: Dictionary) -> GeneratorError:
         if typeof(value) != expected_type:
             return _make_error(
                 "invalid_key_type",
-                "Configuration value for '%s' must be of type %s." % [key, Variant.get_type_name(expected_type)],
+                "Configuration value for '%s' must be of type %s." % [key, type_string(expected_type)],
                 {
                     "key": key,
                     "expected_type": expected_type,
-                    "expected_type_name": Variant.get_type_name(expected_type),
+                    "expected_type_name": type_string(expected_type),
                     "received_type": typeof(value),
-                    "received_type_name": Variant.get_type_name(typeof(value)),
+                    "received_type_name": type_string(typeof(value)),
                 },
             )
 

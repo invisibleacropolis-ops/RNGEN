@@ -29,7 +29,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             "HybridStrategy expects 'steps' to be an Array of configuration dictionaries.",
             {
                 "received_type": typeof(steps_variant),
-                "type_name": Variant.get_type_name(typeof(steps_variant)),
+                "type_name": type_string(typeof(steps_variant)),
             },
         )
 
@@ -105,7 +105,7 @@ func _extract_step_config(entry: Dictionary) -> Variant:
                 "Hybrid step 'config' must be a Dictionary.",
                 {
                     "received_type": typeof(payload),
-                    "type_name": Variant.get_type_name(typeof(payload)),
+                    "type_name": type_string(typeof(payload)),
                 },
             )
         return (payload as Dictionary).duplicate(true)

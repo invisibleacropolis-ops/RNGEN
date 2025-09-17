@@ -120,8 +120,10 @@ func untrack_strategy(strategy: Object) -> void:
     if not _tracked_strategies.has(key):
         return
 
-    var metadata := _tracked_strategies[key]
+    var raw_metadata := _tracked_strategies[key]
     _tracked_strategies.erase(key)
+
+    var metadata: Dictionary = raw_metadata if raw_metadata is Dictionary else {}
 
     if strategy.has_signal("generation_error"):
         var callable := Callable(self, "_on_strategy_error").bind(metadata.get("id", ""))
@@ -131,11 +133,12 @@ func untrack_strategy(strategy: Object) -> void:
 func clear_tracked_strategies() -> void:
     ## Disconnect from every tracked strategy.
     for entry in _tracked_strategies.values():
-        var strategy := entry.get("strategy", null)
-        if strategy != null and is_instance_valid(strategy):
-            var callable := Callable(self, "_on_strategy_error").bind(entry.get("id", ""))
-            if strategy.has_signal("generation_error") and strategy.is_connected("generation_error", callable):
-                strategy.disconnect("generation_error", callable)
+        var metadata: Dictionary = entry if entry is Dictionary else {}
+        var tracked_strategy: Object = metadata.get("strategy", null)
+        if tracked_strategy != null and is_instance_valid(tracked_strategy):
+            var callable := Callable(self, "_on_strategy_error").bind(metadata.get("id", ""))
+            if tracked_strategy.has_signal("generation_error") and tracked_strategy.is_connected("generation_error", callable):
+                tracked_strategy.disconnect("generation_error", callable)
     _tracked_strategies.clear()
 
 func record_warning(message: String, context: Dictionary = {}) -> void:

@@ -33,7 +33,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             "TemplateStrategy requires 'template_string' to be a String.",
             {
                 "received_type": typeof(template_value),
-                "type_name": Variant.get_type_name(typeof(template_value)),
+                "type_name": type_string(typeof(template_value)),
             },
         )
 
@@ -46,7 +46,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
                 "TemplateStrategy optional 'sub_generators' must be a Dictionary.",
                 {
                     "received_type": typeof(config["sub_generators"]),
-                    "type_name": Variant.get_type_name(typeof(config["sub_generators"])),
+                    "type_name": type_string(typeof(config["sub_generators"])),
                 },
             )
         sub_generators = (config["sub_generators"] as Dictionary).duplicate(true)
