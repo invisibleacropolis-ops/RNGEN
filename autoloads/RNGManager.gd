@@ -1,5 +1,4 @@
 extends Node
-class_name RNGManager
 
 ## RNGManager centralizes deterministic random number generation across the project.
 ##
@@ -49,24 +48,25 @@ func save_state() -> Dictionary:
         _STATE_STREAMS: serialized_streams,
     }
 
-func load_state(data) -> void:
+func load_state(data: Variant) -> void:
     if typeof(data) != TYPE_DICTIONARY:
         push_warning("RNGManager.load_state expected a Dictionary; received %s" % typeof(data))
         return
 
-    var master_seed := data.get(_STATE_MASTER_SEED, null)
+    var master_seed: Variant = data.get(_STATE_MASTER_SEED, null)
     if master_seed == null:
         push_warning("RNGManager.load_state missing master_seed; keeping current seed")
     else:
         set_master_seed(int(master_seed))
 
-    var streams := data.get(_STATE_STREAMS, {})
-    if typeof(streams) != TYPE_DICTIONARY:
+    var streams_payload: Variant = data.get(_STATE_STREAMS, {})
+    if typeof(streams_payload) != TYPE_DICTIONARY:
         push_warning("RNGManager.load_state streams payload must be a Dictionary")
         return
 
+    var streams: Dictionary = streams_payload
     for stream_name in streams.keys():
-        var stream_payload = streams[stream_name]
+        var stream_payload := streams[stream_name]
         if typeof(stream_payload) != TYPE_DICTIONARY:
             push_warning("RNGManager.load_state stream '%s' payload must be a Dictionary" % stream_name)
             continue
