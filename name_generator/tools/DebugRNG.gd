@@ -120,7 +120,7 @@ func untrack_strategy(strategy: Object) -> void:
     if not _tracked_strategies.has(key):
         return
 
-    var raw_metadata := _tracked_strategies[key]
+    var raw_metadata: Variant = _tracked_strategies[key]
     _tracked_strategies.erase(key)
 
     var metadata: Dictionary = raw_metadata if raw_metadata is Dictionary else {}
