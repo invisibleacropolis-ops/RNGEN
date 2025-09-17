@@ -26,7 +26,7 @@ class MockStrategy:
         for value in config["values"]:
             normalized.append(String(value))
 
-        var selected: String = ArrayUtils.pick_random_deterministic(normalized, rng)
+        var selected: String = ArrayUtils.pick_uniform(normalized, rng)
 
         if config.get("uppercase", false):
             selected = selected.to_upper()

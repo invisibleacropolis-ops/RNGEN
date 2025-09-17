@@ -1,3 +1,12 @@
 # Test Assets
 
-This folder hosts data fixtures consumed by automated test suites. The current generator strategy tests operate entirely in code, so no external fixtures are required yet. Add new resources here when future suites need sample syllable sets, word lists, or serialized strategy configs.
+This folder hosts data fixtures consumed by automated test suites.
+
+- `wordlist_basic.tres` – Minimal `WordListResource` used by the hybrid strategy
+  tests.
+- `syllable_basic.tres` – Basic `SyllableSetResource` providing a short prefix /
+  suffix catalogue.
+- `markov_basic.tres` – Tiny `MarkovModelResource` that emits deterministic
+  syllable pairs for integration scenarios.
+
+Add additional resources here when future suites need richer datasets.
