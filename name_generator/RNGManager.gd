@@ -1,5 +1,4 @@
 extends Node
-class_name RNGManager
 
 ## Central manager that coordinates deterministic random number streams.
 ## The singleton exposes named RNG instances derived from a master seed so
@@ -39,7 +38,7 @@ func get_rng(stream_name: String) -> RandomNumberGenerator:
     return _streams[name]
 
 func save_state() -> Dictionary:
-    var serialized := {}
+    var serialized: Dictionary = {}
     for key in _streams.keys():
         var rng: RandomNumberGenerator = _streams[key]
         serialized[key] = rng.state
@@ -60,13 +59,14 @@ func load_state(payload: Variant) -> void:
     if not data.has(_STATE_STREAMS):
         return
 
-    var streams := data[_STATE_STREAMS]
-    if typeof(streams) != TYPE_DICTIONARY:
+    var streams_payload := data[_STATE_STREAMS]
+    if typeof(streams_payload) != TYPE_DICTIONARY:
         push_warning("RNGManager.load_state streams payload must be a Dictionary.")
         return
 
+    var streams: Dictionary = streams_payload
     for key in streams.keys():
-        var rng := get_rng(String(key))
+        var rng: RandomNumberGenerator = get_rng(String(key))
         rng.state = int(streams[key])
 
 func randf(stream_name: String = "utility") -> float:

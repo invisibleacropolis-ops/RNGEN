@@ -1,5 +1,4 @@
 extends Node
-class_name NameGenerator
 
 ## High-level façade that coordinates the different generation strategies.
 ## The singleton is registered as a Godot autoload so game code and editor
@@ -24,12 +23,12 @@ func _ready() -> void:
 
 func pick_from_list(options: Array, stream_name: String = "utility_name_list") -> Variant:
     ArrayUtils.assert_not_empty(options, "Name options")
-    var rng := _acquire_rng(stream_name)
+    var rng: RandomNumberGenerator = _acquire_rng(stream_name)
     return ArrayUtils.pick_uniform(options, rng)
 
 func pick_weighted(entries: Array, stream_name: String = "utility_name_weighted") -> Variant:
     ArrayUtils.assert_not_empty(entries, "Weighted name entries")
-    var rng := _acquire_rng(stream_name)
+    var rng: RandomNumberGenerator = _acquire_rng(stream_name)
     return ArrayUtils.pick_weighted(entries, rng)
 
 func register_strategy(strategy_id: String, strategy: GeneratorStrategy) -> void:
@@ -76,9 +75,9 @@ func describe_strategy(strategy_id: String) -> Dictionary:
     if strategy == null:
         return {}
 
-    var description := {}
+    var description: Dictionary = {}
     if strategy.has_method("describe"):
-        var candidate := strategy.call("describe")
+        var candidate: Variant = strategy.call("describe")
         if candidate is Dictionary:
             description = (candidate as Dictionary).duplicate(true)
 
@@ -87,7 +86,7 @@ func describe_strategy(strategy_id: String) -> Dictionary:
 
     if not description.has("expected_config"):
         if strategy.has_method("get_config_schema"):
-            var schema := strategy.call("get_config_schema")
+            var schema: Variant = strategy.call("get_config_schema")
             description["expected_config"] = schema.duplicate(true) if schema is Dictionary else {}
         else:
             description["expected_config"] = strategy._get_expected_config_keys().duplicate(true)
@@ -101,7 +100,7 @@ func describe_strategy(strategy_id: String) -> Dictionary:
     return description
 
 func describe_strategies() -> Dictionary:
-    var descriptions := {}
+    var descriptions: Dictionary = {}
     var identifiers := list_strategies()
     for identifier in identifiers:
         descriptions[identifier] = describe_strategy(identifier)
@@ -109,7 +108,7 @@ func describe_strategies() -> Dictionary:
 
 func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Variant:
     var validation_error := _validate_request_config(config, override_rng != null)
-    if validation_error:
+    if not validation_error.is_empty():
         return validation_error
 
     var request: Dictionary = config
@@ -123,10 +122,10 @@ func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Va
         )
 
     var stream_name := _resolve_stream_name(request, strategy_id)
-    var rng := override_rng if override_rng != null else _acquire_rng(stream_name)
+    var rng: RandomNumberGenerator = override_rng if override_rng != null else _acquire_rng(stream_name)
 
     var strategy_config := _extract_strategy_config(request)
-    var result := strategy.generate(strategy_config, rng)
+    var result: Variant = strategy.generate(strategy_config, rng)
 
     if result is GeneratorStrategy.GeneratorError:
         return result.to_dict()
@@ -134,7 +133,7 @@ func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Va
     return result
 
 func _register_builtin_strategies() -> void:
-    var builtins := _get_builtin_strategy_map()
+    var builtins: Dictionary = _get_builtin_strategy_map()
     for identifier in builtins.keys():
         register_strategy(identifier, builtins[identifier])
 
@@ -187,7 +186,7 @@ func _validate_request_config(config: Variant, allow_missing_seed: bool) -> Dict
             },
         )
 
-    return null
+    return {}
 
 func _resolve_stream_name(config: Dictionary, strategy_id: String) -> String:
     if config.has("rng_stream"):
@@ -208,7 +207,7 @@ func _resolve_stream_name(config: Dictionary, strategy_id: String) -> String:
     return fallback
 
 func _extract_strategy_config(config: Dictionary) -> Dictionary:
-    var strategy_config := {}
+    var strategy_config: Dictionary = {}
     for key in config.keys():
         match key:
             "strategy", "rng_stream":
@@ -265,7 +264,7 @@ func _record_stream_usage(stream_name: String, strategy_id: String, seed: Varian
         return
     if stream_name == "":
         return
-    var context := {
+    var context: Dictionary = {
         "strategy_id": strategy_id,
         "seed": seed,
         "source": source,

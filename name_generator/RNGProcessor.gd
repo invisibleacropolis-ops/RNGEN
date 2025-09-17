@@ -1,5 +1,4 @@
 extends Node
-class_name RNGProcessor
 
 ## Middleware singleton that coordinates NameGenerator requests and RNGManager
 ## seed management. The processor exposes a narrow API designed for editor tools
@@ -82,7 +81,7 @@ func list_strategies() -> PackedStringArray:
     ## options through the middleware without poking the generator directly.
     var generator := _get_name_generator()
     if generator != null and generator.has_method("list_strategies"):
-        var result := generator.call("list_strategies")
+        var result: Variant = generator.call("list_strategies")
         if result is PackedStringArray:
             return result
         elif result is Array:
@@ -97,7 +96,7 @@ func describe_strategy(strategy_id: String) -> Dictionary:
     ## configuration schema and any human-readable notes the strategy exposes.
     var generator := _get_name_generator()
     if generator != null and generator.has_method("describe_strategy"):
-        var description := generator.call("describe_strategy", strategy_id)
+        var description: Variant = generator.call("describe_strategy", strategy_id)
         if description is Dictionary:
             return (description as Dictionary).duplicate(true)
     return {}
@@ -105,7 +104,7 @@ func describe_strategy(strategy_id: String) -> Dictionary:
 func describe_strategies() -> Dictionary:
     ## Convenience accessor that returns the description payload for every
     ## registered strategy keyed by its identifier.
-    var metadata := {}
+    var metadata: Dictionary = {}
     var strategies := list_strategies()
     for identifier in strategies:
         metadata[identifier] = describe_strategy(identifier)
@@ -116,7 +115,7 @@ func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Va
     ## execution metadata to interested observers.
     var generator := _get_name_generator()
     if generator == null or not generator.has_method("generate"):
-        var error := {
+        var error: Dictionary = {
             "code": "missing_name_generator",
             "message": "RNGProcessor requires the NameGenerator singleton to be available.",
             "details": {},
@@ -124,10 +123,10 @@ func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Va
         emit_signal("generation_failed", _duplicate_variant(config), error.duplicate(true), _build_generation_metadata(config, override_rng))
         return error
 
-    var metadata := _build_generation_metadata(config, override_rng)
+    var metadata: Dictionary = _build_generation_metadata(config, override_rng)
     emit_signal("generation_started", _duplicate_variant(config), metadata.duplicate(true))
 
-    var result := generator.call("generate", config, override_rng)
+    var result: Variant = generator.call("generate", config, override_rng)
 
     if result is Dictionary and result.has("code"):
         emit_signal("generation_failed", _duplicate_variant(config), (result as Dictionary).duplicate(true), metadata.duplicate(true))
@@ -173,7 +172,7 @@ func _get_rng_manager() -> Object:
     return _rng_manager
 
 func _build_generation_metadata(config: Variant, override_rng: RandomNumberGenerator) -> Dictionary:
-    var metadata := {
+    var metadata: Dictionary = {
         "strategy_id": "",
         "seed": null,
         "rng_stream": "",
@@ -181,7 +180,7 @@ func _build_generation_metadata(config: Variant, override_rng: RandomNumberGener
 
     if typeof(config) == TYPE_DICTIONARY:
         var dictionary: Dictionary = config
-        var strategy_value := dictionary.get("strategy", "")
+        var strategy_value: Variant = dictionary.get("strategy", "")
         var strategy_id := _normalize_strategy_id(strategy_value)
         metadata["strategy_id"] = strategy_id
         if dictionary.has("seed"):
@@ -261,7 +260,7 @@ func _propagate_debug_rng_to_generator() -> void:
 func _record_debug_stream_usage(stream_name: String, strategy_id: String, seed: Variant, source: String) -> void:
     if _debug_rng == null or stream_name == "" or not _debug_rng.has_method("record_stream_usage"):
         return
-    var context := {
+    var context: Dictionary = {
         "strategy_id": strategy_id,
         "seed": seed,
         "source": source,
