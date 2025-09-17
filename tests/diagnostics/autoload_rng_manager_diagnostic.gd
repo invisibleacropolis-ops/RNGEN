@@ -1,6 +1,6 @@
 extends RefCounted
 
-const RNGManager := preload("res://autoloads/RNGManager.gd")
+const RNGManager := preload("res://name_generator/RNGManager.gd")
 
 const STREAM_NAMES := ["alpha", "beta", "gamma"]
 const MASTER_SEED := 321987
