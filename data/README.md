@@ -7,5 +7,6 @@ This directory organizes external assets and reference materials used by the ran
 - `wordlists/` – Curated name lists that can be sampled directly or used to seed other algorithms.
 - `objects/` – Optional thematic lists for inanimate objects or artifacts used in specialized generators.
 - `people/` – Optional demographic-specific lists or metadata used to produce person names.
+- `skills_powers/` – Ability-focused vocabularies (verbs, elements, suffixes) for combat skills, spells, and powers.
 
 Add additional folders as needed for other content groupings. Place `.gdignore` files inside any folder containing raw data to prevent the Godot importer from processing unsupported formats.
