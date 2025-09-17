@@ -10,6 +10,7 @@ var _streams: Dictionary = {}
 const _STATE_MASTER_SEED := "master_seed"
 const _STATE_STREAMS := "streams"
 const _STATE_STATE := "state"
+const _STATE_SEED := "seed"
 
 func _ready() -> void:
     if _master_seed == 0:
@@ -41,7 +42,10 @@ func save_state() -> Dictionary:
     var serialized: Dictionary = {}
     for key in _streams.keys():
         var rng: RandomNumberGenerator = _streams[key]
-        serialized[key] = rng.state
+        serialized[key] = {
+            _STATE_SEED: int(rng.seed),
+            _STATE_STATE: int(rng.state),
+        }
     return {
         _STATE_MASTER_SEED: _master_seed,
         _STATE_STREAMS: serialized,
@@ -66,7 +70,7 @@ func load_state(payload: Variant) -> void:
     var streams: Dictionary = data[_STATE_STREAMS]
     for key in streams.keys():
         var rng: RandomNumberGenerator = get_rng(String(key))
-        rng.state = int(streams[key])
+        _apply_stream_payload(rng, key, streams[key])
 
 func randf(stream_name: String = "utility") -> float:
     return get_rng(stream_name).randf()
@@ -84,3 +88,40 @@ func _create_stream(name: String) -> RandomNumberGenerator:
 func _compute_stream_seed(name: String) -> int:
     var hashed := hash("%s::%s" % [_master_seed, name])
     return int(hashed & 0x7fffffffffffffff)
+
+func _apply_stream_payload(rng: RandomNumberGenerator, stream_name: String, payload: Variant) -> void:
+    if typeof(payload) in [TYPE_INT, TYPE_FLOAT]:
+        var value := int(payload)
+        rng.seed = value
+        rng.state = value
+        return
+
+    if typeof(payload) != TYPE_DICTIONARY:
+        push_warning("RNGManager.load_state stream '%s' payload must be an integer or dictionary." % stream_name)
+        return
+
+    var data: Dictionary = payload
+
+    var seed_value := data.get(_STATE_SEED, null)
+    var state_value := data.get(_STATE_STATE, null)
+    var seed_applied := false
+    var state_applied := false
+
+    if typeof(seed_value) in [TYPE_INT, TYPE_FLOAT]:
+        rng.seed = int(seed_value)
+        seed_applied = true
+    elif data.has(_STATE_SEED):
+        push_warning("RNGManager.load_state stream '%s' seed must be numeric." % stream_name)
+
+    if typeof(state_value) in [TYPE_INT, TYPE_FLOAT]:
+        rng.state = int(state_value)
+        state_applied = true
+    elif data.has(_STATE_STATE):
+        push_warning("RNGManager.load_state stream '%s' state must be numeric." % stream_name)
+
+    if not state_applied and seed_applied:
+        rng.state = int(seed_value)
+        state_applied = true
+
+    if not seed_applied and not state_applied:
+        push_warning("RNGManager.load_state stream '%s' payload did not contain valid seed or state values." % stream_name)
