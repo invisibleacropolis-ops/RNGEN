@@ -20,5 +20,11 @@
       "name": "RNG Processor Headless Suite",
       "path": "res://tests/test_rng_processor_headless.gd"
     }
+  ],
+  "diagnostics": [
+    {
+      "id": "utils_array_utils",
+      "path": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
+    }
   ]
 }
