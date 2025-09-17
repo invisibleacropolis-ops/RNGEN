@@ -14,8 +14,10 @@ const TemplateStrategy := preload("res://name_generator/strategies/TemplateStrat
 const MarkovChainStrategy := preload("res://name_generator/strategies/MarkovChainStrategy.gd")
 const HybridStrategy := preload("res://name_generator/strategies/HybridStrategy.gd")
 const ArrayUtils := preload("res://name_generator/utils/ArrayUtils.gd")
+const DebugRNG := preload("res://name_generator/tools/DebugRNG.gd")
 
 var _strategies: Dictionary = {}
+var _debug_rng: DebugRNG = null
 
 func _ready() -> void:
     _register_builtin_strategies()
@@ -45,11 +47,14 @@ func register_strategy(strategy_id: String, strategy: GeneratorStrategy) -> void
         return
 
     _strategies[normalized] = strategy
+    _maybe_track_strategy_with_debug(normalized, strategy)
 
 func unregister_strategy(strategy_id: String) -> void:
     var normalized := _normalize_strategy_id(strategy_id)
     if normalized.is_empty():
         return
+    if _strategies.has(normalized):
+        _maybe_untrack_strategy_with_debug(_strategies[normalized])
     _strategies.erase(normalized)
 
 func has_strategy(strategy_id: String) -> bool:
@@ -186,15 +191,21 @@ func _validate_request_config(config: Variant, allow_missing_seed: bool) -> Dict
 
 func _resolve_stream_name(config: Dictionary, strategy_id: String) -> String:
     if config.has("rng_stream"):
-        return String(config["rng_stream"])
+        var provided := String(config["rng_stream"])
+        _record_stream_usage(provided, strategy_id, config.get("seed", null), "explicit_config_override")
+        return provided
 
     if config.has("seed"):
         var seed_string := String(config["seed"]).strip_edges()
         if seed_string.is_empty():
             seed_string = "seed"
-        return "%s::%s" % [strategy_id, seed_string]
+        var seeded := "%s::%s" % [strategy_id, seed_string]
+        _record_stream_usage(seeded, strategy_id, config.get("seed", null), "seed_derived")
+        return seeded
 
-    return "%s::%s" % [DEFAULT_STREAM_PREFIX, strategy_id]
+    var fallback := "%s::%s" % [DEFAULT_STREAM_PREFIX, strategy_id]
+    _record_stream_usage(fallback, strategy_id, config.get("seed", null), "default_prefix")
+    return fallback
 
 func _extract_strategy_config(config: Dictionary) -> Dictionary:
     var strategy_config := {}
@@ -216,7 +227,50 @@ func _acquire_rng(stream_name: String) -> RandomNumberGenerator:
 
     var fallback := RandomNumberGenerator.new()
     fallback.randomize()
+    _record_stream_usage(stream_name, "", null, "fallback_rng_randomize")
     return fallback
+
+func set_debug_rng(debug_rng: DebugRNG) -> void:
+    ## Allow tooling to inject a DebugRNG instance so strategy registration,
+    ## stream derivations, and fallback behavior are documented in shared logs.
+    if _debug_rng == debug_rng:
+        return
+
+    if _debug_rng != null:
+        _debug_rng.clear_tracked_strategies()
+
+    _debug_rng = debug_rng
+
+    if _debug_rng == null:
+        return
+
+    for key in _strategies.keys():
+        var strategy: GeneratorStrategy = _strategies[key]
+        _maybe_track_strategy_with_debug(key, strategy)
+
+func _maybe_track_strategy_with_debug(identifier: String, strategy: GeneratorStrategy) -> void:
+    if _debug_rng == null or strategy == null:
+        return
+    if _debug_rng.has_method("track_strategy"):
+        _debug_rng.track_strategy(identifier, strategy)
+
+func _maybe_untrack_strategy_with_debug(strategy: GeneratorStrategy) -> void:
+    if _debug_rng == null or strategy == null:
+        return
+    if _debug_rng.has_method("untrack_strategy"):
+        _debug_rng.untrack_strategy(strategy)
+
+func _record_stream_usage(stream_name: String, strategy_id: String, seed: Variant, source: String) -> void:
+    if _debug_rng == null or not _debug_rng.has_method("record_stream_usage"):
+        return
+    if stream_name == "":
+        return
+    var context := {
+        "strategy_id": strategy_id,
+        "seed": seed,
+        "source": source,
+    }
+    _debug_rng.record_stream_usage(stream_name, context)
 
 func _format_strategy_display_name(identifier: String) -> String:
     if identifier.is_empty():
