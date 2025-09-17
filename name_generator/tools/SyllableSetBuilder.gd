@@ -96,13 +96,17 @@ func _build_dock() -> Control:
     return panel
 
 func _build_instruction_text() -> String:
-    return "[b]Input formats[/b]\n" +
-        "• Plain text: one entry per line. Blank lines and lines starting with '#' are ignored.\n" +
-        "• CSV: the first comma-separated value is treated as the word. Additional columns are ignored.\n" +
-        "• WordListResource: both simple and weighted entries are imported.\n\n" +
-        "[b]Syllabification[/b]\n" +
-        "Entries are split into syllables with a heuristic that keeps the first group as a prefix, optional middle groups as bridge syllables, " +
-        "and the last group as a suffix. Single-syllable words are stored as both prefixes and suffixes so they can stand alone."
+    var lines := [
+        "[b]Input formats[/b]",
+        "• Plain text: one entry per line. Blank lines and lines starting with '#' are ignored.",
+        "• CSV: the first comma-separated value is treated as the word. Additional columns are ignored.",
+        "• WordListResource: both simple and weighted entries are imported.",
+        "",
+        "[b]Syllabification[/b]",
+        "Entries are split into syllables with a heuristic that keeps the first group as a prefix, optional middle groups as bridge syllables,",
+        "and the last group as a suffix. Single-syllable words are stored as both prefixes and suffixes so they can stand alone.",
+    ]
+    return "\n".join(lines)
 
 func _on_load_word_list_pressed() -> void:
     if _file_dialog:
