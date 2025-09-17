@@ -15,6 +15,10 @@
     {
       "name": "RNG Processor Suite",
       "path": "res://name_generator/tests/test_rng_processor.gd"
+    },
+    {
+      "name": "RNG Processor Headless Suite",
+      "path": "res://tests/test_rng_processor_headless.gd"
     }
   ]
 }
