@@ -9,3 +9,13 @@ This module mirrors the planned runtime architecture for the random name generat
 - `tests/` – Automated regression or integration tests that exercise the generator pipeline.
 
 Place new scripts in the appropriate folder and update the Godot project settings when additional resource directories are required.
+
+## Random Number Coordination
+
+The `autoloads/RNGManager.gd` singleton exposes deterministic `RandomNumberGenerator`
+streams keyed by a descriptive name. Request RNGs via
+`RNGManager.get_rng("gameplay")` instead of creating ad-hoc instances so the
+master seed can drive reproducible results across gameplay systems, tools, and
+tests. Use `set_master_seed()` or `randomize_master_seed()` to control the global
+seed, and persist/restore state with `save_state()` / `load_state()` when saving
+or loading sessions.
