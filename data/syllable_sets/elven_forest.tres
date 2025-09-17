@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class_name="SyllableSetResource" load_steps=2]
+
+[ext_resource type="Script" path="res://name_generator/resources/SyllableSetResource.gd" id="1_0"]
+
+[resource]
+prefixes = PackedStringArray("Ae", "Eli", "Lia", "Syl", "Tha")
+middles = PackedStringArray("ri", "len", "tha", "ria")
+suffixes = PackedStringArray("n", "th", "riel", "wyn")
+allow_empty_middle = true
+locale = "Elarian Woodlands"
+domain = "Forest Sentinels"
