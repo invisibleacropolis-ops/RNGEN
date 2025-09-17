@@ -1,4 +1,3 @@
-
 {
   "diagnostics": {
     "autoload_rng_manager": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd",
@@ -7,7 +6,7 @@
     "name_generator_rng_manager": "res://tests/diagnostics/name_generator_rng_manager_diagnostic.gd",
     "rng_stream_router": "res://tests/diagnostics/rng_stream_router_diagnostic.gd",
     "rng_processor": "res://tests/diagnostics/rng_processor_diagnostic.gd",
-    "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
+    "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd",
+    "syllable_set_builder": "res://tests/diagnostics/syllable_set_builder_diagnostic.gd"
   }
 }
-
