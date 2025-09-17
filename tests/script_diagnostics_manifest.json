@@ -1,6 +1,7 @@
 {
   "diagnostics": {
     "autoload_rng_manager": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd",
+    "dataset_inspector": "res://tests/diagnostics/dataset_inspector_diagnostic.gd",
     "debug_rng": "res://tests/diagnostics/debug_rng_diagnostic.gd",
     "manifest_self_check": "res://tests/diagnostics/manifest_self_check_diagnostic.gd",
     "markov_model_resource": "res://tests/diagnostics/markov_model_resource_diagnostic.gd",
@@ -8,8 +9,12 @@
     "name_generator_rng_manager": "res://tests/diagnostics/name_generator_rng_manager_diagnostic.gd",
     "rng_processor": "res://tests/diagnostics/rng_processor_diagnostic.gd",
     "rng_stream_router": "res://tests/diagnostics/rng_stream_router_diagnostic.gd",
+    "syllable_set_builder": "res://tests/diagnostics/syllable_set_builder_diagnostic.gd"
+    "rng_stream_router": "res://tests/diagnostics/rng_stream_router_diagnostic.gd",
     "syllable_set_builder": "res://tests/diagnostics/syllable_set_builder_diagnostic.gd",
     "template_strategy": "res://tests/diagnostics/template_strategy_diagnostic.gd",
-    "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
+    "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd",
+    "word_list_resource": "res://tests/diagnostics/word_list_resource_diagnostic.gd"
+
   }
 }
