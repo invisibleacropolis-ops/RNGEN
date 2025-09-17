@@ -21,6 +21,11 @@
       "path": "res://tests/test_rng_processor_headless.gd"
     },
     {
+      "name": "Name Generator Diagnostic",
+      "path": "res://tests/diagnostics/name_generator_diagnostic.gd",
+      "id": "name_generator"
+    },
+    {
       "name": "RNG Stream Router Diagnostic",
       "path": "res://tests/diagnostics/rng_stream_router_diagnostic.gd"
     },
