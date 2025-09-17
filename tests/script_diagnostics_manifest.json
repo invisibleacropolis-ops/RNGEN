@@ -1,5 +1,6 @@
 {
   "diagnostics": {
+
     "manifest_self_check": "res://tests/diagnostics/manifest_self_check_diagnostic.gd",
     "autoload_rng_manager": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd",
     "name_generator": "res://tests/diagnostics/name_generator_diagnostic.gd",
@@ -7,5 +8,7 @@
     "ng_rng_manager": "res://tests/diagnostics/name_generator_rng_manager_diagnostic.gd",
     "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd",
     "markov_chain_strategy": "res://tests/diagnostics/markov_chain_strategy_diagnostic.gd"
+    "generator_strategy_base": "res://tests/diagnostics/generator_strategy_base_diagnostic.gd",
+  
   }
 }
