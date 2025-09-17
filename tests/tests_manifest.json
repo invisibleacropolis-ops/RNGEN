@@ -19,6 +19,11 @@
     {
       "name": "RNG Processor Headless Suite",
       "path": "res://tests/test_rng_processor_headless.gd"
+    },
+    {
+      "name": "Name Generator Diagnostic",
+      "path": "res://tests/diagnostics/name_generator_diagnostic.gd",
+      "id": "name_generator"
     }
   ]
 }
