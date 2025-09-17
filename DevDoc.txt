@@ -308,6 +308,8 @@ The correct save/load procedure is therefore:
 	* Call a function on the RNGManager (like set_all_states() above) to iterate through the loaded states and restore the state property of each corresponding RNG instance.
 This two-step process ensures that upon loading, every random stream in the game is in the exact same condition it was in when the game was saved, guaranteeing perfect deterministic continuity.
 
+For day-to-day integration guidance on the middleware that wraps these systems, consult the new `docs/rng_processor_manual.md` (responsibilities, API, DebugRNG logging) and `devdocs/rng_processor.md` (task-oriented field guide). Both references explain how the autoloaded `RNGProcessor` coordinates with `RNGManager` and the `NameGenerator` façade while supporting the upcoming Platform GUI.
+
 Part II: Implementing the Generation Strategies
 
 With the foundational architecture for the NameGenerator, data management, and deterministic randomness established, this section focuses on the practical implementation of the individual generation algorithms. Each of the following chapters will detail a specific GeneratorStrategy, covering its underlying concept, use cases, data requirements, and a complete implementation in GDScript. These strategies are the modular, interchangeable components that give the Universal Name Generator its power and flexibility.

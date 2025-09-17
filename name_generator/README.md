@@ -30,6 +30,30 @@ colliding.
   `generate(config)` calls to the correct strategy while sourcing RNG streams
   from `RNGManager`.
 
+## RNGProcessor middleware
+
+`RNGProcessor.gd` is autoloaded alongside the generator and RNG manager. The
+middleware is the recommended entry point for clients that want deterministic
+results plus observability without touching the underlying singletons directly.
+
+- **Obtaining results** – Call `RNGProcessor.generate(config)` instead of
+  invoking `NameGenerator` yourself. The processor resolves the RNG stream,
+  forwards the request, and emits `generation_started`, `generation_completed`,
+  or `generation_failed` signals that UI layers and automation harnesses can
+  observe.
+- **Discovering strategies** – Ask the middleware for
+  `RNGProcessor.list_strategies()` or `RNGProcessor.describe_strategies()` to
+  populate dropdowns or drive config validation. The methods mirror the
+  generator’s metadata but avoid coupling tool code to its internal registry.
+- **DebugRNG integration** – Attach `DebugRNG` via
+  `RNGProcessor.set_debug_rng(...)` to collect TXT logs that detail every
+  generation call, stream derivation, and warning. The helper defaults to
+  `user://debug_rng_report.txt` but accepts a custom path when you call
+  `attach_to_processor` on the helper.
+
+See `docs/rng_processor_manual.md` for a complete API walkthrough and logging
+reference.
+
 ## Strategy overview
 
 All strategies extend `GeneratorStrategy`, which standardises configuration
