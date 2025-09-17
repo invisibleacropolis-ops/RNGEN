@@ -1,0 +1,11 @@
+# Test Harness
+
+The project ships standalone headless scenarios alongside the manifest runner.
+To execute the RNG processor integration suite directly, run:
+
+```
+godot --headless --script res://tests/test_rng_processor_headless.gd
+```
+
+Invoke the command from the project root so Godot can resolve the resource
+paths declared in the test script.
