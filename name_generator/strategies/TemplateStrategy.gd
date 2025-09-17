@@ -1,8 +1,8 @@
 extends GeneratorStrategy
 class_name TemplateStrategy
 
-const NameGenerator := preload("res://name_generator/NameGenerator.gd")
 const RNGStreamRouter := preload("res://name_generator/utils/RNGManager.gd")
+const NAME_GENERATOR_PATH := "res://name_generator/NameGenerator.gd"
 
 const TOKEN_PATTERN := "\\[(?<token>[^\\[\\]]+)\\]"
 const INTERNAL_DEPTH_KEY := "__template_depth"
@@ -10,6 +10,7 @@ const INTERNAL_MAX_DEPTH_KEY := "__template_max_depth"
 const DEFAULT_MAX_DEPTH := 8
 
 var _token_regex: RegEx
+var _cached_name_generator_script: GDScript = null
 
 func _get_expected_config_keys() -> Dictionary:
     return {
@@ -188,7 +189,48 @@ func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> 
         var processor := Engine.get_singleton("RNGProcessor")
         if processor != null and processor.has_method("generate"):
             return processor.call("generate", config, rng)
-    return NameGenerator.generate(config, rng)
+    var generator := _resolve_name_generator_singleton()
+    if generator != null:
+        return generator.call("generate", config, rng)
+
+    var script := _load_name_generator_script()
+    if script != null:
+        var fallback := script.new()
+        if fallback != null:
+            if fallback.has_method("_register_builtin_strategies"):
+                fallback.call("_register_builtin_strategies")
+            var result := fallback.call("generate", config, rng)
+            if fallback is Node:
+                fallback.free()
+            return result
+
+    return _make_error(
+        "name_generator_unavailable",
+        "TemplateStrategy requires the NameGenerator singleton or script to be available.",
+        {
+            "name_generator_path": NAME_GENERATOR_PATH,
+        },
+    )
+
+func _resolve_name_generator_singleton() -> Object:
+    ## Attempt to fetch the NameGenerator autoload safely without forcing a
+    ## preload on the script. This avoids circular dependency issues while still
+    ## allowing template expansion in games that rely on the singleton.
+    if Engine.has_singleton("NameGenerator"):
+        var singleton := Engine.get_singleton("NameGenerator")
+        if singleton != null and singleton.has_method("generate"):
+            return singleton
+    return null
+
+func _load_name_generator_script() -> GDScript:
+    ## Lazily load and cache the NameGenerator script when the singleton is not
+    ## registered. Diagnostic errors include the path so engineers can diagnose
+    ## project configuration issues quickly.
+    if _cached_name_generator_script == null:
+        var script := load(NAME_GENERATOR_PATH)
+        if script is GDScript:
+            _cached_name_generator_script = script
+    return _cached_name_generator_script
 
 func describe() -> Dictionary:
     var notes := PackedStringArray([
