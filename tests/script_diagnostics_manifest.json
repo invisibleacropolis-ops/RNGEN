@@ -8,10 +8,13 @@
     "name_generator": "res://tests/diagnostics/name_generator_diagnostic.gd",
     "name_generator_rng_manager": "res://tests/diagnostics/name_generator_rng_manager_diagnostic.gd",
     "rng_processor": "res://tests/diagnostics/rng_processor_diagnostic.gd",
+    "syllable_set_builder": "res://tests/diagnostics/syllable_set_builder_diagnostic.gd",
     "rng_stream_router": "res://tests/diagnostics/rng_stream_router_diagnostic.gd",
     "syllable_set_builder": "res://tests/diagnostics/syllable_set_builder_diagnostic.gd",
     "syllable_set_resource": "res://tests/diagnostics/syllable_set_resource_diagnostic.gd",
     "template_strategy": "res://tests/diagnostics/template_strategy_diagnostic.gd",
+    "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd",
+    "rng_processor_headless": "res://tests/diagnostics/rng_processor_headless_diagnostic.gd"
     "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
     "rng_stream_router": "res://tests/diagnostics/rng_stream_router_diagnostic.gd",
     "syllable_set_builder": "res://tests/diagnostics/syllable_set_builder_diagnostic.gd"
