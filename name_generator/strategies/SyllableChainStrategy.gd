@@ -155,8 +155,12 @@ func _parse_middle_range(
     var require_middle := config.get("require_middle", false)
     var range_config := config.get("middle_syllables", null)
 
-    var min_count := require_middle ? 1 : 0
-    var max_count := require_middle ? max(1, min_count) : max(min_count, 1)
+    var min_count := 0
+    var max_count := max(min_count, 1)
+
+    if require_middle:
+        min_count = 1
+        max_count = max(1, min_count)
 
     if not syllable_set.middles.is_empty():
         max_count = max(max_count, syllable_set.middles.size())

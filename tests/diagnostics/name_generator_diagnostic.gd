@@ -128,7 +128,7 @@ func _test_generate_with_override_rng() -> Variant:
         var value := generator.generate(config, rng)
         generator.free()
         return value
-    })
+    )
 
     var second := _with_engine_stub(null, func(_stub_manager = null):
         var generator := _create_generator()
@@ -137,7 +137,7 @@ func _test_generate_with_override_rng() -> Variant:
         var value := generator.generate(config, rng)
         generator.free()
         return value
-    })
+    )
 
     if first is Dictionary:
         return "Override RNG run returned error: %s" % first
@@ -160,14 +160,14 @@ func _test_generate_with_seeded_stream() -> Variant:
         var value := generator.generate(config)
         generator.free()
         return value
-    })
+    )
 
     var second := _with_engine_stub(StubRNGManager.new(), func(_stub_manager = null):
         var generator := _create_generator()
         var value := generator.generate(config)
         generator.free()
         return value
-    })
+    )
 
     if first is Dictionary:
         return "Seeded stream run returned error: %s" % first
@@ -184,7 +184,7 @@ func _test_missing_strategy_error() -> Variant:
         var response := generator.generate({})
         generator.free()
         return response
-    })
+    )
 
     if not (result is Dictionary):
         return "Missing strategy should return an error dictionary."
@@ -206,7 +206,7 @@ func _test_invalid_stream_name_error() -> Variant:
         var response := generator.generate(config)
         generator.free()
         return response
-    })
+    )
 
     if not (result is Dictionary):
         return "Invalid stream name should return an error dictionary."
@@ -228,7 +228,7 @@ func _test_fallback_rng_recording() -> Variant:
         var value := generator.generate(config)
         generator.free()
         return value
-    })
+    )
 
     if result is Dictionary:
         return "Fallback RNG run returned error: %s" % result

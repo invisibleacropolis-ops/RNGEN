@@ -142,4 +142,3 @@ func _remove_file(path: String) -> void:
     if not FileAccess.file_exists(path):
         return
     DirAccess.remove_absolute(path)
-*** End Patch
