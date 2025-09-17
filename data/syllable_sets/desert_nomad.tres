@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class_name="SyllableSetResource" load_steps=2]
+
+[ext_resource type="Script" path="res://name_generator/resources/SyllableSetResource.gd" id="1_0"]
+
+[resource]
+prefixes = PackedStringArray("Az", "Kar", "Zah", "Mal")
+middles = PackedStringArray("im", "ar", "ul", "aad")
+suffixes = PackedStringArray("ir", "ah", "een", "al")
+allow_empty_middle = false
+locale = "Shifting Dunes Tribes"
+domain = "Nomad Clans"
