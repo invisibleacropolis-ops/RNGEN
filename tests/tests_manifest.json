@@ -23,6 +23,18 @@
     {
       "name": "RNG Stream Router Diagnostic",
       "path": "res://tests/diagnostics/rng_stream_router_diagnostic.gd"
+    },
+    {
+      "name": "Name Generator RNG Manager Diagnostic",
+      "path": "res://tests/diagnostics/name_generator_rng_manager_diagnostic.gd",
+      "id": "ng_rng_manager"
+    }
+  ],
+  "diagnostics": [
+    {
+      "id": "utils_array_utils",
+      "path": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
+
     }
   ]
 }
