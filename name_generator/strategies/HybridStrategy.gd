@@ -71,7 +71,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             step_config["seed"] = "%s::step_%s" % [parent_seed, alias]
 
         var child_rng := rng_router.derive_rng([alias, String(index)])
-        var result := NameGenerator.generate(step_config, child_rng)
+        var result := _generate_via_processor(step_config, child_rng)
         if result is Dictionary and result.has("code"):
             return _make_error(
                 String(result.get("code", "hybrid_step_error")),
@@ -174,3 +174,22 @@ func _get_placeholder_regex() -> RegEx:
         if error != OK:
             push_error("Failed to compile hybrid placeholder regex: %s" % PLACEHOLDER_PATTERN)
     return _placeholder_regex
+
+func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
+    if Engine.has_singleton("RNGProcessor"):
+        var processor := Engine.get_singleton("RNGProcessor")
+        if processor != null and processor.has_method("generate"):
+            return processor.call("generate", config, rng)
+    return NameGenerator.generate(config, rng)
+
+func describe() -> Dictionary:
+    var notes := PackedStringArray([
+        "steps executes sequential generator configurations and stitches results.",
+        "Each step may supply store_as to expose its output to later placeholders.",
+        "template can combine stored values using $placeholders.",
+        "Seed defaults cascade from the top-level seed when omitted per step.",
+    ])
+    return {
+        "expected_config": get_config_schema(),
+        "notes": notes,
+    }

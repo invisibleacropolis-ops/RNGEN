@@ -341,3 +341,14 @@ func _get_state_rng(state_id: String, base_rng: RandomNumberGenerator) -> Random
     rng.seed = base_rng.randi()
     _state_rngs[state_id] = rng
     return rng
+
+func describe() -> Dictionary:
+    var notes := PackedStringArray([
+        "markov_model_path must reference a MarkovModelResource asset.",
+        "max_length guards against runaway generation when transitions never reach an end token.",
+        "Model weights and temperatures influence token selection and can be tweaked per state.",
+    ])
+    return {
+        "expected_config": get_config_schema(),
+        "notes": notes,
+    }

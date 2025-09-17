@@ -331,3 +331,15 @@ func _apply_post_processing(name: String, rules: Array) -> String:
         result = regex.sub(result, replacement)
 
     return result
+
+func describe() -> Dictionary:
+    var notes := PackedStringArray([
+        "syllable_set_path should point to a SyllableSetResource with prefix/middle/suffix data.",
+        "Set require_middle to true to force inclusion of at least one middle syllable.",
+        "middle_syllables accepts min/max constraints for middle syllable counts.",
+        "post_processing_rules can apply regex-based clean up after assembly.",
+    ])
+    return {
+        "expected_config": get_config_schema(),
+        "notes": notes,
+    }

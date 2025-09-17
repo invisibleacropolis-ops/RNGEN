@@ -135,3 +135,19 @@ func _get_expected_config_keys() -> Dictionary:
         "required": PackedStringArray(),
         "optional": {},
     }
+
+func get_config_schema() -> Dictionary:
+    ## Public wrapper around the protected `_get_expected_config_keys` hook.
+    ##
+    ## Strategies frequently need to surface their expected configuration to
+    ## tooling or editor UIs. Exposing a public accessor keeps that data
+    ## consistent without forcing subclasses to duplicate schema definitions.
+    return _get_expected_config_keys()
+
+func describe() -> Dictionary:
+    ## Provide a structured description of the strategy. Concrete strategies can
+    ## override this to append additional metadata or human-readable guidance.
+    return {
+        "expected_config": get_config_schema(),
+        "notes": PackedStringArray(),
+    }
