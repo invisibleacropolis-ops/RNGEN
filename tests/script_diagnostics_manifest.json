@@ -1,0 +1,8 @@
+{
+  "diagnostics": [
+    {
+      "id": "autoload_rng_manager",
+      "path": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd"
+    }
+  ]
+}
