@@ -31,6 +31,8 @@ imported_folders=PackedStringArray(
         "res://name_generator/strategies",
         "res://name_generator/utils",
         "res://name_generator/tools",
-        "res://name_generator/tests"
+        "res://name_generator/tests",
+        "res://tests",
+        "res://tests/test_assets"
 )
 
