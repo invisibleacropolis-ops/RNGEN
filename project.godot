@@ -12,6 +12,13 @@ config/name="New Game Project"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
+
+[global_script_classes]
+global_script_classes=[{ "base": "Resource", "class": "WordListResource", "language": "GDScript", "path": "res://name_generator/resources/WordListResource.gd" }]
+
+[global_script_class_icons]
+WordListResource=""
+
 [filesystem]
 imported_folders=PackedStringArray(
         "res://data",
@@ -26,3 +33,4 @@ imported_folders=PackedStringArray(
         "res://name_generator/tools",
         "res://name_generator/tests"
 )
+
