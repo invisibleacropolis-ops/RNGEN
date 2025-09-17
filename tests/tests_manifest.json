@@ -42,6 +42,12 @@
 
     },
     {
+      "id": "deterministic_array_utils",
+      "path": "res://tests/diagnostics/deterministic_array_utils_diagnostic.gd"
+
+
+    },
+    {
       "id": "wordlist_strategy",
       "path": "res://tests/diagnostics/wordlist_strategy_diagnostic.gd"
 
@@ -49,6 +55,7 @@
     {
       "id": "syllable_chain_strategy",
       "path": "res://tests/diagnostics/syllable_chain_strategy_diagnostic.gd"
+
     }
   ]
 }
