@@ -39,7 +39,10 @@
     {
       "id": "utils_array_utils",
       "path": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
-
+    },
+    {
+      "id": "deterministic_array_utils",
+      "path": "res://tests/diagnostics/deterministic_array_utils_diagnostic.gd"
     }
   ]
 }
