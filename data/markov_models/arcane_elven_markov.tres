@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class_name="MarkovModelResource" load_steps=2]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1_0"]
+
+[resource]
+order = 2
+start_sequences = PackedStringArray("ae", "el", "li")
+transitions = {
+"ae": {"l": 0.6, "r": 0.4},
+"el": {"a": 0.5, "i": 0.3, "y": 0.2},
+"la": {"r": 0.5, "n": 0.5},
+"li": {"a": 0.6, "s": 0.4},
+"ar": {"a": 0.2, "i": 0.3, "y": 0.5},
+"ri": {"n": 0.6, "s": 0.4},
+"in": {"a": 0.4, "y": 0.6},
+"ny": {"a": 0.7, "s": 0.3},
+"ya": {"n": 0.6, "r": 0.4}
+}
+locale = "Aelorian Enclaves"
+domain = "Arcane Highborn"
+rarity_notes = "Used for venerable spellcasters who have earned archival status within the enclave registries. Names from this model should surface sparingly in procedural content."
