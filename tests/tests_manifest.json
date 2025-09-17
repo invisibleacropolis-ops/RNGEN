@@ -7,6 +7,10 @@
     {
       "name": "Hybrid Strategy Suite",
       "path": "res://name_generator/tests/test_hybrid_strategy.gd"
+    },
+    {
+      "name": "RNG Processor Suite",
+      "path": "res://name_generator/tests/test_rng_processor.gd"
     }
   ]
 }

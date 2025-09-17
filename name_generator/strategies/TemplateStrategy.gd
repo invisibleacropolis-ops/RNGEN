@@ -165,7 +165,7 @@ func _resolve_token(
         generator_config["seed"] = "%s::%s::%d" % [parent_seed, token, occurrence]
 
     var child_rng := rng_router.derive_rng([token, String(occurrence), String(current_depth + 1)])
-    var result := NameGenerator.generate(generator_config, child_rng)
+    var result := _generate_via_processor(generator_config, child_rng)
     if result is Dictionary and result.has("code"):
         return _make_error(
             String(result.get("code", "template_child_error")),
@@ -182,3 +182,22 @@ func _get_token_regex() -> RegEx:
         if error != OK:
             push_error("Failed to compile template token pattern: %s" % TOKEN_PATTERN)
     return _token_regex
+
+func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
+    if Engine.has_singleton("RNGProcessor"):
+        var processor := Engine.get_singleton("RNGProcessor")
+        if processor != null and processor.has_method("generate"):
+            return processor.call("generate", config, rng)
+    return NameGenerator.generate(config, rng)
+
+func describe() -> Dictionary:
+    var notes := PackedStringArray([
+        "template_string tokens like [name] trigger nested generator calls.",
+        "sub_generators maps template tokens to configuration dictionaries.",
+        "Provide max_depth to guard against accidental infinite recursion.",
+        "Seed values cascade to child generators when omitted from sub-configs.",
+    ])
+    return {
+        "expected_config": get_config_schema(),
+        "notes": notes,
+    }

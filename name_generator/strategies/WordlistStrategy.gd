@@ -145,3 +145,14 @@ func _pick_from_resource(
         )
 
     return ArrayUtils.pick_uniform(entries, rng)
+
+func describe() -> Dictionary:
+    var notes := PackedStringArray([
+        "wordlist_paths accepts resource paths or preloaded WordListResource instances.",
+        "Set use_weights to true to respect weighted entries when available.",
+        "Delimiter controls how selections are joined in the final output.",
+    ])
+    return {
+        "expected_config": get_config_schema(),
+        "notes": notes,
+    }

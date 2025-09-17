@@ -62,6 +62,46 @@ func list_strategies() -> PackedStringArray:
     result.sort()
     return result
 
+func describe_strategy(strategy_id: String) -> Dictionary:
+    var normalized := _normalize_strategy_id(strategy_id)
+    if normalized.is_empty():
+        return {}
+
+    var strategy: GeneratorStrategy = _strategies.get(normalized, null)
+    if strategy == null:
+        return {}
+
+    var description := {}
+    if strategy.has_method("describe"):
+        var candidate := strategy.call("describe")
+        if candidate is Dictionary:
+            description = (candidate as Dictionary).duplicate(true)
+
+    if description.is_empty():
+        description = {}
+
+    if not description.has("expected_config"):
+        if strategy.has_method("get_config_schema"):
+            var schema := strategy.call("get_config_schema")
+            description["expected_config"] = schema.duplicate(true) if schema is Dictionary else {}
+        else:
+            description["expected_config"] = strategy._get_expected_config_keys().duplicate(true)
+
+    if not description.has("id"):
+        description["id"] = normalized
+
+    if not description.has("display_name"):
+        description["display_name"] = _format_strategy_display_name(normalized)
+
+    return description
+
+func describe_strategies() -> Dictionary:
+    var descriptions := {}
+    var identifiers := list_strategies()
+    for identifier in identifiers:
+        descriptions[identifier] = describe_strategy(identifier)
+    return descriptions
+
 func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Variant:
     var validation_error := _validate_request_config(config, override_rng != null)
     if validation_error:
@@ -177,6 +217,20 @@ func _acquire_rng(stream_name: String) -> RandomNumberGenerator:
     var fallback := RandomNumberGenerator.new()
     fallback.randomize()
     return fallback
+
+func _format_strategy_display_name(identifier: String) -> String:
+    if identifier.is_empty():
+        return ""
+
+    var segments := identifier.split("_", false)
+    var parts := PackedStringArray()
+    for segment in segments:
+        if segment.is_empty():
+            continue
+        parts.append(segment.capitalize())
+    if parts.is_empty():
+        return identifier.capitalize()
+    return " ".join(parts)
 
 func _make_error(code: String, message: String, details: Dictionary = {}) -> Dictionary:
     return {
