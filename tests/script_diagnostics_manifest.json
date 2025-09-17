@@ -7,6 +7,7 @@
     "name_generator_rng_manager": "res://tests/diagnostics/name_generator_rng_manager_diagnostic.gd",
     "rng_processor": "res://tests/diagnostics/rng_processor_diagnostic.gd",
     "rng_stream_router": "res://tests/diagnostics/rng_stream_router_diagnostic.gd",
+    "template_strategy": "res://tests/diagnostics/template_strategy_diagnostic.gd",
     "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
   }
 }

@@ -54,7 +54,7 @@ func run() -> Dictionary:
 
     _record("template_expansion", func(): return _test_template_expansion())
     _record("occurrence_specific_seeding", func(): return _test_occurrence_specific_seeding())
-    _record("recursion_depth_enforcement", func(): return _test_recursion_depth_enforcement())
+    _record("error_template_recursion_depth_exceeded", func(): return _test_recursion_depth_enforcement())
     _record("error_invalid_template_type", func(): return _test_invalid_template_type())
     _record("error_invalid_sub_generators_type", func(): return _test_invalid_sub_generators_type())
     _record("error_missing_template_token", func(): return _test_missing_template_token())
