@@ -1,5 +1,16 @@
 # Tests
 
+
+Automated checks live in this directory. Start with the `smoke_test.gd` script, which validates the deterministic helpers in [`ArrayUtils.gd`](../utils/ArrayUtils.gd) and demonstrates how to write headless runners that quit when finished.
+
+Run the suite from the project root:
+
+```bash
+godot --headless --path . --script res://name_generator/tests/smoke_test.gd
+```
+
+Add additional scripts here as you implement strategies or utilities. Prefer small, deterministic checks so they can run quickly in CI.
+
 This directory now contains automated coverage for the name generator module. The suite focuses on the shared `GeneratorStrategy` contract and exercises happy-path name creation, validation failures, and deterministic RNG behaviour using a purpose-built mock implementation.
 
 ## Structure
@@ -30,3 +41,4 @@ ALL TESTS PASSED
 ```
 
 Any failures are reported with the test name and human-readable diagnostics to simplify debugging for engineers integrating new strategies.
+
