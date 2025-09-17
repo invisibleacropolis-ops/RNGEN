@@ -19,6 +19,10 @@
     {
       "name": "RNG Processor Headless Suite",
       "path": "res://tests/test_rng_processor_headless.gd"
+    },
+    {
+      "name": "RNG Stream Router Diagnostic",
+      "path": "res://tests/diagnostics/rng_stream_router_diagnostic.gd"
     }
   ]
 }
