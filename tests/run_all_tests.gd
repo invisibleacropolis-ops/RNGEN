@@ -1,6 +1,7 @@
 extends SceneTree
 
 const MANIFEST_PATH := "res://tests/tests_manifest.json"
+const DIAGNOSTIC_RUNNER_PATH := "res://tests/run_script_diagnostic.gd"
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -10,6 +11,19 @@ func _run() -> void:
     quit(exit_code)
 
 func _execute() -> int:
+    var args := OS.get_cmdline_args()
+    var diagnostic_id := _resolve_diagnostic_request(args)
+    if diagnostic_id != "":
+        print("Single diagnostic requested: %s" % diagnostic_id)
+        var runner_script := load(DIAGNOSTIC_RUNNER_PATH)
+        if runner_script == null:
+            push_error("Unable to load diagnostic runner at %s" % DIAGNOSTIC_RUNNER_PATH)
+            return 1
+        if not runner_script.has_method("run_diagnostic"):
+            push_error("Diagnostic runner script missing required `run_diagnostic()` function.")
+            return 1
+        return runner_script.call("run_diagnostic", diagnostic_id)
+
     if not FileAccess.file_exists(MANIFEST_PATH):
         push_error("Test manifest not found at %s" % MANIFEST_PATH)
         return 1
@@ -107,3 +121,29 @@ func _execute() -> int:
 
     print("TESTS FAILED")
     return 1
+
+func _resolve_diagnostic_request(args: PackedStringArray) -> String:
+    var runner_script := load(DIAGNOSTIC_RUNNER_PATH)
+    if runner_script != null and runner_script.has_method("resolve_diagnostic_request"):
+        return runner_script.call("resolve_diagnostic_request", args)
+
+    var env_request := ""
+    if OS.has_environment("RNGEN_DIAGNOSTIC_ID"):
+        env_request = OS.get_environment("RNGEN_DIAGNOSTIC_ID").strip_edges()
+
+    var cli_request := ""
+    var arg_count := args.size()
+    for index in range(arg_count):
+        var arg := String(args[index])
+        if arg.begins_with("--diagnostic-id="):
+            cli_request = arg.substr("--diagnostic-id=".length()).strip_edges()
+        elif arg.begins_with("--diagnostic="):
+            cli_request = arg.substr("--diagnostic=".length()).strip_edges()
+        elif arg == "--diagnostic-id" or arg == "--diagnostic":
+            if index + 1 < arg_count:
+                cli_request = String(args[index + 1]).strip_edges()
+
+    if cli_request != "":
+        return cli_request
+
+    return env_request

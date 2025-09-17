@@ -1,0 +1,11 @@
+{
+
+  "diagnostics": [
+    {
+      "id": "autoload_rng_manager",
+      "path": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd"
+  "diagnostics": {
+    "manifest_self_check": "res://tests/diagnostics/manifest_self_check_diagnostic.gd"
+  }
+
+}
