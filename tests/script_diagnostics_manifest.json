@@ -1,11 +1,7 @@
 {
-
-  "diagnostics": [
-    {
-      "id": "autoload_rng_manager",
-      "path": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd"
   "diagnostics": {
-    "manifest_self_check": "res://tests/diagnostics/manifest_self_check_diagnostic.gd"
+    "autoload_rng_manager": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd",
+    "manifest_self_check": "res://tests/diagnostics/manifest_self_check_diagnostic.gd",
+    "syllable_chain_strategy": "res://tests/diagnostics/syllable_chain_strategy_diagnostic.gd"
   }
-
 }
