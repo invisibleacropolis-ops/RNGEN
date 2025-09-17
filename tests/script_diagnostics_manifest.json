@@ -1,3 +1,4 @@
+
 {
   "diagnostics": {
     "autoload_rng_manager": "res://tests/diagnostics/autoload_rng_manager_diagnostic.gd",
@@ -9,3 +10,4 @@
     "utils_array_utils": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
   }
 }
+
