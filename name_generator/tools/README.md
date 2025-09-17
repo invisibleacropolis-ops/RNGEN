@@ -15,6 +15,8 @@ Add new scripts alongside `dataset_inspector.gd` and update the developer docs (
 
 This directory hosts editor tooling that supports designers while curating data for the procedural name generator.
 
+For middleware-specific automation guidance (attaching `DebugRNG`, enumerating strategies, or sourcing deterministic streams), see `docs/rng_processor_manual.md` and the workflow examples in `devdocs/rng_processor.md`.
+
 ## Syllable Set Builder
 
 The `SyllableSetBuilder` editor plugin adds a dock that converts curated word lists into [`SyllableSetResource`](../resources/SyllableSetResource.gd) files. Enable the plugin from **Project → Project Settings → Plugins** and look for *Syllable Set Builder*.
