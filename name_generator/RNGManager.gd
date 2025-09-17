@@ -1,63 +1,87 @@
 extends Node
 class_name RNGManager
 
-## Centralized random number generator manager for deterministic workflows.
-##
-## The manager keeps a single ``RandomNumberGenerator`` instance that systems
-## can retrieve without touching Godot's global RNG state. This makes it easier
-## to seed the generator for automated tests while still supporting fully
-## randomized behaviour in production builds.
-var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+## Central manager that coordinates deterministic random number streams.
+## The singleton exposes named RNG instances derived from a master seed so
+## independent systems can share reproducible randomness without colliding.
+
+var _master_seed: int = 0
+var _streams: Dictionary = {}
+
+const _STATE_MASTER_SEED := "master_seed"
+const _STATE_STREAMS := "streams"
+const _STATE_STATE := "state"
 
 func _ready() -> void:
-    """
-    Ensure the RNG has a non-zero seed when the autoload initializes.
+    if _master_seed == 0:
+        randomize_master_seed()
 
-    Godot automatically seeds ``RandomNumberGenerator`` instances at
-    construction time, but calling ``randomize`` guarantees unique values
-    between editor reloads unless a deterministic seed is provided manually.
-    """
-    _rng.randomize()
+func set_master_seed(seed_value: int) -> void:
+    _master_seed = seed_value
+    _streams.clear()
 
+func get_master_seed() -> int:
+    return _master_seed
 
-func get_rng() -> RandomNumberGenerator:
-    """
-    Retrieve the shared ``RandomNumberGenerator`` instance.
+func randomize_master_seed() -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.randomize()
+    set_master_seed(int(rng.randi()))
 
-    Callers must not store their own references to the RNG if they intend to
-    swap seeds later, since autoloads should remain the single source of truth
-    for deterministic control.
-    """
-    return _rng
+func get_rng(stream_name: String) -> RandomNumberGenerator:
+    var name := stream_name
+    if name.is_empty():
+        name = "default"
 
+    if not _streams.has(name):
+        _streams[name] = _create_stream(name)
 
-func reseed(seed_value: int) -> void:
-    """
-    Update the RNG seed explicitly for deterministic scenarios.
+    return _streams[name]
 
-    This method enables save/load systems or automated tests to inject
-    predictable randomness across the entire project. The RNG's state is
-    advanced immediately after seeding to match Godot's default behaviour.
-    """
-    _rng.seed = seed_value
-    _rng.state = _rng.state  # Force the generator to advance once after seeding.
+func save_state() -> Dictionary:
+    var serialized := {}
+    for key in _streams.keys():
+        var rng: RandomNumberGenerator = _streams[key]
+        serialized[key] = rng.state
+    return {
+        _STATE_MASTER_SEED: _master_seed,
+        _STATE_STREAMS: serialized,
+    }
 
+func load_state(payload: Variant) -> void:
+    if typeof(payload) != TYPE_DICTIONARY:
+        push_warning("RNGManager.load_state expected a Dictionary payload.")
+        return
 
-func randf() -> float:
-    """
-    Proxy ``randf`` calls to the shared RNG for convenience.
+    var data: Dictionary = payload
+    if data.has(_STATE_MASTER_SEED):
+        set_master_seed(int(data[_STATE_MASTER_SEED]))
 
-    Keeping this helper inside the manager reduces boilerplate in systems that
-    only need a floating-point random value.
-    """
-    return _rng.randf()
+    if not data.has(_STATE_STREAMS):
+        return
 
+    var streams := data[_STATE_STREAMS]
+    if typeof(streams) != TYPE_DICTIONARY:
+        push_warning("RNGManager.load_state streams payload must be a Dictionary.")
+        return
 
-func randi_range(min_value: int, max_value: int) -> int:
-    """
-    Generate a random integer within ``min_value`` and ``max_value``.
+    for key in streams.keys():
+        var rng := get_rng(String(key))
+        rng.state = int(streams[key])
 
-    Callers can use this helper in place of ``RandomNumberGenerator``'s global
-    static methods to avoid hidden state.
-    """
-    return _rng.randi_range(min_value, max_value)
+func randf(stream_name: String = "utility") -> float:
+    return get_rng(stream_name).randf()
+
+func randi_range(stream_name: String, minimum: int, maximum: int) -> int:
+    return get_rng(stream_name).randi_range(minimum, maximum)
+
+func _create_stream(name: String) -> RandomNumberGenerator:
+    var rng := RandomNumberGenerator.new()
+    var seed := _compute_stream_seed(name)
+    rng.seed = seed
+    rng.state = seed
+    return rng
+
+func _compute_stream_seed(name: String) -> int:
+    var hashed := hash("%s::%s" % [_master_seed, name])
+    return int(hashed & 0x7fffffffffffffff)

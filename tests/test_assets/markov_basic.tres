@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("ka", "la", "mo", "ri")
+start_tokens = [{"token": "ka", "weight": 1.0}, {"token": "mo", "weight": 1.0}]
+transitions = {
+"ka": [{"token": "la", "weight": 1.0}],
+"la": [{"token": "<END>", "weight": 1.0}],
+"mo": [{"token": "ri", "weight": 1.0}],
+"ri": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0

@@ -234,7 +234,7 @@ func _pick_from_packed_strings(values: PackedStringArray, rng: RandomNumberGener
     if as_array.is_empty():
         return ""
 
-    return String(ArrayUtils.pick_random_deterministic(as_array, rng))
+    return String(ArrayUtils.pick_uniform(as_array, rng))
 
 func _join_with_smoothing(fragments: Array) -> String:
     var result := ""
