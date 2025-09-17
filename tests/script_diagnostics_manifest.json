@@ -1,0 +1,5 @@
+{
+  "diagnostics": {
+    "manifest_self_check": "res://tests/diagnostics/manifest_self_check_diagnostic.gd"
+  }
+}
