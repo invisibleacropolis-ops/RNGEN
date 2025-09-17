@@ -5,11 +5,24 @@
 ; Format:
 ;   [section] ; section goes between []
 ;   param=value ; assign values to parameters
-
 config_version=5
 
 [application]
-
 config/name="New Game Project"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
+
+[filesystem]
+imported_folders=PackedStringArray(
+        "res://data",
+        "res://data/markov_models",
+        "res://data/syllable_sets",
+        "res://data/wordlists",
+        "res://data/objects",
+        "res://data/people",
+        "res://name_generator/resources",
+        "res://name_generator/strategies",
+        "res://name_generator/utils",
+        "res://name_generator/tools",
+        "res://name_generator/tests"
+)
