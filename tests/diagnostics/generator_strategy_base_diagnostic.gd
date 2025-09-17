@@ -66,8 +66,8 @@ func _test_ensure_dictionary_rejects_non_dictionary() -> Variant:
         return "Error details must be a dictionary."
     if details.get("received_type", -1) != TYPE_INT:
         return "Expected received_type TYPE_INT but received %s." % details.get("received_type")
-    if details.get("type_name", "") != Variant.get_type_name(TYPE_INT):
-        return "Expected type_name %s but received %s." % [Variant.get_type_name(TYPE_INT), details.get("type_name")]
+    if details.get("type_name", "") != type_string(TYPE_INT):
+        return "Expected type_name %s but received %s." % [type_string(TYPE_INT), details.get("type_name")]
     return null
 
 func _test_validate_required_keys_reports_missing() -> Variant:
@@ -103,7 +103,7 @@ func _test_validate_optional_key_types_enforces_types() -> Variant:
         return "_validate_optional_key_types should reject mismatched types."
     if error.code != "invalid_key_type":
         return "Expected invalid_key_type code but received %s." % error.code
-    var expected_message := "Configuration value for 'retries' must be of type %s." % Variant.get_type_name(TYPE_INT)
+    var expected_message := "Configuration value for 'retries' must be of type %s." % type_string(TYPE_INT)
     if error.message != expected_message:
         return "Expected message '%s' but received '%s'." % [expected_message, error.message]
     var details := error.details
@@ -113,11 +113,11 @@ func _test_validate_optional_key_types_enforces_types() -> Variant:
         return "Detail payload should echo the offending key."
     if details.get("expected_type", -1) != TYPE_INT:
         return "Detail payload should expose the expected Variant type."
-    if details.get("expected_type_name", "") != Variant.get_type_name(TYPE_INT):
+    if details.get("expected_type_name", "") != type_string(TYPE_INT):
         return "Detail payload should expose the expected type name."
     if details.get("received_type", -1) != TYPE_STRING:
         return "Detail payload should expose the received Variant type."
-    if details.get("received_type_name", "") != Variant.get_type_name(TYPE_STRING):
+    if details.get("received_type_name", "") != type_string(TYPE_STRING):
         return "Detail payload should expose the received type name."
     return null
 

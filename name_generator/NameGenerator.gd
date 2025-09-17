@@ -158,7 +158,7 @@ func _validate_request_config(config: Variant, allow_missing_seed: bool) -> Dict
             "NameGenerator.generate expects a Dictionary configuration.",
             {
                 "received_type": typeof(config),
-                "type_name": Variant.get_type_name(typeof(config)),
+                "type_name": type_string(typeof(config)),
             },
         )
 
@@ -182,7 +182,7 @@ func _validate_request_config(config: Variant, allow_missing_seed: bool) -> Dict
             "The 'rng_stream' override must be a string when provided.",
             {
                 "received_type": typeof(dictionary["rng_stream"]),
-                "type_name": Variant.get_type_name(typeof(dictionary["rng_stream"])),
+                "type_name": type_string(typeof(dictionary["rng_stream"])),
             },
         )
 
@@ -220,9 +220,9 @@ func _acquire_rng(stream_name: String) -> RandomNumberGenerator:
     if Engine.has_singleton("RNGManager"):
         var manager := Engine.get_singleton("RNGManager")
         if manager != null and manager.has_method("get_rng"):
-            var rng := manager.call("get_rng", stream_name)
-            if rng is RandomNumberGenerator:
-                return rng
+            var rng_object: Object = manager.call("get_rng", stream_name)
+            if rng_object is RandomNumberGenerator:
+                return rng_object as RandomNumberGenerator
 
     var fallback := RandomNumberGenerator.new()
     fallback.randomize()
