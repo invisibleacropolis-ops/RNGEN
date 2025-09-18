@@ -14,6 +14,7 @@ func run() -> Dictionary:
     _run_test("forwards_generation_signals", func(): _test_forwards_generation_signals())
     _run_test("exposes_debug_rng_helpers", func(): _test_exposes_debug_rng_helpers())
     _run_test("exposes_seed_dashboard_helpers", func(): _test_exposes_seed_dashboard_helpers())
+    _run_test("manages_qa_runs", func(): _test_manages_qa_runs())
 
     return {
         "suite": "Platform GUI RNGProcessor Controller",
@@ -180,6 +181,52 @@ func _test_exposes_seed_dashboard_helpers() -> Variant:
 
     return null
 
+func _test_manages_qa_runs() -> Variant:
+    var processor := StubRNGProcessor.new()
+    var event_bus := StubEventBus.new()
+    var controller := _make_controller(processor, event_bus)
+
+    var runner := StubQARunner.new()
+    controller.set_qa_runner_override(runner)
+    controller.set_qa_stream_yield(false)
+
+    var started_events: Array = []
+    var output_events: Array = []
+    var completed_events: Array = []
+
+    controller.qa_run_started.connect(func(run_id: String, request: Dictionary): started_events.append({"id": run_id, "request": request.duplicate(true)}), CONNECT_REFERENCE_COUNTED)
+    controller.qa_run_output.connect(func(run_id: String, line: String): output_events.append({"id": run_id, "line": line}), CONNECT_REFERENCE_COUNTED)
+    controller.qa_run_completed.connect(func(run_id: String, payload: Dictionary): completed_events.append({"id": run_id, "payload": payload.duplicate(true)}), CONNECT_REFERENCE_COUNTED)
+
+    var run_id := controller.run_full_test_suite()
+    if run_id == "":
+        return "run_full_test_suite should return a run identifier."
+
+    controller._process_active_qa_run()
+
+    if started_events.size() != 1:
+        return "qa_run_started should emit exactly once."
+
+    if output_events.size() != runner.logs.size():
+        return "qa_run_output should relay runner log entries."
+
+    if completed_events.size() != 1:
+        return "qa_run_completed should emit when the run finishes."
+
+    var completion := completed_events[0].get("payload", {})
+    if completion.get("result", {}).get("exit_code", 1) != 0:
+        return "Completion payload should report a passing exit code."
+
+    var history := controller.get_recent_qa_runs()
+    if history.size() != 1:
+        return "Controller should cache recent QA runs."
+
+    var record: Dictionary = history[0]
+    if String(record.get("log_path", "")) == "":
+        return "QA run should persist a log path for later inspection."
+
+    return null
+
 func _make_controller(processor: StubRNGProcessor, event_bus: StubEventBus) -> Node:
     var controller: Node = CONTROLLER_SCENE.instantiate()
     controller.set_rng_processor_override(processor)
@@ -282,3 +329,41 @@ class StubEventBus:
             "name": event_name,
             "payload": payload.duplicate(true),
         })
+
+class StubQARunner:
+    extends RefCounted
+
+    signal log_emitted(line: String)
+
+    var logs := [
+        "Running suite: QA stub",
+        "Suite summary: 3 passed, 0 failed, 3 total.",
+        "ALL TESTS PASSED",
+    ]
+
+    func run_manifest(manifest_path: String, yield_frames: bool = false) -> Dictionary:
+        for line in logs:
+            emit_signal("log_emitted", line)
+        return {
+            "exit_code": 0,
+            "aggregate_total": 3,
+            "aggregate_passed": 3,
+            "aggregate_failed": 0,
+            "suite_total": 3,
+            "suite_passed": 3,
+            "suite_failed": 0,
+            "diagnostic_total": 0,
+            "diagnostic_passed": 0,
+            "diagnostic_failed": 0,
+            "overall_success": true,
+            "logs": PackedStringArray(logs),
+        }
+
+    func run_single_diagnostic(diagnostic_id: String, yield_frames: bool = false) -> Dictionary:
+        emit_signal("log_emitted", "Running diagnostic: %s" % diagnostic_id)
+        return {
+            "exit_code": 0,
+            "diagnostic_id": diagnostic_id,
+            "overall_success": true,
+            "logs": PackedStringArray(["Running diagnostic: %s" % diagnostic_id, "DIAGNOSTIC PASSED"]),
+        }
