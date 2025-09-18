@@ -179,8 +179,8 @@ func _get_placeholder_regex() -> RegEx:
     return _placeholder_regex
 
 func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
-    if Engine.has_singleton("RNGProcessor"):
-        var processor: Object = Engine.get_singleton("RNGProcessor")
+    if _has_engine_singleton("RNGProcessor"):
+        var processor: Object = _get_engine_singleton("RNGProcessor")
         if processor != null and processor.has_method("generate"):
             return processor.call("generate", config, rng)
     var generator: Object = _resolve_name_generator_singleton()
@@ -213,8 +213,8 @@ func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> 
 func _resolve_name_generator_singleton() -> Object:
     ## Mirror TemplateStrategy's singleton resolution so hybrid expansions can
     ## safely delegate to the generator without triggering circular preloads.
-    if Engine.has_singleton("NameGenerator"):
-        var singleton: Object = Engine.get_singleton("NameGenerator")
+    if _has_engine_singleton("NameGenerator"):
+        var singleton: Object = _get_engine_singleton("NameGenerator")
         if singleton != null and singleton.has_method("generate"):
             return singleton
     return null
@@ -261,3 +261,9 @@ func describe() -> Dictionary:
         "expected_config": get_config_schema(),
         "notes": notes,
     }
+
+func _has_engine_singleton(name: StringName) -> bool:
+    return Engine.has_singleton(name)
+
+func _get_engine_singleton(name: StringName) -> Object:
+    return Engine.get_singleton(name)

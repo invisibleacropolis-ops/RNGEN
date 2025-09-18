@@ -17,6 +17,12 @@ class MissingNameGeneratorHybridStrategy:
     func _resolve_name_generator_singleton() -> Object:
         return null
 
+    func _has_engine_singleton(_name: StringName) -> bool:
+        return false
+
+    func _get_engine_singleton(_name: StringName) -> Object:
+        return null
+
 var _total := 0
 var _passed := 0
 var _failed := 0
@@ -52,23 +58,6 @@ func _run_test(name: String, callable: Callable) -> void:
         "name": name,
         "message": String(message),
     })
-
-func _with_autoloads_disabled(callable: Callable) -> Variant:
-    var original_has := Engine.has_singleton
-    var original_get := Engine.get_singleton
-
-    Engine.has_singleton = func(_name: String) -> bool:
-        return false
-
-    Engine.get_singleton = func(_name: String) -> Variant:
-        return null
-
-    var result = callable.call()
-
-    Engine.has_singleton = original_has
-    Engine.get_singleton = original_get
-
-    return result
 
 func _test_hybrid_structure() -> Variant:
     var strategy := HybridStrategy.new()
@@ -147,9 +136,7 @@ func _test_missing_name_generator_resource() -> Variant:
         ],
     }
 
-    var result := _with_autoloads_disabled(func():
-        return strategy.generate(config, rng)
-    )
+    var result := strategy.generate(config, rng)
 
     if not (result is GeneratorStrategy.GeneratorError):
         return "Expected missing NameGenerator script to return a GeneratorError."

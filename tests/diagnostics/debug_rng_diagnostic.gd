@@ -32,7 +32,7 @@ func _run_test(name: String, callable: Callable) -> void:
     _failed += 1
     _failures.append({
         "name": name,
-        "message": String(message),
+        "message": str(message),
     })
 
 func _test_session_logging() -> Variant:
@@ -64,16 +64,17 @@ func _test_session_logging() -> Variant:
     debug.record_stream_usage("omega::5", {"step": 1})
 
     var stats: Dictionary = debug._stats
-    var message := _assert_equal(1, stats.get("calls_started", 0), "calls_started should count generation_started events.")
-    message = message or _assert_equal(1, stats.get("calls_completed", 0), "calls_completed should count generation_completed events.")
-    message = message or _assert_equal(1, stats.get("calls_failed", 0), "calls_failed should count generation_failed events.")
-    message = message or _assert_equal(1, stats.get("warnings", 0), "warnings should track recorded warnings.")
-    message = message or _assert_equal(1, stats.get("stream_records", 0), "stream_records should count stream usage entries.")
+    var message: Variant = null
+    message = _merge_message(message, _assert_equal(1, stats.get("calls_started", 0), "calls_started should count generation_started events."))
+    message = _merge_message(message, _assert_equal(1, stats.get("calls_completed", 0), "calls_completed should count generation_completed events."))
+    message = _merge_message(message, _assert_equal(1, stats.get("calls_failed", 0), "calls_failed should count generation_failed events."))
+    message = _merge_message(message, _assert_equal(1, stats.get("warnings", 0), "warnings should track recorded warnings."))
+    message = _merge_message(message, _assert_equal(1, stats.get("stream_records", 0), "stream_records should count stream usage entries."))
     if message != null:
         return message
 
     var stream_entries := debug._log_entries.filter(func(entry): return entry.get("type", "") == "stream_usage")
-    message = message or _assert_equal(1, stream_entries.size(), "stream_usage entries should be appended to the log.")
+    message = _merge_message(message, _assert_equal(1, stream_entries.size(), "stream_usage entries should be appended to the log."))
     if message != null:
         return message
 
@@ -111,23 +112,23 @@ func _test_strategy_tracking() -> Variant:
     strategy.emit_generation_error("bad_seed", "message", {"attempt": 1})
 
     var stats: Dictionary = debug._stats
-    var message := _assert_equal(1, stats.get("strategy_errors", 0), "strategy_errors should increment when tracked strategies emit errors.")
+    var message: Variant = _assert_equal(1, stats.get("strategy_errors", 0), "strategy_errors should increment when tracked strategies emit errors.")
     if message != null:
         return message
 
     var entries := debug._log_entries.filter(func(entry): return entry.get("type", "") == "strategy_error")
-    message = message or _assert_equal(1, entries.size(), "strategy_error entries should be recorded when tracked strategies fail.")
+    message = _merge_message(message, _assert_equal(1, entries.size(), "strategy_error entries should be recorded when tracked strategies fail."))
     if message == null:
         var entry: Dictionary = entries[0]
-        message = message or _assert_equal("delta", entry.get("strategy_id", ""), "Strategy identifier should be captured in log entries.")
-        message = message or _assert_equal("bad_seed", entry.get("code", ""), "Strategy error code should be logged.")
+        message = _merge_message(message, _assert_equal("delta", entry.get("strategy_id", ""), "Strategy identifier should be captured in log entries."))
+        message = _merge_message(message, _assert_equal("bad_seed", entry.get("code", ""), "Strategy error code should be logged."))
     if message != null:
         return message
 
     debug.untrack_strategy(strategy)
     strategy.emit_generation_error("bad_seed", "message", {"attempt": 2})
 
-    message = message or _assert_equal(1, debug._stats.get("strategy_errors", 0), "Strategy errors should not increment after untracking.")
+    message = _merge_message(message, _assert_equal(1, debug._stats.get("strategy_errors", 0), "Strategy errors should not increment after untracking."))
     return message
 
 class MockProcessor:
@@ -171,6 +172,11 @@ func _reset() -> void:
     _passed = 0
     _failed = 0
     _failures.clear()
+
+func _merge_message(current: Variant, candidate: Variant) -> Variant:
+    if current != null:
+        return current
+    return candidate
 
 func _assert_equal(expected: Variant, actual: Variant, message: String) -> Variant:
     if expected != actual:
