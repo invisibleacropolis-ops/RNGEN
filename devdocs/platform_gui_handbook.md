@@ -11,9 +11,16 @@ Follow these steps whenever you need to work inside the Platform GUI:
 1. **Open the Godot project** – Launch Godot 4.4 and open `project.godot` from the repository root. The GUI scene tree expects the `RNGProcessor` autoload to be active, so do not create a blank project or rename the root folder.
 2. **Confirm autoloads** – In the Godot editor, open **Project > Project Settings > Autoload** and verify that `RNGManager`, `NameGenerator`, and `RNGProcessor` are all enabled. These singletons are the bridges between the GUI and the middleware. If any are missing, press the refresh icon to reload project settings or re-add them by pointing to the corresponding `.gd` files in `res://autoloads/`.
 3. **Run the GUI scene** – Press <kbd>F5</kbd> (or click the play icon) to launch the default scene. The Platform GUI window should appear with tabs for *Generators*, *Seeds*, and *Debug Logs*.
-4. **Optional: enable DebugRNG logging** – If you want the GUI to collect detailed telemetry, toggle the "Record DebugRNG Session" option in the toolbar before running any generators. This attaches the helper via `RNGProcessor.set_debug_rng(...)` so the middleware starts writing the session report immediately.
+4. **Optional: enable DebugRNG logging** – If you want the GUI to collect detailed telemetry, open the DebugRNG toolbar, capture the session metadata (label, ticket ID, quick notes), press **Start session**, and then click **Attach**. The toolbar wires the helper through `RNGProcessor.set_debug_rng(...)` so the middleware starts writing the session report immediately.
 
 ## Common workflows
+
+### Recording DebugRNG sessions
+
+1. Open the DebugRNG toolbar (bundled with `res://addons/platform_gui/components/DebugToolbar.tscn`). Populate the metadata fields so support tickets, QA notes, and quick descriptors are stored alongside the session.
+2. Press **Start session** to create a fresh DebugRNG helper. The toolbar caches the helper and keeps it ready for attachment without touching engine singletons.
+3. Click **Attach** to route the helper through the RNGProcessor controller. The middleware now emits timeline, warning, and stream-usage telemetry directly into the recorder.
+4. Use **Detach** whenever you want to pause logging without destroying the captured session. Press **Stop** to close the report, persist the TXT file, and release the helper.
 
 ### Running a generator
 
@@ -79,9 +86,9 @@ Follow these steps whenever you need to work inside the Platform GUI:
 ### Reviewing DebugRNG logs
 
 1. Switch to the **Debug Logs** tab. When DebugRNG is active, the middleware writes to `user://debug_rng_report.txt` (or a custom path you configured earlier).
-2. Click **Refresh Log**. This button requests the latest telemetry via `RNGProcessor.get_debug_rng().read_current_log()` and updates the viewer pane.
-3. Use the sidebar filters to jump to specific sections (Generation Timeline, Stream Usage, Warnings). These anchors mirror the log layout described in the middleware manual, helping you confirm whether unexpected results came from seeds, strategy choices, or warnings recorded by `record_warning(...)`.
-4. Press **Download Log** to save a copy. The GUI calls `DebugRNG.close()` through the middleware so the file flushes to disk before presenting the system file picker.
+2. Click **Refresh log**. This button requests the latest telemetry via `RNGProcessor.get_debug_rng().read_current_log()` and updates the viewer pane without reparsing the TXT output.
+3. Use the section filter dropdown to jump between **Generation timeline**, **Warnings**, **Stream usage**, and **Strategy errors**. Highlighted entries mirror the telemetry schema—warnings render with the ⚠️ glyph while failures and strategy errors are tinted red—so analysts can scan for issues in seconds.
+4. Enter a target file (for example `user://debug_rng_copy.txt`) and press **Download** to archive the latest TXT report. The panel streams the raw file directly to disk so engineers can attach it to tickets or share it with QA leads.
 
 ### Replaying and exporting seeds
 

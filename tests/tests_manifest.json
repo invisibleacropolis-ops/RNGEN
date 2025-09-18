@@ -41,6 +41,14 @@
       "path": "res://tests/gui/test_hybrid_pipeline_panel.gd"
     },
     {
+      "name": "Platform GUI Debug Toolbar Suite",
+      "path": "res://tests/gui/test_debug_toolbar.gd"
+    },
+    {
+      "name": "Platform GUI Debug Log Panel Suite",
+      "path": "res://tests/gui/test_debug_log_panel.gd"
+    },
+    {
       "name": "Formulas Workspace Suite",
       "path": "res://tests/gui/test_formulas_workspace.gd"
     },
