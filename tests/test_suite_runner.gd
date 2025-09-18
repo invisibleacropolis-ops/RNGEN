@@ -79,7 +79,7 @@ static func list_available_diagnostics() -> Array[Dictionary]:
 
     var script_manifest := _load_json(SCRIPT_DIAGNOSTIC_MANIFEST_PATH)
     if script_manifest is Dictionary:
-        var diagnostics_variant := script_manifest.get("diagnostics", {})
+        var diagnostics_variant: Variant = script_manifest.get("diagnostics", {})
         if diagnostics_variant is Dictionary:
             var diagnostics_dict: Dictionary = diagnostics_variant
             for id_key in diagnostics_dict.keys():
@@ -94,10 +94,12 @@ static func list_available_diagnostics() -> Array[Dictionary]:
 
     var manifest := _load_json(DEFAULT_MANIFEST_PATH)
     if manifest is Dictionary:
-        var diagnostics_array_variant := manifest.get("diagnostics", [])
+        var diagnostics_array_variant: Variant = manifest.get("diagnostics", [])
         if diagnostics_array_variant is Array:
             for entry_variant in diagnostics_array_variant:
-                var info: Dictionary = entry_variant if entry_variant is Dictionary else {}
+                var info: Dictionary = {}
+                if entry_variant is Dictionary:
+                    info = entry_variant
                 var diag_id := String(info.get("id", "")).strip_edges()
                 if diag_id == "":
                     continue
@@ -177,7 +179,9 @@ func _normalize_failures(failures_variant: Variant) -> Array:
     var failures: Array = []
     if failures_variant is Array:
         for failure in failures_variant:
-            var failure_info: Dictionary = failure if failure is Dictionary else {}
+            var failure_info: Dictionary = {}
+            if failure is Dictionary:
+                failure_info = failure
             failures.append({
                 "name": failure_info.get("name", "Unnamed Check"),
                 "message": failure_info.get("message", ""),
@@ -205,8 +209,8 @@ func _summarize_diagnostic_result(result: Dictionary, summary: Dictionary, label
     if failed > 0 or not failures.is_empty():
         summary["overall_success"] = false
         for failure in failures:
-            var name := failure.get("name", label)
-            var message := failure.get("message", "")
+            var name: String = String(failure.get("name", label))
+            var message: String = String(failure.get("message", ""))
             summary["failure_summaries"].append("Diagnostic %s :: %s -- %s" % [label, name, message])
 
 func _summarize_suite_result(result: Dictionary, suite_name: String, summary: Dictionary) -> void:
@@ -225,8 +229,8 @@ func _summarize_suite_result(result: Dictionary, suite_name: String, summary: Di
     if failed > 0 or not failures.is_empty():
         summary["overall_success"] = false
         for failure in failures:
-            var name := failure.get("name", "Unnamed Test")
-            var message := failure.get("message", "")
+            var name: String = String(failure.get("name", "Unnamed Test"))
+            var message: String = String(failure.get("message", ""))
             summary["failure_summaries"].append("Suite %s :: %s -- %s" % [suite_name, name, message])
 
 func _build_exit_summary(summary: Dictionary) -> Dictionary:
@@ -263,13 +267,13 @@ func _finalize_summary(summary: Dictionary) -> Dictionary:
     return _build_exit_summary(summary)
 
 func _duplicate_summary(summary: Dictionary) -> Dictionary:
-    var payload := {}
+    var payload: Dictionary = {}
     for key in summary.keys():
         payload[key] = _duplicate_variant(summary[key])
     return payload
 
 func _extract_function_state(result: Variant) -> Variant:
-    if result is GDScriptFunctionState:
+    if result is Object and result.get_class() == "GDScriptFunctionState":
         return await result
     return result
 
@@ -474,7 +478,7 @@ func _log(message: String) -> void:
     if not _yield_callable.is_valid():
         return
     var result := _yield_callable.call()
-    if result is GDScriptFunctionState:
+    if result is Object and result.get_class() == "GDScriptFunctionState":
         await result
 
 func _yield_frame() -> void:

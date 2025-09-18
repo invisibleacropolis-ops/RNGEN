@@ -306,7 +306,7 @@ func _process_active_qa_run() -> void:
         if runner.has_method("run_single_diagnostic"):
             var diagnostic_id := String(request.get("diagnostic_id", ""))
             var diagnostic_result_variant := runner.call("run_single_diagnostic", diagnostic_id, yield_frames)
-            if diagnostic_result_variant is GDScriptFunctionState:
+            if diagnostic_result_variant is Object and diagnostic_result_variant.get_class() == "GDScriptFunctionState":
                 diagnostic_result_variant = await diagnostic_result_variant
             if diagnostic_result_variant is Dictionary:
                 result = diagnostic_result_variant
@@ -325,7 +325,7 @@ func _process_active_qa_run() -> void:
         if runner.has_method("run_manifest"):
             var manifest_path := String(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
             var manifest_result_variant := runner.call("run_manifest", manifest_path, yield_frames)
-            if manifest_result_variant is GDScriptFunctionState:
+            if manifest_result_variant is Object and manifest_result_variant.get_class() == "GDScriptFunctionState":
                 manifest_result_variant = await manifest_result_variant
             if manifest_result_variant is Dictionary:
                 result = manifest_result_variant
