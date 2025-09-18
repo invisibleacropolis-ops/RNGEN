@@ -186,8 +186,10 @@ Start with the developer documentation map for discipline-specific guidance:
   seeding tips.
 - `devdocs/rng_processor.md` & `devdocs/rng_processor_manual.md` – Middleware API,
   DebugRNG logging, and platform integration reference.
-- `devdocs/platform_gui_handbook.md` – Platform GUI workflows, replay tooling,
-  and accessibility considerations for the forthcoming interface.
+- `devdocs/platform_gui_handbook.md` – Platform GUI tabs, batch export workflows,
+  replay tooling, and accessibility considerations.
+- `devdocs/platform_gui_checklists.md` – Printable launch, export, and debug handoff
+  checklists that mirror the handbook.
 
 These documents expand on every script and workflow mentioned in this README and
 should be treated as the canonical reference for engineers joining the project.
