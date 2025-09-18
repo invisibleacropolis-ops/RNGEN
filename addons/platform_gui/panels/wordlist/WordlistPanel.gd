@@ -34,6 +34,7 @@ var _resource_cache: Array = []
 func _ready() -> void:
     _preview_button.pressed.connect(_on_preview_button_pressed)
     %RefreshButton.pressed.connect(_on_refresh_pressed)
+    _seed_edit.text_submitted.connect(_on_seed_submitted)
     _refresh_metadata()
     _refresh_resource_catalog()
     _update_preview_state(null)
@@ -118,6 +119,10 @@ func apply_config_payload(config: Dictionary) -> void:
 
 func _on_refresh_pressed() -> void:
     refresh()
+
+func _on_seed_submitted(text: String) -> void:
+    _seed_edit.text = text
+    _on_preview_button_pressed()
 
 func _refresh_metadata() -> void:
     var service := _get_metadata_service()

@@ -40,6 +40,7 @@ func _ready() -> void:
     _preview_button.pressed.connect(_on_preview_button_pressed)
     %RefreshButton.pressed.connect(_on_refresh_pressed)
     _resource_list.item_selected.connect(_on_resource_selected)
+    _seed_edit.text_submitted.connect(_on_seed_submitted)
     _refresh_metadata()
     _refresh_resource_catalog()
     _update_preview_state(null)
@@ -116,6 +117,10 @@ func _on_preview_button_pressed() -> void:
         "status": "success",
         "message": String(response),
     })
+
+func _on_seed_submitted(text: String) -> void:
+    _seed_edit.text = text
+    _on_preview_button_pressed()
 
 func _refresh_metadata() -> void:
     var service := _get_metadata_service()

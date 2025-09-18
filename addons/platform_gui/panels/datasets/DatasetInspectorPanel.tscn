@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://datasetinspectorpanel"]
+[gd_scene load_steps=3 format=3 uid="uid://datasetinspectorpanel"]
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd" id="1_9p7k1"]
+[ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_2m7yt"]
 
 [node name="DatasetInspectorPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
@@ -21,12 +22,18 @@ size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 [node name="InspectButton" type="Button" parent="Header"]
 text = "Inspect datasets"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_2m7yt")
 
 [node name="SyllableBuilderButton" type="Button" parent="Header"]
 text = "Open syllable builder"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_2m7yt")
 
 [node name="DocsButton" type="Button" parent="Header"]
 text = "Dataset guide"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_2m7yt")
 
 [node name="StatusLabel" type="RichTextLabel" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

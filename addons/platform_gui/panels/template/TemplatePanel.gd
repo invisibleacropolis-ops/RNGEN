@@ -47,6 +47,7 @@ func _ready() -> void:
     _sub_generators_edit.text_changed.connect(_on_sub_generators_changed)
     _max_depth_spin.value_changed.connect(_on_max_depth_changed)
     _seed_edit.text_changed.connect(_on_seed_changed)
+    _seed_edit.text_submitted.connect(_on_seed_submitted)
     _token_tree.set_column_titles_visible(true)
     _token_tree.set_column_title(0, "Node")
     _token_tree.set_column_title(1, "Depth")
@@ -181,6 +182,10 @@ func _on_preview_button_pressed() -> void:
     })
     _update_seed_helper()
     _notify_configuration_changed()
+
+func _on_seed_submitted(text: String) -> void:
+    _seed_edit.text = text
+    _on_preview_button_pressed()
 
 func _refresh_metadata() -> void:
     var service := _get_metadata_service()

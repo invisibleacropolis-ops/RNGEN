@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://templatepanel"]
+[gd_scene load_steps=3 format=3 uid="uid://templatepanel"]
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/template/TemplatePanel.gd" id="1_zl6r1"]
+[ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_l5smr"]
 
 [node name="TemplatePanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
@@ -23,6 +24,8 @@ size_flags_horizontal = Control.SIZE_EXPAND_FILL
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata."
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="MetadataSummary" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -43,6 +46,8 @@ custom_minimum_size = Vector2(0, 80)
 placeholder_text = "Forge a [material] blade for the [title]."
 scroll_fit_content_height = true
 wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="MaxDepthRow" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 8
@@ -56,6 +61,8 @@ max_value = 64.0
 min_value = 1.0
 step = 1.0
 value = 8.0
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="SeedRow" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 8
@@ -66,6 +73,8 @@ text = "Seed"
 [node name="SeedInput" type="LineEdit" parent="SeedRow"]
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 placeholder_text = "Optional seed label"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="SeedHelper" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -82,6 +91,8 @@ custom_minimum_size = Vector2(0, 140)
 placeholder_text = "{\n    \"material\": {\"strategy\": \"wordlist\", \"wordlist_paths\": []},\n    \"title\": {\"strategy\": \"template\", \"template_string\": \"[rank] of [order]\"}\n}"
 scroll_fit_content_height = true
 wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="TokenTreeLabel" type="Label" parent="."]
 text = "Token expansion preview"
@@ -92,6 +103,8 @@ custom_minimum_size = Vector2(0, 220)
 select_mode = Tree.SELECT_ROW
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 size_flags_vertical = Control.SIZE_EXPAND_FILL
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="ValidationLabel" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -107,6 +120,8 @@ theme_override_constants/separation = 12
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
 text = "Preview"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="PreviewSpacer" type="Control" parent="PreviewRow"]
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
