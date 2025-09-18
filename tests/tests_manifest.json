@@ -25,6 +25,10 @@
       "path": "res://tests/platform_gui/test_rng_processor_controller.gd"
     },
     {
+      "name": "Platform GUI Strategy Metadata Service Suite",
+      "path": "res://tests/gui/test_strategy_metadata_service.gd"
+    },
+    {
       "name": "Name Generator Diagnostic",
       "path": "res://tests/diagnostics/name_generator_diagnostic.gd",
       "id": "name_generator"
