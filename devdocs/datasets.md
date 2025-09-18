@@ -58,6 +58,7 @@ identifying when to regenerate derived Markov models.
   chaining rather than direct list selection. The `MarkovChainStrategy` loads a
   model from disk, validates its `states`, `start_tokens`, and `end_tokens`, and
   then walks the weighted transition tables during generation.【F:name_generator/resources/MarkovModelResource.gd†L5-L33】【F:name_generator/strategies/MarkovChainStrategy.gd†L4-L200】
+* Audit trained models inside the Platform GUI before shipping them. The Markov configuration panel summarises token inventories, temperature overrides, and transition health so you can spot missing links or unreachable terminations without digging through raw JSON.【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L188-L352】
 * Rebuild models whenever you substantially change the underlying corpus (new
   locale, new domain, or major balance pass) so the transition data remains in
   sync with the source material.

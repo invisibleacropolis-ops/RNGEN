@@ -34,6 +34,16 @@ Follow these steps whenever you need to work inside the Platform GUI:
 7. Press **Preview** to request a seeded sample from the middleware. Successful runs render the preview inline, while validation errors appear in red beneath the controls so you can correct the form without leaving the panel.
 8. Click **Refresh** if you add new word lists to the project mid-session. The button reloads both the metadata schema and the resource catalogue.
 
+### Configuring Markov chain strategies
+
+1. Choose **Markov Chain** from the strategy dropdown to load the dedicated panel.
+2. Review the metadata banner and inline notes sourced from the middleware schema. The panel mirrors the required `markov_model_path` key plus optional settings like `max_length` so you know which controls unlock previews.【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L44-L110】
+3. Browse available `MarkovModelResource` assets in the resource list. Each entry surfaces locale and domain metadata in the label and tooltip so you can pick the right corpus without guessing.【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L112-L186】
+4. Select a resource to populate the summary cards. The top summary reports state counts, start/end tokens, and temperature override ranges; the health block highlights missing transitions, unreachable tokens, and direct terminators so you can gauge dataset integrity at a glance.【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L188-L352】
+5. Adjust **Maximum length** when you want the middleware to stop sampling once a name reaches a specific token count. Leave it at `0` to accept the natural termination point determined by the Markov model.【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L52-L87】
+6. Supply an optional seed label and press **Preview**. The panel forwards the seed, model path, and max length directly to `RNGProcessor.generate(...)` so you get deterministic samples. If the middleware rejects the request, the red validation stack shows the error message plus a bullet list of diagnostic details extracted from the payload.【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L89-L145】【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L354-L415】
+7. Hit **Refresh** whenever you add new Markov models or update middleware notes—the button reloads both the schema hints and the on-disk resource catalogue.【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L33-L76】【F:addons/platform_gui/panels/markov/MarkovPanel.gd†L112-L152】
+
 ### Configuring syllable chain strategies
 
 1. Choose **Syllable Chain** from the strategy dropdown to load the dedicated panel.
