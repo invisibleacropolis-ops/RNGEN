@@ -44,28 +44,28 @@ func _ensure_dictionary(value: Variant, context: String = "config") -> Generator
     return null
 
 func _validate_config(config: Variant) -> GeneratorError:
-    var type_error := _ensure_dictionary(config)
+    var type_error: GeneratorError = _ensure_dictionary(config)
     if type_error:
         return type_error
 
     var dictionary: Dictionary = config
 
-    var required_error := _validate_required_keys(dictionary)
+    var required_error: GeneratorError = _validate_required_keys(dictionary)
     if required_error:
         return required_error
 
-    var optional_error := _validate_optional_key_types(dictionary)
+    var optional_error: GeneratorError = _validate_optional_key_types(dictionary)
     if optional_error:
         return optional_error
 
     return null
 
 func _validate_required_keys(config: Dictionary) -> GeneratorError:
-    var expectations := _get_expected_config_keys()
+    var expectations: Dictionary = _get_expected_config_keys()
     if expectations.is_empty() or not expectations.has("required"):
         return null
 
-    var required_keys := expectations["required"]
+    var required_keys: Variant = expectations["required"]
     var normalized := PackedStringArray()
     if required_keys is PackedStringArray:
         normalized = required_keys
@@ -88,7 +88,7 @@ func _validate_required_keys(config: Dictionary) -> GeneratorError:
     )
 
 func _validate_optional_key_types(config: Dictionary) -> GeneratorError:
-    var expectations := _get_expected_config_keys()
+    var expectations: Dictionary = _get_expected_config_keys()
     if expectations.is_empty() or not expectations.has("optional"):
         return null
 
@@ -98,7 +98,7 @@ func _validate_optional_key_types(config: Dictionary) -> GeneratorError:
             continue
 
         var expected_type: int = optional[key]
-        var value := config[key]
+        var value: Variant = config[key]
         if typeof(value) != expected_type:
             return _make_error(
                 "invalid_key_type",
@@ -120,13 +120,13 @@ func emit_configured_error(
     default_message: String,
     details: Dictionary = {}
 ) -> GeneratorError:
-    var message := default_message
+    var message: String = default_message
     if config.has("errors"):
-        var overrides := config.get("errors")
+        var overrides: Variant = config.get("errors")
         if typeof(overrides) == TYPE_DICTIONARY and overrides.has(code):
             message = String(overrides[code])
 
-    var error := _make_error(code, message, details)
+    var error: GeneratorError = _make_error(code, message, details)
     emit_signal("generation_error", error.code, error.message, error.details)
     return error
 

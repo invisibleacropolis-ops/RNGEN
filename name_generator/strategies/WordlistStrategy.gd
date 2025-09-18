@@ -20,15 +20,15 @@ func _get_expected_config_keys() -> Dictionary:
     }
 
 func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
-    var validation_error := _validate_config(config)
+    var validation_error: GeneratorError = _validate_config(config)
     if validation_error:
         return validation_error
 
-    var resources_result := _collect_resources(config["wordlist_paths"])
+    var resources_result: Variant = _collect_resources(config["wordlist_paths"])
     if resources_result is GeneratorError:
         return resources_result
 
-    var resources: Array = resources_result
+    var resources: Array = resources_result if resources_result is Array else []
     if resources.is_empty():
         return emit_configured_error(
             config,
@@ -37,11 +37,11 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
         )
 
     var selections: Array[String] = []
-    var use_weights := bool(config.get("use_weights", false))
-    var delimiter := String(config.get("delimiter", " "))
+    var use_weights: bool = bool(config.get("use_weights", false))
+    var delimiter: String = String(config.get("delimiter", " "))
 
     for resource in resources:
-        var picked := _pick_from_resource(resource, use_weights, rng, config)
+        var picked: Variant = _pick_from_resource(resource, use_weights, rng, config)
         if picked is GeneratorError:
             return picked
         if picked == null:
@@ -58,13 +58,13 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
     return delimiter.join(selections)
 
 func _collect_resources(sources: Variant) -> Variant:
-    var normalized := []
-    var entries := []
+    var normalized: Array = []
+    var entries: Array = []
 
     if sources is PackedStringArray:
-        entries = sources.to_array()
+        entries.assign(sources)
     elif sources is Array:
-        entries = sources
+        entries = sources.duplicate()
     else:
         return _make_error(
             "invalid_wordlist_paths_type",
@@ -87,7 +87,7 @@ func _collect_resources(sources: Variant) -> Variant:
                 },
             )
 
-        var path := String(entry).strip_edges()
+        var path: String = String(entry).strip_edges()
         if path.is_empty():
             continue
 
@@ -98,7 +98,7 @@ func _collect_resources(sources: Variant) -> Variant:
                 {"path": path},
             )
 
-        var resource := ResourceLoader.load(path)
+        var resource: Resource = ResourceLoader.load(path)
         if resource == null:
             return _make_error(
                 ERROR_LOAD_FAILED,
@@ -127,7 +127,7 @@ func _pick_from_resource(
     config: Dictionary
 ) -> Variant:
     if use_weights and resource.has_weight_data():
-        var weighted_entries := resource.get_weighted_entries()
+        var weighted_entries: Array = resource.get_weighted_entries()
         if weighted_entries.is_empty():
             return emit_configured_error(
                 config,
@@ -136,7 +136,7 @@ func _pick_from_resource(
             )
         return ArrayUtils.pick_weighted(weighted_entries, rng)
 
-    var entries := resource.get_uniform_entries()
+    var entries: Array = resource.get_uniform_entries()
     if entries.is_empty():
         return emit_configured_error(
             config,

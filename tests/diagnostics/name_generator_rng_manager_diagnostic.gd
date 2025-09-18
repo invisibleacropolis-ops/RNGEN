@@ -81,9 +81,10 @@ func _test_rng_manager_behaviors() -> Variant:
     if not state.has("master_seed") or not state.has("streams"):
         return "Serialized state must include master_seed and streams entries."
 
-    var streams_payload := state["streams"] if state.has("streams") else null
-    if not (streams_payload is Dictionary):
+    var streams_variant: Variant = state.get("streams", null)
+    if not (streams_variant is Dictionary):
         return "Streams entry in serialized state must be a Dictionary."
+    var streams_payload: Dictionary = streams_variant
 
     if not streams_payload.has("default"):
         return "Serialized streams should include the mapped 'default' stream for empty names."

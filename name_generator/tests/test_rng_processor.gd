@@ -142,7 +142,7 @@ func _test_generate_success() -> Variant:
     if not _failed_events.is_empty():
         return "generation_failed should not emit for successful requests."
 
-    var metadata := _started_events[0]["metadata"]
+    var metadata: Dictionary = _started_events[0]["metadata"]
     if metadata.get("strategy_id", "") != "wordlist":
         return "generation_started metadata should capture the normalized strategy id."
 
@@ -152,7 +152,7 @@ func _test_generate_success() -> Variant:
     if metadata.get("rng_stream", "") != "wordlist::rng_processor_success":
         return "generation_started metadata should include the resolved RNG stream name."
 
-    var completed := _completed_events[0]
+    var completed: Dictionary = _completed_events[0]
     if completed.get("result", "") == "":
         return "generation_completed should forward the generation result."
 
@@ -190,24 +190,40 @@ func _test_generate_failure() -> Variant:
     if _failed_events.size() != 1:
         return "generation_failed should emit exactly once for failures."
 
-    var failure := _failed_events[0]
-    var metadata := failure.get("metadata", {})
+    var failure: Dictionary = _failed_events[0]
+    var metadata: Dictionary = failure.get("metadata", {})
     if metadata.get("strategy_id", "") != "does_not_exist":
         return "generation_failed metadata should include the normalized strategy id."
 
     if metadata.get("rng_stream", "") != "does_not_exist::rng_processor_failure":
         return "generation_failed metadata should capture the resolved RNG stream."
 
-    var error := failure.get("error", {})
+    var error: Dictionary = failure.get("error", {})
     if error.get("code", "") != "unknown_strategy":
         return "generation_failed should forward the underlying error code."
 
     return null
 
 func _make_processor() -> RNGProcessor:
+    _ensure_required_singletons()
     var processor := RNGProcessor.new()
     processor._ready()
     return processor
+
+func _ensure_required_singletons() -> void:
+    if not Engine.has_singleton("RNGManager"):
+        var rng_manager_script: GDScript = load("res://name_generator/RNGManager.gd")
+        var rng_manager_instance: Node = rng_manager_script.new()
+        rng_manager_instance._ready()
+        Engine.register_singleton("RNGManager", rng_manager_instance)
+
+    if not Engine.has_singleton("NameGenerator"):
+        var name_generator_script: GDScript = load("res://name_generator/NameGenerator.gd")
+        var generator_instance: Node = name_generator_script.new()
+        generator_instance._ready()
+        if generator_instance.has_method("_register_builtin_strategies"):
+            generator_instance.call("_register_builtin_strategies")
+        Engine.register_singleton("NameGenerator", generator_instance)
 
 func _reset_signal_captures() -> void:
     _started_events.clear()

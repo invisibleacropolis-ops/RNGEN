@@ -11,11 +11,11 @@ func _run() -> void:
     quit(exit_code)
 
 func _execute() -> int:
-    var args := OS.get_cmdline_args()
-    var diagnostic_id := _resolve_diagnostic_request(args)
+    var args: PackedStringArray = OS.get_cmdline_args()
+    var diagnostic_id: String = _resolve_diagnostic_request(args)
     if diagnostic_id != "":
         print("Single diagnostic requested: %s" % diagnostic_id)
-        var runner_script := load(DIAGNOSTIC_RUNNER_PATH)
+        var runner_script: Resource = load(DIAGNOSTIC_RUNNER_PATH)
         if runner_script == null:
             push_error("Unable to load diagnostic runner at %s" % DIAGNOSTIC_RUNNER_PATH)
             return 1
@@ -28,24 +28,24 @@ func _execute() -> int:
         push_error("Test manifest not found at %s" % MANIFEST_PATH)
         return 1
 
-    var file := FileAccess.open(MANIFEST_PATH, FileAccess.READ)
+    var file: FileAccess = FileAccess.open(MANIFEST_PATH, FileAccess.READ)
     if file == null:
         push_error("Unable to open test manifest at %s" % MANIFEST_PATH)
         return 1
 
-    var text := file.get_as_text()
-    var json := JSON.new()
-    var parse_error := json.parse(text)
+    var text: String = file.get_as_text()
+    var json: JSON = JSON.new()
+    var parse_error: Error = json.parse(text)
     if parse_error != OK:
         push_error("Failed to parse test manifest JSON: %s" % json.get_error_message())
         return 1
 
-    var manifest := json.data
+    var manifest: Dictionary = json.data
     if manifest == null or not (manifest is Dictionary):
         push_error("Test manifest must be a dictionary with a 'suites' array.")
         return 1
 
-    var suites := manifest.get("suites", [])
+    var suites: Array = manifest.get("suites", [])
     if suites.is_empty():
         push_warning("No test suites declared in manifest. Nothing to run.")
         return 0
@@ -56,9 +56,9 @@ func _execute() -> int:
     var aggregate_failed := 0
 
     for entry in suites:
-        var suite_info := entry if entry is Dictionary else {}
-        var suite_name := suite_info.get("name", "Unnamed Suite")
-        var suite_path := suite_info.get("path", "")
+        var suite_info: Dictionary = entry if entry is Dictionary else {}
+        var suite_name: String = suite_info.get("name", "Unnamed Suite")
+        var suite_path: String = suite_info.get("path", "")
 
         print("Running suite: %s" % suite_name)
 
@@ -67,23 +67,23 @@ func _execute() -> int:
             print("  ✗ Suite path missing from manifest entry.")
             continue
 
-        var script := load(suite_path)
+        var script: Script = load(suite_path) as Script
         if script == null:
             overall_success = false
             print("  ✗ Unable to load suite script at %s" % suite_path)
             continue
 
-        var suite_instance = script.new()
+        var suite_instance: Object = script.new()
         if suite_instance == null or not suite_instance.has_method("run"):
             overall_success = false
             print("  ✗ Suite script %s must implement a `run()` method." % suite_path)
             continue
 
-        var suite_result = suite_instance.run()
+        var suite_result: Variant = suite_instance.run()
         var total := 0
         var passed := 0
         var failed := 0
-        var failures := []
+        var failures: Array = []
 
         if suite_result is Dictionary:
             total = int(suite_result.get("total", 0))
@@ -106,9 +106,9 @@ func _execute() -> int:
         if not failures.is_empty():
             overall_success = false
             for failure in failures:
-                var failure_info := failure if failure is Dictionary else {}
-                var test_name := failure_info.get("name", "Unnamed Test")
-                var message := failure_info.get("message", "")
+                var failure_info: Dictionary = failure if failure is Dictionary else {}
+                var test_name: String = failure_info.get("name", "Unnamed Test")
+                var message: String = failure_info.get("message", "")
                 print("    ✗ %s -- %s" % [test_name, message])
         else:
             print("  ✅ All tests passed in suite: %s" % suite_name)

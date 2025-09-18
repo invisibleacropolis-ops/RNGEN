@@ -34,25 +34,25 @@ func _initialize() -> void:
     call_deferred("_run")
 
 func _run() -> void:
-    var diagnostic_id := resolve_diagnostic_request(OS.get_cmdline_args())
+    var diagnostic_id: String = resolve_diagnostic_request(OS.get_cmdline_args())
     if diagnostic_id == "":
         push_error("No diagnostic ID provided. Pass --diagnostic-id <id> or set %s." % DIAGNOSTIC_ENV_VAR)
         _print_available_diagnostics()
         quit(1)
         return
 
-    var exit_code := run_diagnostic(diagnostic_id)
+    var exit_code: int = run_diagnostic(diagnostic_id)
     quit(exit_code)
 
 static func resolve_diagnostic_request(args: PackedStringArray) -> String:
-    var env_request := ""
+    var env_request: String = ""
     if OS.has_environment(DIAGNOSTIC_ENV_VAR):
         env_request = OS.get_environment(DIAGNOSTIC_ENV_VAR).strip_edges()
 
-    var cli_request := ""
-    var arg_count := args.size()
+    var cli_request: String = ""
+    var arg_count: int = args.size()
     for index in range(arg_count):
-        var arg := String(args[index])
+        var arg: String = String(args[index])
         if arg.begins_with("--diagnostic-id="):
             cli_request = arg.substr("--diagnostic-id=".length()).strip_edges()
         elif arg.begins_with("--diagnostic="):
@@ -71,60 +71,69 @@ static func run_diagnostic(diagnostic_id: String) -> int:
         push_error("Diagnostic ID cannot be empty.")
         return 1
 
-    var manifest := _load_manifest()
-    if manifest == null:
+    var manifest_variant: Variant = _load_manifest()
+    if manifest_variant == null:
         return 1
 
-    var diagnostics := manifest.get(DIAGNOSTIC_COLLECTION_KEY, {})
-    if not (diagnostics is Dictionary):
+    if not (manifest_variant is Dictionary):
+        push_error("Diagnostics manifest must be a dictionary.")
+        return 1
+
+    var manifest: Dictionary = manifest_variant
+
+    var diagnostics_variant: Variant = manifest.get(DIAGNOSTIC_COLLECTION_KEY, {})
+    if not (diagnostics_variant is Dictionary):
         push_error("Diagnostics manifest must expose a '%s' dictionary." % DIAGNOSTIC_COLLECTION_KEY)
         return 1
+
+    var diagnostics: Dictionary = diagnostics_variant
 
     if not diagnostics.has(diagnostic_id):
         push_error("Unknown diagnostic ID '%s'." % diagnostic_id)
         _print_available_entries(diagnostics)
         return 1
 
-    var script_path := String(diagnostics[diagnostic_id])
+    var script_path: String = String(diagnostics[diagnostic_id])
     if script_path.strip_edges() == "":
         push_error("Manifest entry for '%s' is missing a script path." % diagnostic_id)
         return 1
 
-    var script := load(script_path)
+    var script: Script = load(script_path) as Script
     if script == null:
         push_error("Unable to load diagnostic script at %s" % script_path)
         return 1
 
-    var instance := script.new()
+    var instance: Object = script.new()
     if instance == null or not instance.has_method("run"):
         push_error("Diagnostic %s must implement a `run()` method." % script_path)
         return 1
 
     print("Running diagnostic '%s' (%s)" % [diagnostic_id, script_path])
-    var result := instance.run()
+    var result: Variant = instance.run()
 
     if not (result is Dictionary):
         push_error("Diagnostic '%s' returned an unexpected result type." % diagnostic_id)
         return 1
 
-    var diagnostic_name := result.get("name", diagnostic_id)
-    var total := int(result.get("total", 0))
-    var passed := int(result.get("passed", 0))
-    var failed := int(result.get("failed", 0))
-    var failures := result.get("failures", [])
+    var diagnostic_name: String = result.get("name", diagnostic_id)
+    var total: int = int(result.get("total", 0))
+    var passed: int = int(result.get("passed", 0))
+    var failed: int = int(result.get("failed", 0))
+    var failures_variant: Variant = result.get("failures", [])
+    var failures: Array = failures_variant if failures_variant is Array else []
 
     print("  Name: %s" % diagnostic_name)
     print("  Total: %d" % total)
     print("  Passed: %d" % passed)
     print("  Failed: %d" % failed)
 
-    var exit_code := 0
-    if failures is Array and not failures.is_empty():
+    var exit_code: int = 0
+    if not failures.is_empty():
         exit_code = 1
         for failure in failures:
-            var failure_info := failure if failure is Dictionary else {}
-            var test_name := failure_info.get("name", "Unnamed Check")
-            var message := failure_info.get("message", "")
+            var failure_info: Dictionary = failure if failure is Dictionary else {}
+            var test_name: String = failure_info.get("name", "Unnamed Check")
+            var message: String = failure_info.get("message", "")
             print("    ✗ %s -- %s" % [test_name, message])
     elif failed > 0:
         exit_code = 1
@@ -147,19 +156,19 @@ static func _load_manifest():
         push_error("Diagnostics manifest not found at %s" % MANIFEST_PATH)
         return null
 
-    var file := FileAccess.open(MANIFEST_PATH, FileAccess.READ)
+    var file: FileAccess = FileAccess.open(MANIFEST_PATH, FileAccess.READ)
     if file == null:
         push_error("Unable to open diagnostics manifest at %s" % MANIFEST_PATH)
         return null
 
-    var text := file.get_as_text()
-    var json := JSON.new()
-    var parse_error := json.parse(text)
+    var text: String = file.get_as_text()
+    var json: JSON = JSON.new()
+    var parse_error: Error = json.parse(text)
     if parse_error != OK:
         push_error("Failed to parse diagnostics manifest JSON: %s" % json.get_error_message())
         return null
 
-    var manifest := json.data
+    var manifest: Variant = json.data
     if manifest == null or not (manifest is Dictionary):
         push_error("Diagnostics manifest must be a dictionary.")
         return null
@@ -167,13 +176,18 @@ static func _load_manifest():
     return manifest
 
 static func _print_available_diagnostics() -> void:
-    var manifest := _load_manifest()
+    var manifest: Variant = _load_manifest()
     if manifest == null:
         return
-    var diagnostics := manifest.get(DIAGNOSTIC_COLLECTION_KEY, {})
-    if not (diagnostics is Dictionary) or diagnostics.is_empty():
+    if not (manifest is Dictionary):
+        push_error("Diagnostics manifest must be a dictionary.")
+        return
+
+    var diagnostics_variant: Variant = manifest.get(DIAGNOSTIC_COLLECTION_KEY, {})
+    if not (diagnostics_variant is Dictionary) or diagnostics_variant.is_empty():
         print("No diagnostics are registered in the manifest.")
         return
+    var diagnostics: Dictionary = diagnostics_variant
     _print_available_entries(diagnostics)
 
 static func _print_available_entries(diagnostics: Dictionary) -> void:

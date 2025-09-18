@@ -24,12 +24,12 @@ func get_master_seed() -> int:
     return _master_seed
 
 func randomize_master_seed() -> void:
-    var rng := RandomNumberGenerator.new()
+    var rng: RandomNumberGenerator = RandomNumberGenerator.new()
     rng.randomize()
     set_master_seed(int(rng.randi()))
 
 func get_rng(stream_name: String) -> RandomNumberGenerator:
-    var name := stream_name
+    var name: String = stream_name
     if name.is_empty():
         name = "default"
 
@@ -79,14 +79,14 @@ func randi_range(stream_name: String, minimum: int, maximum: int) -> int:
     return get_rng(stream_name).randi_range(minimum, maximum)
 
 func _create_stream(name: String) -> RandomNumberGenerator:
-    var rng := RandomNumberGenerator.new()
-    var seed := _compute_stream_seed(name)
+    var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+    var seed: int = _compute_stream_seed(name)
     rng.seed = seed
     rng.state = seed
     return rng
 
 func _compute_stream_seed(name: String) -> int:
-    var hashed := hash("%s::%s" % [_master_seed, name])
+    var hashed: int = hash("%s::%s" % [_master_seed, name])
     return int(hashed & 0x7fffffffffffffff)
 
 func _apply_stream_payload(rng: RandomNumberGenerator, stream_name: String, payload: Variant) -> void:
@@ -102,10 +102,10 @@ func _apply_stream_payload(rng: RandomNumberGenerator, stream_name: String, payl
 
     var data: Dictionary = payload
 
-    var seed_value := data.get(_STATE_SEED, null)
-    var state_value := data.get(_STATE_STATE, null)
-    var seed_applied := false
-    var state_applied := false
+    var seed_value: Variant = data.get(_STATE_SEED, null)
+    var state_value: Variant = data.get(_STATE_STATE, null)
+    var seed_applied: bool = false
+    var state_applied: bool = false
 
     if typeof(seed_value) in [TYPE_INT, TYPE_FLOAT]:
         rng.seed = int(seed_value)

@@ -28,13 +28,13 @@ func _init(seed_or_rng: Variant, path: PackedStringArray = PackedStringArray()):
 func derive_rng(extra_segments: Array = []) -> RandomNumberGenerator:
     var segments := PackedStringArray(_path)
     for segment in extra_segments:
-        segments.append(String(segment))
+        segments.append(str(segment))
     return _make_rng_for_path(segments)
 
 func branch(extra_segments: Array = []) -> RNGStreamRouter:
     var segments := PackedStringArray(_path)
     for segment in extra_segments:
-        segments.append(String(segment))
+        segments.append(str(segment))
     return RNGStreamRouter.new(_root_seed, segments)
 
 func to_rng() -> RandomNumberGenerator:
