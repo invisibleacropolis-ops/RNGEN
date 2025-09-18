@@ -114,7 +114,8 @@ func _refresh_streams(controller: Object) -> void:
         else:
             stream_item.set_tooltip_text(0, "Seed provided by RNGManager.")
 
-    _import_status.text = mode == "fallback" ? "Fallback streams active" : "RNGManager authoritative"
+    var status_text := "Fallback streams active" if mode == "fallback" else "RNGManager authoritative"
+    _import_status.text = status_text
 
 func _refresh_routing(controller: Object) -> void:
     _routing_tree.clear()
@@ -230,4 +231,3 @@ func _update_status(message: String) -> void:
 
 func _format_error(message: String) -> String:
     return "[color=%s]%s[/color]" % [_ERROR_COLOR.to_html(), message]
-*** End
