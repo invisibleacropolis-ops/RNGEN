@@ -312,4 +312,3 @@ class StubQAController:
                     combined_logs.append(String(line))
         aggregated["logs"] = combined_logs
         return aggregated
-*** End Patch

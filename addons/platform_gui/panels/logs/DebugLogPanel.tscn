@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/logs/DebugLogPanel.gd" id="1_r9a7o"]
 [ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_rqdjh"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="3_compat"]
 
 [node name="DebugLogPanel" type="VBoxContainer"]
 layout_mode = 2
@@ -14,42 +15,49 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="RefreshButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Refresh log"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="SectionSelector" type="OptionButton" parent="Header"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 1
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="DownloadPath" type="LineEdit" parent="Header"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(240, 0)
 placeholder_text = "user://debug_rng_copy.txt"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="DownloadButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Download"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="LogDisplay" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+script = ExtResource("3_compat")
 bbcode_enabled = true
 scroll_active = true
 scroll_following = true
-
 [node name="StatusLabel" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 32)
+script = ExtResource("3_compat")
 bbcode_enabled = true
 scroll_active = false

@@ -39,10 +39,10 @@ func _test_starts_session_and_captures_metadata() -> Variant:
 
     toolbar._on_start_pressed()
 
-    var debug_rng := toolbar.get_active_debug_rng()
+    var debug_rng: Object = toolbar.get_active_debug_rng()
     if debug_rng == null:
         return "Toolbar should create a DebugRNG instance when starting a session."
-    var payload := debug_rng.read_current_log()
+    var payload: Dictionary = debug_rng.read_current_log()
     var metadata: Dictionary = payload.get("metadata", {})
     if metadata.get("label", "") != "QA Session":
         return "Session metadata should include the provided label."
@@ -78,7 +78,7 @@ func _test_stop_closes_session_and_detaches() -> Variant:
     toolbar.set_controller_override(controller)
     toolbar._ready()
     toolbar._on_start_pressed()
-    var debug_rng := toolbar.get_active_debug_rng()
+    var debug_rng: Object = toolbar.get_active_debug_rng()
     toolbar._on_attach_pressed()
 
     toolbar._on_stop_pressed()

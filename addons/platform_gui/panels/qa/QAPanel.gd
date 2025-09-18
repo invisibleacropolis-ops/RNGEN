@@ -16,17 +16,17 @@ const _INFO_COLOR := Color(0.3, 0.6, 0.9)
 const _SUCCESS_COLOR := Color(0.32, 0.7, 0.36)
 const _ERROR_COLOR := Color(0.86, 0.23, 0.23)
 
-@onready var _run_suite_button: Button = %RunSuiteButton
-@onready var _diagnostic_selector: OptionButton = %DiagnosticSelector
-@onready var _run_diagnostic_button: Button = %RunDiagnosticButton
-@onready var _refresh_diagnostics_button: Button = %RefreshDiagnosticsButton
-@onready var _log_view: RichTextLabel = %LogView
-@onready var _clear_log_button: Button = %ClearLogButton
-@onready var _open_log_button: Button = %OpenLogButton
-@onready var _log_path_field: LineEdit = %LogPathField
-@onready var _status_label: RichTextLabel = %StatusLabel
-@onready var _history_list: ItemList = %HistoryList
-@onready var _guidance_label: RichTextLabel = %GuidanceLabel
+var _run_suite_button: Button= null
+var _diagnostic_selector: OptionButton= null
+var _run_diagnostic_button: Button= null
+var _refresh_diagnostics_button: Button= null
+var _log_view: RichTextLabel= null
+var _clear_log_button: Button= null
+var _open_log_button: Button= null
+var _log_path_field: LineEdit= null
+var _status_label: RichTextLabel= null
+var _history_list: ItemList= null
+var _guidance_label: RichTextLabel= null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
@@ -37,7 +37,32 @@ var _active_run_id: String = ""
 var _active_log_path: String = ""
 var _history_lookup: Dictionary = {}
 
+
+func _ensure_nodes_ready() -> void:
+    if _run_suite_button == null:
+        _run_suite_button = get_node("%RunSuiteButton") as Button
+    if _diagnostic_selector == null:
+        _diagnostic_selector = get_node("%DiagnosticSelector") as OptionButton
+    if _run_diagnostic_button == null:
+        _run_diagnostic_button = get_node("%RunDiagnosticButton") as Button
+    if _refresh_diagnostics_button == null:
+        _refresh_diagnostics_button = get_node("%RefreshDiagnosticsButton") as Button
+    if _log_view == null:
+        _log_view = get_node("%LogView") as RichTextLabel
+    if _clear_log_button == null:
+        _clear_log_button = get_node("%ClearLogButton") as Button
+    if _open_log_button == null:
+        _open_log_button = get_node("%OpenLogButton") as Button
+    if _log_path_field == null:
+        _log_path_field = get_node("%LogPathField") as LineEdit
+    if _status_label == null:
+        _status_label = get_node("%StatusLabel") as RichTextLabel
+    if _history_list == null:
+        _history_list = get_node("%HistoryList") as ItemList
+    if _guidance_label == null:
+        _guidance_label = get_node("%GuidanceLabel") as RichTextLabel
 func _ready() -> void:
+    _ensure_nodes_ready()
     _log_view.bbcode_enabled = true
     _status_label.bbcode_enabled = true
     _guidance_label.bbcode_enabled = true
@@ -60,6 +85,7 @@ func _ready() -> void:
     _update_buttons()
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     _controller_override = controller
     _cached_controller = null
     _ensure_controller_connections()
@@ -68,6 +94,7 @@ func set_controller_override(controller: Object) -> void:
     _update_buttons()
 
 func clear_controller_override() -> void:
+    _ensure_nodes_ready()
     _controller_override = null
     _cached_controller = null
     _ensure_controller_connections()
@@ -76,6 +103,7 @@ func clear_controller_override() -> void:
     _update_buttons()
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     _cached_controller = null
     _ensure_controller_connections()
     _populate_diagnostics()
@@ -83,6 +111,7 @@ func refresh() -> void:
     _update_buttons()
 
 func _on_run_suite_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null or not controller.has_method("run_full_test_suite"):
         _set_status(_format_error("RNGProcessor controller unavailable; suite launch skipped."))
@@ -91,6 +120,7 @@ func _on_run_suite_pressed() -> void:
     _handle_run_start(String(run_id_variant), {"label": "Full suite"})
 
 func _on_run_diagnostic_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null or not controller.has_method("run_targeted_diagnostic"):
         _set_status(_format_error("RNGProcessor controller unavailable; diagnostic launch skipped."))
@@ -103,15 +133,18 @@ func _on_run_diagnostic_pressed() -> void:
     _handle_run_start(String(run_id_variant), {"label": "Diagnostic %s" % selected_id})
 
 func _on_refresh_diagnostics_pressed() -> void:
+    _ensure_nodes_ready()
     _populate_diagnostics(true)
 
 func _on_clear_log_pressed() -> void:
+    _ensure_nodes_ready()
     _log_lines.clear()
     _log_view.bbcode_text = ""
     _active_log_path = ""
     _log_path_field.text = ""
 
 func _on_open_log_pressed() -> void:
+    _ensure_nodes_ready()
     if _active_log_path == "":
         _set_status(_format_error("Select a run with a saved log before opening."))
         return
@@ -123,6 +156,7 @@ func _on_open_log_pressed() -> void:
         _set_status(_format_info("Opened log at %s." % _active_log_path))
 
 func _on_history_selected(index: int) -> void:
+    _ensure_nodes_ready()
     if index < 0 or index >= _history_list.item_count:
         return
     var run_id := String(_history_list.get_item_metadata(index))
@@ -136,14 +170,17 @@ func _on_history_selected(index: int) -> void:
     _update_buttons()
 
 func _on_controller_run_started(run_id: String, request: Dictionary) -> void:
+    _ensure_nodes_ready()
     _handle_run_start(run_id, request)
 
 func _on_controller_run_output(run_id: String, line: String) -> void:
+    _ensure_nodes_ready()
     if _active_run_id != "" and run_id != _active_run_id:
         return
     _append_log_line(line)
 
 func _on_controller_run_completed(run_id: String, payload: Dictionary) -> void:
+    _ensure_nodes_ready()
     var result: Dictionary = payload.get("result", {}) if payload.has("result") else {}
     var log_path := String(payload.get("log_path", ""))
     _active_log_path = log_path
@@ -163,6 +200,7 @@ func _on_controller_run_completed(run_id: String, payload: Dictionary) -> void:
     _update_buttons()
 
 func _handle_run_start(run_id: String, request: Dictionary) -> void:
+    _ensure_nodes_ready()
     if run_id == "":
         _set_status(_format_error("QA run could not be started."))
         return
@@ -176,14 +214,17 @@ func _handle_run_start(run_id: String, request: Dictionary) -> void:
     _update_buttons()
 
 func _append_log_line(line: String) -> void:
+    _ensure_nodes_ready()
     _log_lines.append(line)
     _log_view.bbcode_text = _join_strings(_log_lines, "\n")
     call_deferred("_scroll_log_to_end")
 
 func _scroll_log_to_end() -> void:
+    _ensure_nodes_ready()
     _log_view.scroll_to_line(_log_lines.size())
 
 func _populate_diagnostics(force: bool = false) -> void:
+    _ensure_nodes_ready()
     if not force and not _diagnostic_catalog.is_empty():
         return
     _diagnostic_catalog.clear()
@@ -210,6 +251,7 @@ func _populate_diagnostics(force: bool = false) -> void:
         _diagnostic_selector.set_item_metadata(_diagnostic_selector.item_count - 1, id_value)
 
 func _refresh_history() -> void:
+    _ensure_nodes_ready()
     _history_list.clear()
     _history_lookup.clear()
     var controller := _get_controller()
@@ -232,6 +274,7 @@ func _refresh_history() -> void:
     _update_buttons()
 
 func _format_history_label(record: Dictionary) -> String:
+    _ensure_nodes_ready()
     var label := String(record.get("label", record.get("mode", "QA run")))
     var exit_code := int(record.get("exit_code", 1))
     var completed_ms := int(record.get("completed_at", 0))
@@ -250,6 +293,7 @@ func _format_history_label(record: Dictionary) -> String:
     return "%s %s" % [status_icon, label]
 
 func _render_history_log_hint(record: Dictionary) -> void:
+    _ensure_nodes_ready()
     var exit_code := int(record.get("exit_code", 1))
     var label := String(record.get("label", record.get("mode", "QA run")))
     var lines := PackedStringArray()
@@ -263,6 +307,7 @@ func _render_history_log_hint(record: Dictionary) -> void:
     _set_status(_join_strings(lines, "\n"))
 
 func _get_selected_diagnostic_id() -> String:
+    _ensure_nodes_ready()
     var selected := _diagnostic_selector.get_selected_id()
     if selected >= 0:
         var metadata := _diagnostic_selector.get_item_metadata(_diagnostic_selector.selected)
@@ -270,6 +315,7 @@ func _get_selected_diagnostic_id() -> String:
     return ""
 
 func _update_buttons() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     var controller_ready := controller != null
     var run_active := _active_run_id != ""
@@ -280,18 +326,23 @@ func _update_buttons() -> void:
     _open_log_button.disabled = _active_log_path == ""
 
 func _set_status(message: String) -> void:
+    _ensure_nodes_ready()
     _status_label.bbcode_text = message
 
 func _format_info(message: String) -> String:
+    _ensure_nodes_ready()
     return "[color=%s]%s[/color]" % [_INFO_COLOR.to_html(), message]
 
 func _format_success(message: String) -> String:
+    _ensure_nodes_ready()
     return "[color=%s]%s[/color]" % [_SUCCESS_COLOR.to_html(), message]
 
 func _format_error(message: String) -> String:
+    _ensure_nodes_ready()
     return "[color=%s]%s[/color]" % [_ERROR_COLOR.to_html(), message]
 
 func _extract_group_summaries(source: Variant) -> Array:
+    _ensure_nodes_ready()
     var summaries: Array = []
     if source is Array:
         for entry in source:
@@ -304,12 +355,14 @@ func _extract_group_summaries(source: Variant) -> Array:
     return summaries
 
 func _resolve_group_summaries(payload: Dictionary, result: Dictionary) -> Array:
+    _ensure_nodes_ready()
     var primary := _extract_group_summaries(result.get("group_summaries", []))
     if not primary.is_empty():
         return primary
     return _extract_group_summaries(payload.get("group_summaries", []))
 
 func _resolve_group_label_for_display(entry: Dictionary) -> String:
+    _ensure_nodes_ready()
     var label := String(entry.get("group_label", ""))
     if label.strip_edges() != "":
         return label
@@ -328,6 +381,7 @@ func _resolve_group_label_for_display(entry: Dictionary) -> String:
     return _join_strings(words, " ")
 
 func _resolve_group_badge_code(entry: Dictionary) -> String:
+    _ensure_nodes_ready()
     var group_id := String(entry.get("group_id", "")).strip_edges()
     if group_id == "":
         var label := _resolve_group_label_for_display(entry)
@@ -346,9 +400,11 @@ func _resolve_group_badge_code(entry: Dictionary) -> String:
     return code
 
 func _resolve_group_icon(entry: Dictionary) -> String:
+    _ensure_nodes_ready()
     return "✅" if int(entry.get("exit_code", 0)) == 0 else "✗"
 
 func _format_plain_group_summary(entry: Dictionary) -> String:
+    _ensure_nodes_ready()
     var icon := _resolve_group_icon(entry)
     var label := _resolve_group_label_for_display(entry)
     var passed := int(entry.get("aggregate_passed", entry.get("suite_passed", 0)))
@@ -357,6 +413,7 @@ func _format_plain_group_summary(entry: Dictionary) -> String:
     return "%s %s: %d passed, %d failed (%d total)" % [icon, label, passed, failed, total]
 
 func _format_group_breakdown_lines(group_summaries: Array) -> PackedStringArray:
+    _ensure_nodes_ready()
     var lines := PackedStringArray()
     for entry_variant in group_summaries:
         if not (entry_variant is Dictionary):
@@ -370,6 +427,7 @@ func _format_group_breakdown_lines(group_summaries: Array) -> PackedStringArray:
     return lines
 
 func _format_group_history_suffix(record: Dictionary) -> String:
+    _ensure_nodes_ready()
     var group_summaries := _extract_group_summaries(record.get("group_summaries", []))
     if group_summaries.is_empty():
         return ""
@@ -385,6 +443,7 @@ func _format_group_history_suffix(record: Dictionary) -> String:
     return "[%s]" % _join_strings(badges, " | ")
 
 func _format_history_tooltip(record: Dictionary) -> String:
+    _ensure_nodes_ready()
     var group_summaries := _extract_group_summaries(record.get("group_summaries", []))
     if group_summaries.is_empty():
         return ""
@@ -398,6 +457,7 @@ func _format_history_tooltip(record: Dictionary) -> String:
     return _join_strings(lines, "\n")
 
 func _ensure_controller_connections() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == _connected_controller:
         return
@@ -420,6 +480,7 @@ func _ensure_controller_connections() -> void:
     _connected_controller = controller
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null:
         return _controller_override
     if _cached_controller != null and _is_object_valid(_cached_controller):
@@ -437,6 +498,7 @@ func _get_controller() -> Object:
     return null
 
 func _join_strings(values: Variant, separator: String) -> String:
+    _ensure_nodes_ready()
     var combined := ""
     var is_first := true
     for value in values:
@@ -449,6 +511,7 @@ func _join_strings(values: Variant, separator: String) -> String:
     return combined
 
 func _is_object_valid(candidate: Object) -> bool:
+    _ensure_nodes_ready()
     if candidate == null:
         return false
     if candidate is Node:
@@ -456,5 +519,6 @@ func _is_object_valid(candidate: Object) -> bool:
     return true
 
 func _on_meta_clicked(meta: Variant) -> void:
+    _ensure_nodes_ready()
     if meta is String:
         OS.shell_open(ProjectSettings.globalize_path(String(meta)))

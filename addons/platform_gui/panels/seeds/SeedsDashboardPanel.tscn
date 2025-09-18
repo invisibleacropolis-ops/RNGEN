@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/seeds/SeedsDashboardPanel.gd" id="1"]
 [ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_1ac4o"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="3_compat"]
 
 [node name="SeedsDashboardPanel" type="VBoxContainer"]
 script = ExtResource("1")
@@ -26,35 +27,35 @@ size_flags_horizontal = 1
 unique_name_in_owner = true
 size_flags_horizontal = 3
 placeholder_text = "Enter master seed"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="ApplySeedButton" type="Button" parent="SeedHeader"]
 unique_name_in_owner = true
 text = "Apply"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="RandomizeButton" type="Button" parent="SeedHeader"]
 unique_name_in_owner = true
 text = "Randomize"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="RefreshButton" type="Button" parent="SeedHeader"]
 unique_name_in_owner = true
 text = "Refresh"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="StatusLabel" type="RichTextLabel" parent="."]
 unique_name_in_owner = true
+script = ExtResource("3_compat")
 bbcode_enabled = true
 text = "Awaiting seed data..."
 fit_content = true
 scroll_active = false
 size_flags_vertical = 1
-
 [node name="ImportStatus" type="Label" parent="."]
 unique_name_in_owner = true
 text = "RNG status"
@@ -69,7 +70,7 @@ size_flags_vertical = 3
 allow_reselect = true
 columns = 4
 hide_root = true
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="RoutingLabel" type="Label" parent="."]
@@ -81,7 +82,7 @@ unique_name_in_owner = true
 size_flags_vertical = 3
 columns = 4
 hide_root = true
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="ExportControls" type="HBoxContainer" parent="."]
@@ -90,18 +91,18 @@ size_flags_horizontal = 3
 [node name="ExportButton" type="Button" parent="ExportControls"]
 unique_name_in_owner = true
 text = "Export state"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="ImportButton" type="Button" parent="ExportControls"]
 unique_name_in_owner = true
 text = "Import state"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")
 
 [node name="ExportText" type="TextEdit" parent="."]
 unique_name_in_owner = true
 size_flags_vertical = 3
 placeholder_text = "Seed export will appear here. Paste a saved JSON payload to import."
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_1ac4o")

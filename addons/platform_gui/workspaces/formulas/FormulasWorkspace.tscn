@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://addons/platform_gui/workspaces/formulas/FormulasWorkspace.gd" id="1_vnru3"]
 [ext_resource type="PackedScene" path="res://addons/platform_gui/panels/hybrid/HybridPipelinePanel.tscn" id="2_ny06x"]
 [ext_resource type="PackedScene" path="res://addons/platform_gui/panels/template/TemplatePanel.tscn" id="3_rxymd"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="4_compat"]
 
 [node name="FormulasWorkspace" type="VBoxContainer"]
 anchors_preset = 15
@@ -27,22 +28,25 @@ text = "Formulas"
 size_flags_horizontal = 1
 
 [node name="BlueprintSelector" type="OptionButton" parent="Main/Header"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 1
 
 [node name="HandbookLink" type="RichTextLabel" parent="Main"]
+script = ExtResource("4_compat")
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 24)
 autowrap_mode = 3
-
 [node name="BlueprintNotes" type="RichTextLabel" parent="Main"]
+script = ExtResource("4_compat")
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 64)
 autowrap_mode = 3
-
 [node name="PropagationPanel" type="PanelContainer" parent="Main"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -59,6 +63,7 @@ layout_mode = 2
 text = "Seed & Alias Propagation"
 
 [node name="PropagationTree" type="Tree" parent="Main/PropagationPanel/PropagationVBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -87,6 +92,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="HybridPanel" parent="Main/EditorSplit/HybridColumn/HybridPanelContainer" instance=ExtResource("2_ny06x")]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -106,6 +112,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="TemplatePanel" parent="Main/EditorSplit/TemplateColumn/TemplatePanelContainer" instance=ExtResource("3_rxymd")]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -116,14 +123,16 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 40)
 
 [node name="PreviewButton" type="Button" parent="Main/PreviewRow"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 1
 text = "Preview formula"
 
 [node name="PreviewLabel" type="RichTextLabel" parent="Main/PreviewRow"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 autowrap_mode = 3
+script = ExtResource("4_compat")
 visible = false
 custom_minimum_size = Vector2(0, 40)
-

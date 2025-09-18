@@ -38,6 +38,9 @@ signal qa_run_started(run_id: String, request: Dictionary)
 signal qa_run_output(run_id: String, line: String)
 signal qa_run_completed(run_id: String, payload: Dictionary)
 
+func _is_gdscript_function_state(value: Variant) -> bool:
+    return value is Object and value.is_class("GDScriptFunctionState")
+
 @export var event_bus_path: NodePath
 
 var _rng_processor_override: Object = null
@@ -160,7 +163,7 @@ func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Va
         }
     return processor.call("generate", config, override_rng)
 
-func set_debug_rng(debug_rng: Object, attach_to_debug: bool = true) -> void:
+func set_debug_rng(debug_rng: Variant, attach_to_debug: bool = true) -> void:
     var processor := _get_rng_processor()
     if processor == null:
         push_warning("RNGProcessor singleton unavailable; set_debug_rng skipped.")
@@ -168,7 +171,7 @@ func set_debug_rng(debug_rng: Object, attach_to_debug: bool = true) -> void:
     if processor.has_method("set_debug_rng"):
         processor.call("set_debug_rng", debug_rng, attach_to_debug)
 
-func get_debug_rng() -> Object:
+func get_debug_rng() -> Variant:
     var processor := _get_rng_processor()
     if processor == null or not processor.has_method("get_debug_rng"):
         return null
@@ -390,7 +393,7 @@ func _execute_manifest_groups(runner: Object, manifest_path: String, groups: Arr
             continue
         var group_label := String(descriptor.get("label", _resolve_group_label(group_id)))
         var group_result_variant := runner.call("run_group", manifest_path, group_id, yield_frames)
-        if group_result_variant is GDScriptFunctionState:
+        if _is_gdscript_function_state(group_result_variant):
             group_result_variant = await group_result_variant
 
         var group_result: Dictionary = {}
@@ -513,7 +516,7 @@ func _process_active_qa_run() -> void:
         if runner.has_method("run_single_diagnostic"):
             var diagnostic_id := String(request.get("diagnostic_id", ""))
             var diagnostic_result_variant := runner.call("run_single_diagnostic", diagnostic_id, yield_frames)
-            if diagnostic_result_variant is GDScriptFunctionState:
+            if _is_gdscript_function_state(diagnostic_result_variant):
                 diagnostic_result_variant = await diagnostic_result_variant
             if diagnostic_result_variant is Dictionary:
                 result = diagnostic_result_variant
@@ -551,7 +554,7 @@ func _process_active_qa_run() -> void:
         if runner.has_method("run_manifest"):
             var manifest_path := String(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
             var manifest_result_variant := runner.call("run_manifest", manifest_path, yield_frames)
-            if manifest_result_variant is GDScriptFunctionState:
+            if _is_gdscript_function_state(manifest_result_variant):
                 manifest_result_variant = await manifest_result_variant
             if manifest_result_variant is Dictionary:
                 result = manifest_result_variant

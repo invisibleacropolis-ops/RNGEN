@@ -13,17 +13,17 @@ extends VBoxContainer
 
 const MarkovModelResource := preload("res://name_generator/resources/MarkovModelResource.gd")
 
-@onready var _resource_list: ItemList = %ResourceList
-@onready var _resource_summary: RichTextLabel = %ResourceSummary
-@onready var _health_label: RichTextLabel = %HealthLabel
-@onready var _max_length_spin: SpinBox = %MaxLengthSpin
-@onready var _seed_edit: LineEdit = %SeedInput
-@onready var _preview_button: Button = %PreviewButton
-@onready var _preview_label: RichTextLabel = %PreviewOutput
-@onready var _validation_label: Label = %ValidationLabel
-@onready var _validation_details: RichTextLabel = %ValidationDetails
-@onready var _metadata_summary: Label = %MetadataSummary
-@onready var _notes_label: Label = %NotesLabel
+var _resource_list: ItemList= null
+var _resource_summary: RichTextLabel= null
+var _health_label: RichTextLabel= null
+var _max_length_spin: SpinBox= null
+var _seed_edit: LineEdit= null
+var _preview_button: Button= null
+var _preview_label: RichTextLabel= null
+var _validation_label: Label= null
+var _validation_details: RichTextLabel= null
+var _metadata_summary: Label= null
+var _notes_label: Label= null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
@@ -36,7 +36,32 @@ const _SUCCESS_COLOUR := Color(0.176, 0.647, 0.258)
 const _WARNING_COLOUR := Color(0.831, 0.541, 0.0)
 const _ERROR_COLOUR := Color(0.82, 0.18, 0.2)
 
+
+func _ensure_nodes_ready() -> void:
+    if _resource_list == null:
+        _resource_list = get_node("%ResourceList") as ItemList
+    if _resource_summary == null:
+        _resource_summary = get_node("%ResourceSummary") as RichTextLabel
+    if _health_label == null:
+        _health_label = get_node("%HealthLabel") as RichTextLabel
+    if _max_length_spin == null:
+        _max_length_spin = get_node("%MaxLengthSpin") as SpinBox
+    if _seed_edit == null:
+        _seed_edit = get_node("%SeedInput") as LineEdit
+    if _preview_button == null:
+        _preview_button = get_node("%PreviewButton") as Button
+    if _preview_label == null:
+        _preview_label = get_node("%PreviewOutput") as RichTextLabel
+    if _validation_label == null:
+        _validation_label = get_node("%ValidationLabel") as Label
+    if _validation_details == null:
+        _validation_details = get_node("%ValidationDetails") as RichTextLabel
+    if _metadata_summary == null:
+        _metadata_summary = get_node("%MetadataSummary") as Label
+    if _notes_label == null:
+        _notes_label = get_node("%NotesLabel") as Label
 func _ready() -> void:
+    _ensure_nodes_ready()
     _preview_button.pressed.connect(_on_preview_button_pressed)
     %RefreshButton.pressed.connect(_on_refresh_pressed)
     _resource_list.item_selected.connect(_on_resource_selected)
@@ -46,25 +71,31 @@ func _ready() -> void:
     _update_preview_state(null)
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     _controller_override = controller
     _cached_controller = null
 
 func set_metadata_service_override(service: Object) -> void:
+    _ensure_nodes_ready()
     _metadata_service_override = service
     _cached_metadata_service = null
 
 func set_resource_catalog_override(entries: Array) -> void:
+    _ensure_nodes_ready()
     _resource_catalog_override = entries.duplicate(true)
     _refresh_resource_catalog()
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     _refresh_metadata()
     _refresh_resource_catalog()
 
 func get_selected_resource_path() -> String:
+    _ensure_nodes_ready()
     return _get_selected_resource_path()
 
 func build_config_payload() -> Dictionary:
+    _ensure_nodes_ready()
     var config: Dictionary = {
         "strategy": "markov",
     }
@@ -80,12 +111,15 @@ func build_config_payload() -> Dictionary:
     return config
 
 func _on_refresh_pressed() -> void:
+    _ensure_nodes_ready()
     refresh()
 
 func _on_resource_selected(_index: int) -> void:
+    _ensure_nodes_ready()
     _update_selected_resource_summary()
 
 func _on_preview_button_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null:
         _update_preview_state({
@@ -119,23 +153,25 @@ func _on_preview_button_pressed() -> void:
     })
 
 func _on_seed_submitted(text: String) -> void:
+    _ensure_nodes_ready()
     _seed_edit.text = text
     _on_preview_button_pressed()
 
 func _refresh_metadata() -> void:
+    _ensure_nodes_ready()
     var service := _get_metadata_service()
     if service == null:
         _metadata_summary.text = "Markov strategy metadata unavailable."
         _notes_label.text = ""
         return
 
-    var required_variant := []
+    var required_variant: Variant = PackedStringArray()
     if service.has_method("get_required_keys"):
         required_variant = service.call("get_required_keys", "markov")
     var optional: Dictionary = {}
     if service.has_method("get_optional_key_types"):
         optional = service.call("get_optional_key_types", "markov")
-    var notes_variant := []
+    var notes_variant: Variant = PackedStringArray()
     if service.has_method("get_default_notes"):
         notes_variant = service.call("get_default_notes", "markov")
 
@@ -173,6 +209,7 @@ func _refresh_metadata() -> void:
         _notes_label.text = ""
 
 func _refresh_resource_catalog() -> void:
+    _ensure_nodes_ready()
     _resource_list.clear()
     _resource_cache.clear()
 
@@ -223,6 +260,7 @@ func _refresh_resource_catalog() -> void:
     _health_label.bbcode_text = ""
 
 func _discover_markov_resources() -> Array:
+    _ensure_nodes_ready()
     var results: Array = []
     var stack: Array[String] = ["res://data"]
     while not stack.is_empty():
@@ -262,6 +300,7 @@ func _discover_markov_resources() -> Array:
     return results
 
 func _derive_display_name(path: String) -> String:
+    _ensure_nodes_ready()
     var segments := path.split("/")
     if segments.is_empty():
         return path
@@ -270,6 +309,7 @@ func _derive_display_name(path: String) -> String:
     return trimmed.capitalize()
 
 func _update_selected_resource_summary() -> void:
+    _ensure_nodes_ready()
     var path := _get_selected_resource_path()
     if path == "":
         _resource_summary.bbcode_text = "Select a Markov model to review its states and transitions."
@@ -293,6 +333,7 @@ func _update_selected_resource_summary() -> void:
     _health_label.bbcode_text = _format_health_summary(analysis)
 
 func _analyse_model(model: MarkovModelResource) -> Dictionary:
+    _ensure_nodes_ready()
     var states := PackedStringArray()
     for token in model.states:
         states.append(String(token))
@@ -428,6 +469,7 @@ func _analyse_model(model: MarkovModelResource) -> Dictionary:
     }
 
 func _calculate_start_reachability(start_tokens: PackedStringArray, adjacency: Dictionary, end_tokens: PackedStringArray) -> Dictionary:
+    _ensure_nodes_ready()
     var reachable := 0
     var unreachable := PackedStringArray()
     for token in start_tokens:
@@ -443,6 +485,7 @@ func _calculate_start_reachability(start_tokens: PackedStringArray, adjacency: D
     }
 
 func _can_reach_end(token: String, adjacency: Dictionary, end_tokens: PackedStringArray) -> bool:
+    _ensure_nodes_ready()
     if token == "":
         return false
     if end_tokens.has(token):
@@ -471,6 +514,7 @@ func _can_reach_end(token: String, adjacency: Dictionary, end_tokens: PackedStri
     return false
 
 func _format_model_summary(model: MarkovModelResource, analysis: Dictionary) -> String:
+    _ensure_nodes_ready()
     var lines: Array[String] = []
     lines.append("[b]States[/b]: %d" % int(analysis.get("state_count", 0)))
     var start_tokens := _to_packed_string_array(analysis.get("start_tokens", PackedStringArray()))
@@ -494,6 +538,7 @@ func _format_model_summary(model: MarkovModelResource, analysis: Dictionary) -> 
     return _join_strings(lines, "\n")
 
 func _format_health_summary(analysis: Dictionary) -> String:
+    _ensure_nodes_ready()
     var lines: Array[String] = []
     var state_count := int(analysis.get("state_count", 0))
     var states_with_transitions := int(analysis.get("states_with_transitions", 0))
@@ -543,9 +588,11 @@ func _format_health_summary(analysis: Dictionary) -> String:
     return _join_strings(lines, "\n")
 
 func _wrap_health_message(message: String, colour: Color) -> String:
+    _ensure_nodes_ready()
     return "[color=#%s]%s[/color]" % [colour.to_html(false), message]
 
 func _format_token_sample(tokens: PackedStringArray, limit: int = 4) -> String:
+    _ensure_nodes_ready()
     if tokens.size() == 0:
         return "—"
     var sample: Array[String] = []
@@ -559,6 +606,7 @@ func _format_token_sample(tokens: PackedStringArray, limit: int = 4) -> String:
     return _join_strings(sample, ", ")
 
 func _to_packed_string_array(value: Variant) -> PackedStringArray:
+    _ensure_nodes_ready()
     var result := PackedStringArray()
     if value is PackedStringArray:
         for entry in value:
@@ -571,6 +619,7 @@ func _to_packed_string_array(value: Variant) -> PackedStringArray:
     return result
 
 func _to_float_array(value: Variant) -> Array[float]:
+    _ensure_nodes_ready()
     var result: Array[float] = []
     if value is Array:
         for entry in value:
@@ -581,6 +630,7 @@ func _to_float_array(value: Variant) -> Array[float]:
     return result
 
 func _update_preview_state(payload: Variant) -> void:
+    _ensure_nodes_ready()
     _preview_label.visible = false
     _preview_label.text = ""
     _validation_label.visible = false
@@ -603,13 +653,14 @@ func _update_preview_state(payload: Variant) -> void:
             _validation_details.bbcode_text = details_text
 
 func _format_error_details(details: Variant) -> String:
+    _ensure_nodes_ready()
     if details is Dictionary and not (details as Dictionary).is_empty():
         var dictionary: Dictionary = details
         var keys := dictionary.keys()
         keys.sort()
         var lines: Array[String] = []
         for key in keys:
-            var value := dictionary[key]
+            var value: Variant = dictionary[key]
             lines.append("- [b]%s[/b]: %s" % [String(key), _stringify_detail_value(value)])
         return "[b]Details:[/b]\n%s" % _join_strings(lines, "\n")
     if details is Array and (details as Array).size() > 0:
@@ -621,6 +672,7 @@ func _format_error_details(details: Variant) -> String:
     return ""
 
 func _stringify_detail_value(value: Variant) -> String:
+    _ensure_nodes_ready()
     if value is PackedStringArray:
         var packed: PackedStringArray = value
         var items: Array[String] = []
@@ -629,9 +681,10 @@ func _stringify_detail_value(value: Variant) -> String:
         return _join_strings(items, ", ")
     if value is Array or value is Dictionary:
         return JSON.stringify(value)
-    return String(value)
+    return str(value)
 
 func _get_selected_resource_path() -> String:
+    _ensure_nodes_ready()
     var selected := _resource_list.get_selected_items()
     if selected.is_empty():
         return ""
@@ -644,6 +697,7 @@ func _get_selected_resource_path() -> String:
     return ""
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null and _is_object_valid(_controller_override):
         return _controller_override
     if _cached_controller != null and _is_object_valid(_cached_controller):
@@ -661,6 +715,7 @@ func _get_controller() -> Object:
     return null
 
 func _get_metadata_service() -> Object:
+    _ensure_nodes_ready()
     if _metadata_service_override != null and _is_object_valid(_metadata_service_override):
         return _metadata_service_override
     if _cached_metadata_service != null and _is_object_valid(_cached_metadata_service):
@@ -678,6 +733,7 @@ func _get_metadata_service() -> Object:
     return null
 
 func _join_strings(values: Variant, separator: String) -> String:
+    _ensure_nodes_ready()
     var combined := ""
     var is_first := true
     for value in values:
@@ -690,6 +746,7 @@ func _join_strings(values: Variant, separator: String) -> String:
     return combined
 
 func _is_object_valid(candidate: Object) -> bool:
+    _ensure_nodes_ready()
     if candidate == null:
         return false
     if candidate is Node:

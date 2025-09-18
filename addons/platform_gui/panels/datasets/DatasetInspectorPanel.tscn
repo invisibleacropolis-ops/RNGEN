@@ -2,11 +2,12 @@
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd" id="1_9p7k1"]
 [ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_2m7yt"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="3_compat"]
 
 [node name="DatasetInspectorPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 script = ExtResource("1_9p7k1")
 
@@ -18,37 +19,43 @@ text = "Dataset health"
 theme_override_font_sizes/font_size = 18
 
 [node name="HeaderSpacer" type="Control" parent="Header"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="InspectButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 text = "Inspect datasets"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_2m7yt")
 
 [node name="SyllableBuilderButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 text = "Open syllable builder"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_2m7yt")
 
 [node name="DocsButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 text = "Dataset guide"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_2m7yt")
 
 [node name="StatusLabel" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_compat")
 fit_content = true
 scroll_active = false
-
 [node name="ResultLabel" type="Label" parent="."]
 text = "Folder contents"
 
 [node name="ResultDisplay" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_compat")
 fit_content = true
 scroll_active = false
-
 [node name="WarningsBlock" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
 visible = false
 theme_override_constants/separation = 4
 
@@ -56,11 +63,14 @@ theme_override_constants/separation = 4
 text = "Warnings"
 
 [node name="WarningsDisplay" type="RichTextLabel" parent="WarningsBlock"]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_compat")
 fit_content = true
 scroll_active = false
-
 [node name="ContextLabel" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_compat")
 fit_content = true
 scroll_active = false

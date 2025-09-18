@@ -2,11 +2,12 @@
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/markov/MarkovPanel.gd" id="1_s8t7f"]
 [ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_kr4tw"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="3_fcg3b"]
 
 [node name="MarkovPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 script = ExtResource("1_s8t7f")
 
@@ -18,21 +19,24 @@ theme_override_font_sizes/font_size = 18
 text = "Markov Chain Strategy"
 
 [node name="HeaderSpacer" type="Control" parent="Header"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="RefreshButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata and the resource catalogue."
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="MetadataSummary" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="NotesLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="ResourceSection" type="VBoxContainer" parent="."]
@@ -42,24 +46,28 @@ theme_override_constants/separation = 4
 text = "Available Markov models"
 
 [node name="ResourceList" type="ItemList" parent="ResourceSection"]
+unique_name_in_owner = true
 allow_reselect = true
 allow_rmb_select = true
 custom_minimum_size = Vector2(0, 220)
-select_mode = ItemList.SELECT_SINGLE
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+select_mode = 0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="ResourceSummary" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-bbcode_enabled = true
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_fcg3b")
 fit_content = true
 scroll_active = false
 text = "Select a Markov model to review its states and transitions."
 
 [node name="HealthLabel" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_fcg3b")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
@@ -75,9 +83,10 @@ theme_override_constants/separation = 6
 text = "Maximum length"
 
 [node name="MaxLengthSpacer" type="Control" parent="OptionsSection/MaxLengthRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="MaxLengthSpin" type="SpinBox" parent="OptionsSection/MaxLengthRow"]
+unique_name_in_owner = true
 allow_lesser = true
 allow_greater = true
 custom_minimum_size = Vector2(120, 0)
@@ -85,7 +94,7 @@ max_value = 128.0
 min_value = 0.0
 step = 1.0
 value = 0.0
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="PreviewRow" type="HBoxContainer" parent="."]
@@ -95,23 +104,28 @@ theme_override_constants/separation = 12
 text = "Seed"
 
 [node name="SeedInput" type="LineEdit" parent="PreviewRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+unique_name_in_owner = true
+size_flags_horizontal = 3
 placeholder_text = "Optional seed label"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
+unique_name_in_owner = true
 text = "Preview"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="ValidationLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
 visible = false
 
 [node name="ValidationDetails" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_fcg3b")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
@@ -119,7 +133,9 @@ visible = false
 text = ""
 
 [node name="PreviewOutput" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_fcg3b")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false

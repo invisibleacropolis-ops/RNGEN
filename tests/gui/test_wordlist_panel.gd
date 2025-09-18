@@ -48,13 +48,13 @@ func _test_loads_metadata_summary() -> Variant:
     var panel: VBoxContainer = context["panel"]
     panel._ready()
 
-    var summary_text := panel.get_node("MetadataSummary").text
+    var summary_text: String = panel.get_node("MetadataSummary").text
     if summary_text.find("Requires: wordlist_paths") == -1:
         return "Metadata summary should list required keys from the cache."
     if summary_text.find("delimiter") == -1 or summary_text.find("weights") == -1:
         return "Metadata summary should describe optional key expectations."
 
-    var notes_text := panel.get_node("NotesLabel").text
+    var notes_text: String = panel.get_node("NotesLabel").text
     if notes_text.find("Wordlist note guidance.") == -1:
         return "Metadata notes should surface narrative guidance for artists."
 

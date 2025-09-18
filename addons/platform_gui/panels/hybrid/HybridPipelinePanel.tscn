@@ -2,11 +2,12 @@
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/hybrid/HybridPipelinePanel.gd" id="1_rksh5"]
 [ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_j56sy"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="3_compat"]
 
 [node name="HybridPipelinePanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(620, 0)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 script = ExtResource("1_rksh5")
 
@@ -18,20 +19,20 @@ theme_override_font_sizes/font_size = 18
 text = "Hybrid Pipeline"
 
 [node name="HeaderSpacer" type="Control" parent="Header"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="RefreshButton" type="Button" parent="Header"]
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata."
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
 [node name="MetadataSummary" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+autowrap_mode = 3
 
 [node name="NotesLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+autowrap_mode = 3
 
 [node name="PipelineControls" type="VBoxContainer" parent="."]
 theme_override_constants/separation = 4
@@ -39,31 +40,31 @@ theme_override_constants/separation = 4
 [node name="SeedRow" type="HBoxContainer" parent="PipelineControls"]
 theme_override_constants/separation = 8
 
-[node name="SeedLabel" type="Label" parent="SeedRow"]
+[node name="SeedLabel" type="Label" parent="PipelineControls/SeedRow"]
 text = "Pipeline seed"
 
-[node name="SeedInput" type="LineEdit" parent="SeedRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+[node name="SeedInput" type="LineEdit" parent="PipelineControls/SeedRow"]
+size_flags_horizontal = 3
 placeholder_text = "Optional parent seed"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
 [node name="SeedHelper" type="Label" parent="PipelineControls"]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+autowrap_mode = 3
 text = "Hybrid steps derive seeds as pipeline_seed::step_$alias."
 
 [node name="TemplateSection" type="VBoxContainer" parent="PipelineControls"]
 theme_override_constants/separation = 4
 
-[node name="TemplateLabel" type="Label" parent="TemplateSection"]
+[node name="TemplateLabel" type="Label" parent="PipelineControls/TemplateSection"]
 text = "Optional template"
 
-[node name="TemplateInput" type="TextEdit" parent="TemplateSection"]
+[node name="TemplateInput" type="TextEdit" parent="PipelineControls/TemplateSection"]
 custom_minimum_size = Vector2(0, 80)
 placeholder_text = "Forged from $material, this $item hums with $effect."
 scroll_fit_content_height = true
-wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-focus_mode = Control.FOCUS_ALL
+wrap_mode = 1
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
 [node name="PipelineOverviewLabel" type="Label" parent="."]
@@ -72,77 +73,78 @@ text = "Pipeline overview"
 [node name="PipelineTree" type="Tree" parent="."]
 columns = 5
 custom_minimum_size = Vector2(0, 200)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
 [node name="EditorSection" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 12
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_vertical = 3
 
 [node name="StepSidebar" type="VBoxContainer" parent="EditorSection"]
 custom_minimum_size = Vector2(220, 0)
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_vertical = 3
 
-[node name="StepHeader" type="HBoxContainer" parent="StepSidebar"]
+[node name="StepHeader" type="HBoxContainer" parent="EditorSection/StepSidebar"]
 theme_override_constants/separation = 6
 
-[node name="StepLabel" type="Label" parent="StepHeader"]
+[node name="StepLabel" type="Label" parent="EditorSection/StepSidebar/StepHeader"]
 text = "Steps"
 
-[node name="StepControls" type="HBoxContainer" parent="StepSidebar"]
+[node name="StepControls" type="HBoxContainer" parent="EditorSection/StepSidebar"]
 theme_override_constants/separation = 6
 
-[node name="StrategySelector" type="OptionButton" parent="StepControls"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+[node name="StrategySelector" type="OptionButton" parent="EditorSection/StepSidebar/StepControls"]
+size_flags_horizontal = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
-[node name="AddStepButton" type="Button" parent="StepControls"]
+[node name="AddStepButton" type="Button" parent="EditorSection/StepSidebar/StepControls"]
 text = "Add"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
-[node name="RemoveStepButton" type="Button" parent="StepControls"]
+[node name="RemoveStepButton" type="Button" parent="EditorSection/StepSidebar/StepControls"]
 text = "Remove"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
-[node name="StepList" type="ItemList" parent="StepSidebar"]
+[node name="StepList" type="ItemList" parent="EditorSection/StepSidebar"]
 allow_rearrange = true
 custom_minimum_size = Vector2(0, 220)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
 [node name="StepDetails" type="VBoxContainer" parent="EditorSection"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="AliasRow" type="HBoxContainer" parent="StepDetails"]
+[node name="AliasRow" type="HBoxContainer" parent="EditorSection/StepDetails"]
 theme_override_constants/separation = 8
 
-[node name="AliasLabel" type="Label" parent="AliasRow"]
+[node name="AliasLabel" type="Label" parent="EditorSection/StepDetails/AliasRow"]
 text = "Alias"
 
-[node name="AliasEdit" type="LineEdit" parent="AliasRow"]
+[node name="AliasEdit" type="LineEdit" parent="EditorSection/StepDetails/AliasRow"]
 editable = false
 placeholder_text = "store_as alias"
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+size_flags_horizontal = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
-[node name="StepMetadataLabel" type="RichTextLabel" parent="StepDetails"]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+[node name="StepMetadataLabel" type="RichTextLabel" parent="EditorSection/StepDetails"]
+autowrap_mode = 3
+script = ExtResource("3_compat")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
 
-[node name="StrategyConfigHost" type="VBoxContainer" parent="StepDetails"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+[node name="StrategyConfigHost" type="VBoxContainer" parent="EditorSection/StepDetails"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="FeedbackSection" type="VBoxContainer" parent="."]
@@ -153,11 +155,12 @@ self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
 visible = false
 
 [node name="HintLabel" type="Label" parent="FeedbackSection"]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+autowrap_mode = 3
 visible = false
 
 [node name="DetailLabel" type="RichTextLabel" parent="FeedbackSection"]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+autowrap_mode = 3
+script = ExtResource("3_compat")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
@@ -168,14 +171,15 @@ theme_override_constants/separation = 12
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
 text = "Preview"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_j56sy")
 
 [node name="PreviewSpacer" type="Control" parent="PreviewRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="PreviewOutput" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+autowrap_mode = 3
+script = ExtResource("3_compat")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false

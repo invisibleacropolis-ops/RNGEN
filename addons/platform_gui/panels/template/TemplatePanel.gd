@@ -20,18 +20,18 @@ const TOKEN_PATTERN := "\\[(?<token>[^\\[\\]]+)\\]"
 const DEFAULT_MAX_DEPTH := 8
 const _ERROR_TINT := Color(1.0, 0.85, 0.85, 1.0)
 
-@onready var _metadata_summary: Label = %MetadataSummary
-@onready var _notes_label: Label = %NotesLabel
-@onready var _template_input: TextEdit = %TemplateInput
-@onready var _max_depth_spin: SpinBox = %MaxDepthSpin
-@onready var _seed_edit: LineEdit = %SeedInput
-@onready var _seed_helper: Label = %SeedHelper
-@onready var _sub_generators_edit: TextEdit = %SubGeneratorInput
-@onready var _token_tree: Tree = %TokenTree
-@onready var _validation_label: Label = %ValidationLabel
-@onready var _fix_it_label: Label = %FixItLabel
-@onready var _preview_button: Button = %PreviewButton
-@onready var _preview_label: RichTextLabel = %PreviewOutput
+var _metadata_summary: Label= null
+var _notes_label: Label= null
+var _template_input: TextEdit= null
+var _max_depth_spin: SpinBox= null
+var _seed_edit: LineEdit= null
+var _seed_helper: Label= null
+var _sub_generators_edit: TextEdit= null
+var _token_tree: Tree= null
+var _validation_label: Label= null
+var _fix_it_label: Label= null
+var _preview_button: Button= null
+var _preview_label: RichTextLabel= null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
@@ -40,7 +40,34 @@ var _cached_metadata_service: Object = null
 var _control_default_modulates: Dictionary = {}
 var _token_regex: RegEx = null
 
+
+func _ensure_nodes_ready() -> void:
+    if _metadata_summary == null:
+        _metadata_summary = get_node("%MetadataSummary") as Label
+    if _notes_label == null:
+        _notes_label = get_node("%NotesLabel") as Label
+    if _template_input == null:
+        _template_input = get_node("%TemplateInput") as TextEdit
+    if _max_depth_spin == null:
+        _max_depth_spin = get_node("%MaxDepthSpin") as SpinBox
+    if _seed_edit == null:
+        _seed_edit = get_node("%SeedInput") as LineEdit
+    if _seed_helper == null:
+        _seed_helper = get_node("%SeedHelper") as Label
+    if _sub_generators_edit == null:
+        _sub_generators_edit = get_node("%SubGeneratorInput") as TextEdit
+    if _token_tree == null:
+        _token_tree = get_node("%TokenTree") as Tree
+    if _validation_label == null:
+        _validation_label = get_node("%ValidationLabel") as Label
+    if _fix_it_label == null:
+        _fix_it_label = get_node("%FixItLabel") as Label
+    if _preview_button == null:
+        _preview_button = get_node("%PreviewButton") as Button
+    if _preview_label == null:
+        _preview_label = get_node("%PreviewOutput") as RichTextLabel
 func _ready() -> void:
+    _ensure_nodes_ready()
     _preview_button.pressed.connect(_on_preview_button_pressed)
     %RefreshButton.pressed.connect(_on_refresh_pressed)
     _template_input.text_changed.connect(_on_template_changed)
@@ -62,6 +89,7 @@ func _ready() -> void:
     _rebuild_configuration_views()
 
 func apply_config_payload(config: Dictionary) -> void:
+    _ensure_nodes_ready()
     var template_string := String(config.get("template_string", ""))
     if _template_input.text != template_string:
         _template_input.text = template_string
@@ -84,25 +112,30 @@ func apply_config_payload(config: Dictionary) -> void:
     _notify_configuration_changed()
 
 func evaluate_configuration(seed_override: String = "") -> Dictionary:
+    _ensure_nodes_ready()
     return _evaluate_configuration(seed_override)
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     _controller_override = controller
     _cached_controller = null
     _update_seed_helper()
 
 func set_metadata_service_override(service: Object) -> void:
+    _ensure_nodes_ready()
     _metadata_service_override = service
     _cached_metadata_service = null
     _refresh_metadata()
     _rebuild_configuration_views()
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     _refresh_metadata()
     _rebuild_configuration_views()
     _update_seed_helper()
 
 func build_config_payload() -> Dictionary:
+    _ensure_nodes_ready()
     var config: Dictionary = {
         "strategy": TEMPLATE_STRATEGY_ID,
         "template_string": _template_input.text,
@@ -119,29 +152,36 @@ func build_config_payload() -> Dictionary:
     return config
 
 func get_child_generator_definitions() -> Dictionary:
+    _ensure_nodes_ready()
     return _parse_sub_generator_dictionary()
 
 func _on_refresh_pressed() -> void:
+    _ensure_nodes_ready()
     refresh()
 
 func _on_template_changed() -> void:
+    _ensure_nodes_ready()
     _rebuild_configuration_views()
     _notify_configuration_changed()
 
 func _on_sub_generators_changed() -> void:
+    _ensure_nodes_ready()
     _rebuild_configuration_views()
     _notify_configuration_changed()
 
 func _on_max_depth_changed(_value: float) -> void:
+    _ensure_nodes_ready()
     _rebuild_configuration_views()
     _notify_configuration_changed()
 
 func _on_seed_changed(_text: String) -> void:
+    _ensure_nodes_ready()
     _rebuild_configuration_views()
     _update_seed_helper()
     _notify_configuration_changed()
 
 func _on_preview_button_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null:
         _update_preview_state({
@@ -188,10 +228,12 @@ func _on_preview_button_pressed() -> void:
     _notify_configuration_changed()
 
 func _on_seed_submitted(text: String) -> void:
+    _ensure_nodes_ready()
     _seed_edit.text = text
     _on_preview_button_pressed()
 
 func _refresh_metadata() -> void:
+    _ensure_nodes_ready()
     var service := _get_metadata_service()
     if service == null:
         _metadata_summary.text = "Template strategy metadata unavailable."
@@ -225,6 +267,7 @@ func _refresh_metadata() -> void:
         _notes_label.text = ""
 
 func _update_seed_helper() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     var latest_metadata := {}
     if controller != null and controller.has_method("get_latest_generation_metadata"):
@@ -238,11 +281,13 @@ func _update_seed_helper() -> void:
     _seed_helper.text = _join_strings(helper_lines, "\n")
 
 func _rebuild_configuration_views() -> void:
+    _ensure_nodes_ready()
     var evaluation := _evaluate_configuration()
     _render_token_tree(evaluation["structure"])
     _apply_validation_feedback(evaluation["errors"])
 
 func _evaluate_configuration(seed_override: String = "") -> Dictionary:
+    _ensure_nodes_ready()
     var template_string := _template_input.text
     var max_depth := int(_max_depth_spin.value)
     var seed_value := _seed_edit.text.strip_edges()
@@ -271,6 +316,7 @@ func _evaluate_configuration(seed_override: String = "") -> Dictionary:
     }
 
 func _parse_sub_generators() -> Dictionary:
+    _ensure_nodes_ready()
     var errors: Array = []
     var definitions: Dictionary = {}
     var text := _sub_generators_edit.text.strip_edges()
@@ -300,6 +346,7 @@ func _parse_sub_generators() -> Dictionary:
     return {"errors": errors, "definitions": definitions}
 
 func _parse_sub_generator_dictionary() -> Dictionary:
+    _ensure_nodes_ready()
     var result := _parse_sub_generators()
     return result["definitions"]
 
@@ -310,6 +357,7 @@ func _build_token_structure(
     max_depth: int,
     parent_seed: String
 ) -> Dictionary:
+    _ensure_nodes_ready()
     var structure := {
         "node_type": "template",
         "template": template_string,
@@ -423,6 +471,7 @@ func _build_token_structure(
     return {"node": structure, "errors": errors}
 
 func _render_token_tree(structure: Dictionary) -> void:
+    _ensure_nodes_ready()
     _token_tree.clear()
     var root := _token_tree.create_item()
     if structure.is_empty():
@@ -437,6 +486,7 @@ func _render_token_tree(structure: Dictionary) -> void:
     _populate_token_children(template_item, structure.get("children", []))
 
 func _populate_token_children(parent: TreeItem, children: Array) -> void:
+    _ensure_nodes_ready()
     for child_dict in children:
         if not (child_dict is Dictionary):
             continue
@@ -472,6 +522,7 @@ func _populate_token_children(parent: TreeItem, children: Array) -> void:
         _populate_token_children(token_item, child.get("children", []))
 
 func _apply_validation_feedback(errors: Array) -> void:
+    _ensure_nodes_ready()
     _validation_label.visible = false
     _validation_label.text = ""
     _validation_label.tooltip_text = ""
@@ -526,6 +577,7 @@ func _apply_validation_feedback(errors: Array) -> void:
                 _set_control_highlight(_max_depth_spin, true)
 
 func _update_preview_state(payload: Dictionary) -> void:
+    _ensure_nodes_ready()
     _preview_label.visible = false
     _preview_label.text = ""
     _preview_label.tooltip_text = ""
@@ -548,6 +600,7 @@ func _update_preview_state(payload: Dictionary) -> void:
         _validation_label.tooltip_text = tooltip
 
 func _lookup_error_guidance(code: String) -> Dictionary:
+    _ensure_nodes_ready()
     if code == "" or code == "invalid_json":
         return {}
     var service := _get_metadata_service()
@@ -564,6 +617,7 @@ func _lookup_error_guidance(code: String) -> Dictionary:
     return {}
 
 func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
+    _ensure_nodes_ready()
     if guidance.is_empty():
         return {"text": "", "tooltip": ""}
     var text_segments: Array[String] = []
@@ -593,11 +647,13 @@ func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
     }
 
 func _track_default_modulate(control: Control) -> void:
+    _ensure_nodes_ready()
     if control == null:
         return
     _control_default_modulates[control] = control.self_modulate
 
 func _set_control_highlight(control: Control, highlight: bool) -> void:
+    _ensure_nodes_ready()
     if control == null:
         return
     if highlight:
@@ -606,11 +662,13 @@ func _set_control_highlight(control: Control, highlight: bool) -> void:
         control.self_modulate = _control_default_modulates[control]
 
 func _notify_configuration_changed() -> void:
+    _ensure_nodes_ready()
     if not is_inside_tree():
         return
     configuration_changed.emit()
 
 func _resolve_strategy_display_name(strategy_id: String) -> String:
+    _ensure_nodes_ready()
     if strategy_id == "":
         return ""
     var service := _get_metadata_service()
@@ -623,6 +681,7 @@ func _resolve_strategy_display_name(strategy_id: String) -> String:
     return strategy_id
 
 func _get_token_regex() -> RegEx:
+    _ensure_nodes_ready()
     if _token_regex == null:
         _token_regex = RegEx.new()
         var error := _token_regex.compile(TOKEN_PATTERN)
@@ -631,11 +690,13 @@ func _get_token_regex() -> RegEx:
     return _token_regex
 
 func _extract_token(match: RegExMatch) -> String:
+    _ensure_nodes_ready()
     if match.names.has("token"):
         return match.get_string("token")
     return match.get_string(1)
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null and _is_object_valid(_controller_override):
         return _controller_override
     if _cached_controller != null and _is_object_valid(_cached_controller):
@@ -653,6 +714,7 @@ func _get_controller() -> Object:
     return null
 
 func _get_metadata_service() -> Object:
+    _ensure_nodes_ready()
     if _metadata_service_override != null and _is_object_valid(_metadata_service_override):
         return _metadata_service_override
     if _cached_metadata_service != null and _is_object_valid(_cached_metadata_service):
@@ -670,6 +732,7 @@ func _get_metadata_service() -> Object:
     return null
 
 func _join_strings(values: Variant, separator: String) -> String:
+    _ensure_nodes_ready()
     var combined := ""
     var is_first := true
     for value in values:
@@ -682,6 +745,7 @@ func _join_strings(values: Variant, separator: String) -> String:
     return combined
 
 func _is_object_valid(candidate: Object) -> bool:
+    _ensure_nodes_ready()
     if candidate == null:
         return false
     if candidate is Node:
