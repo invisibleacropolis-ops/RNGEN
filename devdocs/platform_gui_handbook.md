@@ -34,6 +34,19 @@ Follow these steps whenever you need to work inside the Platform GUI:
 7. Press **Preview** to request a seeded sample from the middleware. Successful runs render the preview inline, while validation errors appear in red beneath the controls so you can correct the form without leaving the panel.
 8. Click **Refresh** if you add new word lists to the project mid-session. The button reloads both the metadata schema and the resource catalogue.
 
+### Configuring syllable chain strategies
+
+1. Choose **Syllable Chain** from the strategy dropdown to load the dedicated panel.
+2. Review the metadata banner and inline notes. They come directly from `describe_strategies()` so the panel mirrors the same schema the middleware validates against.
+3. Use the resource browser to pick a `SyllableSetResource`. Each entry summarises prefix/middle/suffix counts plus locale and domain tags so you can immediately judge coverage.
+4. Check the details panel beneath the list to confirm whether the resource allows empty middles. The panel automatically expands the middle syllable slider range to match the asset so you are never capped prematurely.
+5. Toggle **Require at least one middle syllable** to enforce bridge syllables. When enabled the panel clamps the minimum slider to 1 so the config cannot drift below what the middleware expects.
+6. Adjust the **Middle syllable range** sliders to control optional middles. Invalid ranges surface an inline validation message and the sliders tint red until corrected, matching the middleware error codes for quick debugging.
+7. Set a **Minimum length** if you want the strategy to append extra middles until the generated name crosses a threshold. Leave it at `0` to accept any length.
+8. Enable one or more **Regex cleanup presets** to strip stray punctuation or collapse awkward repeats after generation. The presets map to the `post_processing_rules` array in the strategy config so the middleware receives ready-to-run instructions.
+9. Supply an optional seed, then click **Preview**. Successful runs render seeded output inline. Middleware validation errors are echoed in red along with human-friendly hints from the metadata service (e.g., missing resources or invalid middle ranges) so you can course-correct immediately.
+10. Use **Refresh** whenever you add new syllable sets or need the latest schema hints; the button re-queries both the metadata service and the on-disk resource catalogue.
+
 ### Reviewing DebugRNG logs
 
 1. Switch to the **Debug Logs** tab. When DebugRNG is active, the middleware writes to `user://debug_rng_report.txt` (or a custom path you configured earlier).

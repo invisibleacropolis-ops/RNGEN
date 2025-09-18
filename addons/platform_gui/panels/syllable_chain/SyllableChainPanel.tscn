@@ -1,0 +1,143 @@
+[gd_scene load_steps=2 format=3 uid="uid://syllablechainpanel"]
+
+[ext_resource type="Script" path="res://addons/platform_gui/panels/syllable_chain/SyllableChainPanel.gd" id="1_w9vaf"]
+
+[node name="SyllableChainPanel" type="VBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+theme_override_constants/separation = 12
+script = ExtResource("1_w9vaf")
+
+[node name="Header" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Header"]
+theme_override_font_sizes/font_size = 18
+text = "Syllable Chain Strategy"
+
+[node name="HeaderSpacer" type="Control" parent="Header"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="RefreshButton" type="Button" parent="Header"]
+flat = true
+text = "Refresh"
+tooltip_text = "Reload strategy metadata and the resource catalogue."
+
+[node name="MetadataSummary" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+text = ""
+
+[node name="NotesLabel" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+text = ""
+
+[node name="ResourceSection" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 4
+
+[node name="ResourceLabel" type="Label" parent="ResourceSection"]
+text = "Available syllable sets"
+
+[node name="ResourceList" type="ItemList" parent="ResourceSection"]
+allow_reselect = true
+allow_rmb_select = true
+custom_minimum_size = Vector2(0, 220)
+select_mode = ItemList.SELECT_SINGLE
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+[node name="ResourceSummary" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+text = "Select a syllable set to review its details."
+
+[node name="OptionsSection" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 8
+
+[node name="RequireMiddle" type="CheckButton" parent="OptionsSection"]
+text = "Require at least one middle syllable"
+
+[node name="MiddleRangeRow" type="HBoxContainer" parent="OptionsSection"]
+theme_override_constants/separation = 6
+
+[node name="MiddleRangeLabel" type="Label" parent="OptionsSection/MiddleRangeRow"]
+text = "Middle syllable range"
+
+[node name="MiddleRangeSpacer" type="Control" parent="OptionsSection/MiddleRangeRow"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="MiddleMinLabel" type="Label" parent="OptionsSection/MiddleRangeRow"]
+text = "Min"
+
+[node name="MiddleMinSpin" type="SpinBox" parent="OptionsSection/MiddleRangeRow"]
+allow_lesser = true
+allow_greater = true
+custom_minimum_size = Vector2(80, 0)
+max_value = 32.0
+min_value = 0.0
+step = 1.0
+value = 0.0
+
+[node name="MiddleMaxLabel" type="Label" parent="OptionsSection/MiddleRangeRow"]
+text = "Max"
+
+[node name="MiddleMaxSpin" type="SpinBox" parent="OptionsSection/MiddleRangeRow"]
+allow_lesser = true
+allow_greater = true
+custom_minimum_size = Vector2(80, 0)
+max_value = 32.0
+min_value = 0.0
+step = 1.0
+value = 1.0
+
+[node name="MinLengthRow" type="HBoxContainer" parent="OptionsSection"]
+theme_override_constants/separation = 6
+
+[node name="MinLengthLabel" type="Label" parent="OptionsSection/MinLengthRow"]
+text = "Minimum length"
+
+[node name="MinLengthSpacer" type="Control" parent="OptionsSection/MinLengthRow"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="MinLengthSpin" type="SpinBox" parent="OptionsSection/MinLengthRow"]
+allow_lesser = true
+allow_greater = true
+custom_minimum_size = Vector2(120, 0)
+max_value = 64.0
+min_value = 0.0
+step = 1.0
+value = 0.0
+
+[node name="RegexSection" type="VBoxContainer" parent="OptionsSection"]
+theme_override_constants/separation = 4
+
+[node name="RegexLabel" type="Label" parent="OptionsSection/RegexSection"]
+text = "Regex cleanup presets"
+tooltip_text = "Select presets to post-process generated names before display."
+
+[node name="RegexPresetContainer" type="VBoxContainer" parent="OptionsSection/RegexSection"]
+theme_override_constants/separation = 2
+
+[node name="PreviewRow" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+
+[node name="SeedLabel" type="Label" parent="PreviewRow"]
+text = "Seed"
+
+[node name="SeedInput" type="LineEdit" parent="PreviewRow"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+placeholder_text = "Optional seed label"
+
+[node name="PreviewButton" type="Button" parent="PreviewRow"]
+text = "Preview"
+
+[node name="ValidationLabel" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
+visible = false
+
+[node name="PreviewOutput" type="RichTextLabel" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+visible = false
