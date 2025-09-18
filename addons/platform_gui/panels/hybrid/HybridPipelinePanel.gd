@@ -468,6 +468,7 @@ func _clear_step_error_states() -> void:
     _error_label.visible = false
     _hint_label.visible = false
     _details_label.visible = false
+    _hint_label.tooltip_text = ""
 
 func _apply_error_state(error_dict: Dictionary) -> void:
     var code := String(error_dict.get("code", "hybrid_error"))
@@ -477,7 +478,10 @@ func _apply_error_state(error_dict: Dictionary) -> void:
     var targeted_step := _find_step_by_alias(alias)
     if targeted_step == null and alias.is_empty() and details.has("index"):
         targeted_step = _get_step_by_runtime_index(details.get("index"))
-    var hint := _lookup_error_hint(code, targeted_step)
+    var guidance := _lookup_error_guidance(code, targeted_step)
+    var composed := _compose_guidance_display(guidance)
+    var hint := String(composed.get("text", ""))
+    var tooltip := String(composed.get("tooltip", ""))
     if targeted_step != null:
         targeted_step.error_code = code
     _refresh_step_list()
@@ -490,9 +494,11 @@ func _apply_error_state(error_dict: Dictionary) -> void:
     if hint != "":
         _hint_label.visible = true
         _hint_label.text = hint
+        _hint_label.tooltip_text = tooltip if tooltip != "" else hint
     else:
         _hint_label.visible = false
         _hint_label.text = ""
+        _hint_label.tooltip_text = ""
     if not detail_lines.is_empty():
         _details_label.visible = true
         _details_label.bbcode_text = "\n".join(detail_lines)
@@ -502,6 +508,7 @@ func _apply_error_state(error_dict: Dictionary) -> void:
     _update_preview_state({
         "status": "error",
         "message": message,
+        "tooltip": tooltip if tooltip != "" else message,
     })
 
 func _find_step_by_alias(alias: String) -> StepConfig:
@@ -519,18 +526,54 @@ func _get_step_by_runtime_index(index_value: Variant) -> StepConfig:
         return null
     return _steps[index]
 
-func _lookup_error_hint(code: String, targeted_step: StepConfig) -> String:
+func _lookup_error_guidance(code: String, targeted_step: StepConfig) -> Dictionary:
     var service := _get_metadata_service()
     if service == null:
-        return ""
-    var hint := ""
+        return {}
+    var guidance := {}
     if targeted_step != null and targeted_step.strategy_id != "":
-        if service.has_method("get_generator_error_hint"):
-            hint = String(service.call("get_generator_error_hint", targeted_step.strategy_id, code))
-    if hint == "" and service != null:
-        if service.has_method("get_generator_error_hint"):
-            hint = String(service.call("get_generator_error_hint", HYBRID_STRATEGY_ID, code))
-    return hint
+        if service.has_method("get_generator_error_guidance"):
+            var targeted_guidance: Variant = service.call("get_generator_error_guidance", targeted_step.strategy_id, code)
+            if targeted_guidance is Dictionary and not (targeted_guidance as Dictionary).is_empty():
+                guidance = targeted_guidance
+    if guidance.is_empty() and service.has_method("get_generator_error_guidance"):
+        var fallback_guidance: Variant = service.call("get_generator_error_guidance", HYBRID_STRATEGY_ID, code)
+        if fallback_guidance is Dictionary:
+            guidance = fallback_guidance
+    if guidance.is_empty() and service.has_method("get_generator_error_hint"):
+        var hint := String(service.call("get_generator_error_hint", HYBRID_STRATEGY_ID, code))
+        if hint != "":
+            guidance = {"message": hint}
+    return guidance
+
+func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
+    if guidance.is_empty():
+        return {"text": "", "tooltip": ""}
+    var text_segments: Array[String] = []
+    var tooltip_segments: Array[String] = []
+    var message := String(guidance.get("message", ""))
+    if message != "":
+        text_segments.append(message)
+        tooltip_segments.append(message)
+    var remediation := String(guidance.get("remediation", ""))
+    if remediation != "":
+        var fix_line := "Try: %s" % remediation
+        text_segments.append(fix_line)
+        tooltip_segments.append(fix_line)
+    var handbook_label := String(guidance.get("handbook_label", ""))
+    if handbook_label != "":
+        var anchor := String(guidance.get("handbook_anchor", ""))
+        var handbook_line := "Handbook: %s" % handbook_label
+        if anchor != "":
+            handbook_line += " (#%s)" % anchor
+            tooltip_segments.append("Platform GUI Handbook › %s (#%s)" % [handbook_label, anchor])
+        else:
+            tooltip_segments.append("Platform GUI Handbook › %s" % handbook_label)
+        text_segments.append(handbook_line)
+    return {
+        "text": "\n".join(text_segments),
+        "tooltip": "\n".join(tooltip_segments),
+    }
 
 func _format_step_metadata(step: StepConfig) -> String:
     var base_seed := _seed_edit.text.strip_edges()
@@ -562,16 +605,22 @@ func _update_preview_state(state: Dictionary) -> void:
         return
     var status := String(state.get("status", ""))
     var message := String(state.get("message", ""))
+    var tooltip := String(state.get("tooltip", message))
+    if tooltip == "":
+        tooltip = message
     if status == "success":
         _preview_label.visible = true
         _preview_label.text = message
         _preview_label.self_modulate = Color(0.85, 1.0, 0.85, 1.0)
+        _preview_label.tooltip_text = message
     elif status == "error":
         _preview_label.visible = true
         _preview_label.text = message
         _preview_label.self_modulate = Color(1.0, 0.85, 0.85, 1.0)
+        _preview_label.tooltip_text = tooltip
     else:
         _preview_label.visible = false
+        _preview_label.tooltip_text = ""
 
 func _refresh_metadata() -> void:
     var service := _get_metadata_service()

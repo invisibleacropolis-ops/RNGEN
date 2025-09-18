@@ -165,12 +165,119 @@ Follow these steps whenever you need to work inside the Platform GUI. The conden
 | --- | --- | --- |
 | **"No strategies available" in the dropdown** | Ensure the Godot project autoloads are active (see the launch checklist) and press the **Reload Strategies** button. This re-invokes `RNGProcessor.list_strategies()` to rebuild the list. | `list_strategies()` |
 | **Generator previews ignore the selected seed** | Verify that **Randomize seed before each run** is disabled and that the Seeds tab shows the seed you expect. If the Admin Tools flag **Force random seeds** is on, turn it off to respect manual seeds. | `set_master_seed(...)`, `randomize_master_seed()` |
-| **"Failed to generate" error banner** | Double-check your inputs; required fields turn red if missing. If the error persists, open the Debug Logs tab to read the detailed message captured from `generation_failed`. Use **Copy config JSON** to share the failing payload with engineers. | `generate(...)`, `generation_failed` |
+| **"Failed to generate" error banner** | Double-check your inputs; required fields turn red if missing. If the error persists, open the Debug Logs tab to read the detailed message captured from `generation_failed`. Use **Copy config JSON** to share the failing payload with engineers. The inline hint links to the relevant table below for strategy-specific fixes. | `generate(...)`, `generation_failed` |
 | **Debug Logs tab is empty** | Toggle "Record DebugRNG Session" and run the generator again. The button wires up `RNGProcessor.set_debug_rng(...)` so the middleware actually writes the log file. | `set_debug_rng(...)`, `get_debug_rng()` |
 | **Export bundle missing DebugRNG snapshot** | Confirm **Include DebugRNG snapshot** is enabled before running **Run batch** in the Exports tab. If the toggle is missing, open Admin Tools and enable the **Exports.DebugRNG** feature flag. | `set_debug_rng(...)`, `get_debug_rng()` |
 | **Seed value keeps changing unexpectedly** | Confirm you did not enable "Randomize seed before each run" in the toolbar. Disable it to keep using your manually applied seed via `set_master_seed(...)`. | `set_master_seed(...)`, `reset_master_seed()` |
 | **Admin Tools flags do not persist** | Check file permissions for `user://platform_gui/settings.json`. If Godot cannot write to that file, presets revert to defaults. Delete the file to regenerate it after fixing permissions. | Settings persistence |
 | **GUI window will not launch** | Open Godot's output panel for errors. Missing autoloads or a renamed project folder prevent the scene from finding `RNGProcessor`. Restore the original `project.godot` path and retry. | Autoload access |
+
+### Middleware error quick reference
+
+When the middleware reports an error, the GUI now shows a plain-language summary, a remediation checklist, and a direct reference to the handbook. Use the tables below to dig deeper into each family of errors. Every row mirrors the hint/tooltip structure surfaced in the panels.
+
+#### Configuration payloads {#middleware-errors-configuration}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `invalid_config_type` | Configuration payload must be provided as a Dictionary. | Regenerate the payload from the GUI form or rebuild it using the handbook configuration template. |
+
+#### Required key mismatches {#middleware-errors-required-keys}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `missing_required_keys` | Configuration is missing at least one required key. | Compare your payload with the required key list documented in this handbook before retrying. |
+
+#### Optional key typing {#middleware-errors-optional-types}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `invalid_key_type` | Optional key value does not match the expected type. | Confirm each optional key uses the type shown in the optional key reference table. |
+
+#### Resource lookups {#middleware-errors-resources}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `missing_resource` | Referenced resource could not be loaded from disk. | Verify the path, file extension, and import status against the resource checklist. |
+| `invalid_resource_type` | Loaded resource exists but does not match the expected type. | Open the referenced file in Godot and confirm it inherits from the required resource class. |
+
+#### Word list datasets {#middleware-errors-wordlists}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `invalid_wordlist_paths_type` | `wordlist_paths` must contain resource paths or `WordListResource` instances. | Select word lists through the GUI picker or mirror the array structure described in the handbook. |
+| `invalid_wordlist_entry` | Word list entries must be strings or `WordListResource` objects. | Clean the array so only resource paths or preloaded resources remain before generating. |
+| `wordlists_missing` | No word list resources were provided to the strategy. | Use the resource browser to add at least one dataset before generating. |
+| `wordlists_no_selection` | The configured word lists did not return any entries. | Double-check that each word list contains entries and the filters match the handbook workflow. |
+| `wordlist_invalid_type` | Loaded resource is not a `WordListResource`. | Confirm the path targets a `.tres` exported from the word list builder tools. |
+| `wordlist_empty` | Word list resource does not expose any entries. | Populate the dataset via the builder and reimport before attempting another preview. |
+
+#### Syllable chain ranges {#middleware-errors-syllable-ranges}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `invalid_syllable_set_path` | `syllable_set_path` must be a valid resource path. | Browse to an existing syllable set asset listed in the handbook inventory. |
+| `invalid_syllable_set_type` | Loaded resource is not a `SyllableSetResource`. | Rebuild the asset using the syllable set builder described in the handbook. |
+| `empty_prefixes` | Selected syllable set is missing prefix entries. | Edit the dataset so every required syllable column contains at least one entry. |
+| `empty_suffixes` | Selected syllable set is missing suffix entries. | Populate suffix data in the resource before generating again. |
+| `missing_required_middles` | Configuration requires middle syllables but the resource has none. | Add middle syllables to the dataset or disable the `require_middle` option. |
+| `middle_syllables_not_available` | Requested middle syllables but the resource does not define any. | Reduce the middle syllable range or update the dataset with middle entries. |
+| `invalid_middle_range` | `middle_syllables` must define a valid min/max range. | Ensure min is less than or equal to max and matches the examples in the handbook. |
+| `unable_to_satisfy_min_length` | Generated name could not reach the requested minimum length. | Lower the minimum length or expand the syllable set to include longer fragments. |
+
+#### Template nesting {#middleware-errors-template-nesting}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `invalid_template_type` | Template payload must be a string before tokens can be resolved. | Copy the template examples directly from the handbook to restore the correct syntax. |
+| `empty_token` | Template contains an empty token placeholder. | Replace empty placeholders with named tokens so they can map to sub-generators. |
+| `missing_template_token` | Template references a token that is not defined in `sub_generators`. | Add a matching entry to the sub-generator dictionary following the handbook example. |
+| `invalid_sub_generators_type` | `sub_generators` must be a Dictionary keyed by template tokens. | Restructure the payload so each token maps to a configuration dictionary. |
+| `invalid_max_depth` | `max_depth` must be a positive integer. | Set `max_depth` using the defensive defaults outlined in the handbook. |
+| `missing_strategy` | Sub-generator entry is missing its `strategy` identifier. | Assign a strategy ID that matches the middleware catalog before generating. |
+| `template_recursion_depth_exceeded` | Nested templates exceeded the configured `max_depth`. | Increase `max_depth` or simplify nested calls per the handbook escalation steps. |
+| `invalid_name_generator_resource` | Fallback `NameGenerator` resource is not a valid GDScript. | Point the configuration to the bundled script path listed in the handbook. |
+| `name_generator_unavailable` | `NameGenerator` singleton or script is unavailable. | Enable the autoloads noted in the launch checklist or restore the default script path. |
+
+#### Hybrid pipelines {#middleware-errors-hybrid-pipelines}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `invalid_steps_type` | Hybrid strategy expects `steps` to be an Array of dictionaries. | Collect step definitions through the Hybrid panel so the payload structure matches the handbook. |
+| `empty_steps` | Hybrid strategy requires at least one configured step. | Add a step that points to a generator or reuse the starter pipelines documented in the handbook. |
+| `invalid_step_entry` | Each hybrid step must be a Dictionary entry. | Recreate the step via the GUI to avoid mixing scalar values with configuration dictionaries. |
+| `invalid_step_config` | Hybrid step `config` payload must be a Dictionary. | Open the child panel referenced in the handbook to capture a fresh configuration block. |
+| `missing_step_strategy` | Hybrid step is missing its `strategy` identifier. | Select a generator for every step so the middleware knows which strategy to invoke. |
+| `hybrid_step_error` | A nested hybrid step reported its own error. | Inspect the step details and open the referenced panel for targeted troubleshooting. |
+
+#### Markov chain datasets {#middleware-errors-markov-models}
+
+| Error code | What it means | How to fix it |
+| --- | --- | --- |
+| `invalid_markov_model_path` | `markov_model_path` must point to a `MarkovModelResource`. | Select a model from the Dataset Health inventory before requesting a preview. |
+| `missing_markov_model_path` | Configuration omitted the Markov model path. | Fill in the model path or pick a dataset using the Markov panel workflow. |
+| `invalid_model_states` | Markov model state table is malformed. | Re-export the dataset using the builder to refresh state counts. |
+| `invalid_model_start_tokens` | Start token array contains invalid data. | Verify the start token definitions following the Markov checklist. |
+| `invalid_model_end_tokens` | End token array contains invalid data. | Review the termination tokens described in the handbook and update the resource. |
+| `invalid_transitions_type` | Transition table must be a Dictionary keyed by token. | Regenerate the model to ensure transitions use the documented schema. |
+| `empty_transition_block` | Transition table contains an empty block. | Populate every transition bucket or remove unused tokens before exporting. |
+| `invalid_transition_block` | Transition block does not match the expected array layout. | Restore the weight/value pairs illustrated in the handbook transition examples. |
+| `invalid_transition_entry_type` | Transition entries must be Dictionaries describing token/weight pairs. | Rebuild the transitions using the Markov editor workflow. |
+| `invalid_transition_token_type` | Transition entry token must be a String. | Review the dataset export script and ensure tokens are serialised as text. |
+| `invalid_transition_weight_type` | Transition weight must be numeric. | Normalise weight values to floats or integers before exporting the model. |
+| `invalid_transition_weight_value` | Transition weight must be greater than zero. | Remove negative or zero weights so sampling behaves predictably. |
+| `non_positive_weight_sum` | Transition weights sum to zero or less. | Rebalance the weights so they sum to a positive value as shown in the handbook. |
+| `missing_transition_token` | A transition entry is missing its token value. | Add the token string or delete the incomplete entry before exporting. |
+| `missing_transition_for_token` | Model lacks a transition table for one of the referenced tokens. | Regenerate the dataset to include transitions for every token referenced in the state table. |
+| `unknown_token_reference` | Transition references a token that is not defined in the model. | Cross-check the token inventory and remove stale references. |
+| `invalid_token_temperature_type` | Temperature overrides must be numeric. | Set token temperatures to floats as demonstrated in the handbook examples. |
+| `invalid_token_temperature_value` | Token temperature must be greater than zero. | Use positive values when adjusting token temperature overrides. |
+| `invalid_transition_temperature_type` | Transition temperature overrides must be numeric. | Ensure transition overrides mirror the numeric structure from the handbook. |
+| `invalid_transition_temperature_value` | Transition temperature must be greater than zero. | Audit override values and keep them positive as shown in the troubleshooting guide. |
+| `invalid_default_temperature` | Default temperature must be numeric and above zero. | Update the config to use the safe defaults captured in the handbook. |
+| `invalid_max_length_type` | `max_length` must be an integer. | Provide numeric values when clamping generated token counts. |
+| `invalid_max_length_value` | `max_length` must be greater than zero. | Use the minimum thresholds suggested in the handbook before sampling. |
+| `max_length_exceeded` | Generation stopped after exceeding the configured `max_length`. | Increase `max_length` or relax temperature constraints per the troubleshooting table. |
 
 ## Engineering implementation notes
 

@@ -88,19 +88,39 @@ func _test_provides_plain_language_error_hints() -> Variant:
     var hints := service.get_generator_error_hints("wordlist")
     if not hints.has("missing_required_keys"):
         return "Error hints should include schema-derived missing key guidance."
-    if String(hints["missing_required_keys"]).find("wordlist_paths") == -1:
+    var missing_required := hints["missing_required_keys"]
+    if typeof(missing_required) != TYPE_DICTIONARY:
+        return "Missing key hint should be normalised into a dictionary payload."
+    if String(missing_required.get("message", "")).find("wordlist_paths") == -1:
         return "Missing key hint should reference the required configuration keys."
+    if String(missing_required.get("handbook_anchor", "")) != "middleware-errors-required-keys":
+        return "Missing key hint should include the handbook anchor for required keys."
 
     if not hints.has("invalid_key_type"):
         return "Error hints should include optional key type guidance."
-    if String(hints["invalid_key_type"]).find("delimiter") == -1:
+    var optional_hint := hints["invalid_key_type"]
+    if typeof(optional_hint) != TYPE_DICTIONARY:
+        return "Optional key hint should be normalised into a dictionary payload."
+    if String(optional_hint.get("message", "")).find("delimiter") == -1:
         return "Type hint should reference optional configuration keys."
-    if String(hints["invalid_key_type"]).find("String") == -1:
+    if String(optional_hint.get("message", "")).find("String") == -1:
         return "Type hint should surface human-readable type names."
+    if String(optional_hint.get("handbook_label", "")).find("Optional") == -1:
+        return "Optional key hint should expose the handbook label for quick reference."
+
+    var base_guidance := service.get_generator_error_guidance("wordlist", "invalid_config_type")
+    if String(base_guidance.get("message", "")).find("Dictionary") == -1:
+        return "Shared schema guidance should surface descriptive default messages."
+    if String(base_guidance.get("remediation", "")).find("Regenerate") == -1:
+        return "Shared schema guidance should include remediation instructions."
 
     var base_hint := service.get_generator_error_hint("wordlist", "invalid_config_type")
     if base_hint.find("Dictionary") == -1:
-        return "Shared schema hints should surface descriptive default messages."
+        return "Hint formatter should still expose descriptive text for UI fallbacks."
+
+    var unknown_guidance := service.get_generator_error_guidance("missing", "invalid_config_type")
+    if unknown_guidance.is_empty():
+        return "Unknown strategies should still expose shared schema guidance."
 
     var unknown_hint := service.get_generator_error_hint("missing", "invalid_config_type")
     if unknown_hint == "":

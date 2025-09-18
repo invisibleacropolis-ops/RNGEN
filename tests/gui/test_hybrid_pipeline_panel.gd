@@ -166,6 +166,24 @@ func _test_visualises_seed_and_stream() -> Variant:
 func _test_surfaces_child_error_payload() -> Variant:
     var context := _make_panel()
     var metadata := context["metadata"] as MetadataStub
+    metadata.guidance_map = {
+        "hybrid": {
+            "hybrid_step_error": {
+                "message": "Check the failing step configuration.",
+                "remediation": "Open the failing step and resolve its nested error.",
+                "handbook_anchor": "middleware-errors-hybrid-pipelines",
+                "handbook_label": "Hybrid pipelines",
+            },
+        },
+        "wordlist": {
+            "missing_resource": {
+                "message": "Ensure the word list path is valid.",
+                "remediation": "Browse to a valid WordListResource before retrying.",
+                "handbook_anchor": "middleware-errors-wordlists",
+                "handbook_label": "Word list datasets",
+            },
+        },
+    }
     metadata.error_hints = {
         "hybrid": {"hybrid_step_error": "Check the failing step configuration."},
         "wordlist": {"missing_resource": "Ensure the word list path is valid."},
@@ -198,6 +216,10 @@ func _test_surfaces_child_error_payload() -> Variant:
     var hint_label: Label = panel.get_node("FeedbackSection/HintLabel")
     if hint_label.text.find("Ensure the word list path is valid.") == -1:
         return "Hybrid panel should translate middleware error codes into friendly hints."
+    if hint_label.text.find("Handbook: Word list datasets") == -1:
+        return "Hybrid panel should surface handbook references in the inline hint."
+    if hint_label.tooltip_text.find("Platform GUI Handbook") == -1:
+        return "Hybrid panel should expose handbook context via tooltip text."
     var detail_label: RichTextLabel = panel.get_node("FeedbackSection/DetailLabel")
     if detail_label.bbcode_text.find("received_path") == -1:
         return "Error details should enumerate the middleware payload keys."
@@ -233,6 +255,7 @@ class MetadataStub:
     extends Node
 
     var error_hints: Dictionary = {}
+    var guidance_map: Dictionary = {}
 
     func get_required_keys(_strategy_id: String) -> PackedStringArray:
         return PackedStringArray(["steps"])
@@ -243,7 +266,24 @@ class MetadataStub:
     func get_default_notes(_strategy_id: String) -> PackedStringArray:
         return PackedStringArray(["Each step inherits the pipeline seed before deriving step aliases."])
 
+    func get_generator_error_hints(strategy_id: String) -> Dictionary:
+        return error_hints.get(strategy_id, {}).duplicate(true)
+
+    func get_generator_error_guidance(strategy_id: String, code: String) -> Dictionary:
+        if not guidance_map.has(strategy_id):
+            return {}
+        var strategy_guidance: Dictionary = guidance_map[strategy_id]
+        if not strategy_guidance.has(code):
+            return {}
+        var entry := strategy_guidance[code]
+        if entry is Dictionary:
+            return (entry as Dictionary).duplicate(true)
+        return {}
+
     func get_generator_error_hint(strategy_id: String, code: String) -> String:
+        var guidance := get_generator_error_guidance(strategy_id, code)
+        if not guidance.is_empty():
+            return String(guidance.get("message", ""))
         if not error_hints.has(strategy_id):
             return ""
         return String(error_hints[strategy_id].get(code, ""))
