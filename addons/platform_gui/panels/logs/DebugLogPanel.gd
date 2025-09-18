@@ -21,6 +21,12 @@ const _INFO_COLOR := Color(0.3, 0.6, 0.9)
 const _ERROR_COLOR := Color(0.86, 0.23, 0.23)
 const _WARNING_COLOR := Color(0.82, 0.49, 0.09)
 
+const _STATUS_ICONS := {
+    "info": "ℹ️",
+    "warning": "⚠️",
+    "error": "❌",
+}
+
 @onready var _refresh_button: Button = %RefreshButton
 @onready var _section_selector: OptionButton = %SectionSelector
 @onready var _log_display: RichTextLabel = %LogDisplay
@@ -69,23 +75,23 @@ func _on_refresh_pressed() -> void:
 
 func _on_download_pressed() -> void:
     if _report_cache.is_empty():
-        _set_status(_format_error("Attach DebugRNG before downloading."))
+        _set_status("Attach DebugRNG before downloading.", "error")
         return
     var source_path := String(_report_cache.get("log_path", ""))
     if source_path == "":
-        _set_status(_format_error("DebugRNG did not report a log path."))
+        _set_status("DebugRNG did not report a log path.", "error")
         return
     if not FileAccess.file_exists(source_path):
-        _set_status(_format_error("DebugRNG log not found at %s." % source_path))
+        _set_status("DebugRNG log not found at %s." % source_path, "error")
         return
     var target_path := _download_path.text.strip_edges()
     if target_path == "":
-        _set_status(_format_error("Provide a download path (e.g. user://debug_rng_copy.txt)."))
+        _set_status("Provide a download path (e.g. user://debug_rng_copy.txt).", "error")
         return
     var content := FileAccess.get_file_as_string(source_path)
     var file := FileAccess.open(target_path, FileAccess.WRITE)
     if file == null:
-        _set_status(_format_error("Unable to open %s for writing." % target_path))
+        _set_status("Unable to open %s for writing." % target_path, "error")
         return
     file.store_string(content)
     _set_status("Saved DebugRNG report to %s." % target_path)
@@ -102,19 +108,19 @@ func _load_report() -> void:
     var controller := _get_controller()
     if controller == null or not controller.has_method("get_debug_rng"):
         _report_cache = {}
-        _set_status(_format_error("RNGProcessor controller unavailable."))
+        _set_status("RNGProcessor controller unavailable.", "error")
         _update_display()
         return
 
     var debug_rng: Object = controller.call("get_debug_rng")
     if debug_rng == null:
         _report_cache = {}
-        _set_status(_format_error("DebugRNG helper is not attached."))
+        _set_status("DebugRNG helper is not attached.", "error")
         _update_display()
         return
     if not debug_rng is DebugRNG and not debug_rng.has_method("read_current_log"):
         _report_cache = {}
-        _set_status(_format_error("Attached helper does not expose read_current_log()."))
+        _set_status("Attached helper does not expose read_current_log().", "error")
         _update_display()
         return
 
@@ -124,7 +130,7 @@ func _load_report() -> void:
         _set_status("Loaded DebugRNG report with %d entries." % _report_cache.get("entries", []).size())
     else:
         _report_cache = {}
-        _set_status(_format_error("DebugRNG returned unexpected telemetry payload."))
+        _set_status("DebugRNG returned unexpected telemetry payload.", "error")
     _update_display()
 
 func _update_display() -> void:
@@ -265,11 +271,21 @@ func _update_button_states() -> void:
     var has_report := not _report_cache.is_empty()
     _download_button.disabled = not has_report
 
-func _set_status(message: String) -> void:
-    _status_label.text = message if message.begins_with("[color=") else "[color=%s]%s[/color]" % [_INFO_COLOR.to_html(), message]
+func _set_status(message: String, severity: String = "info") -> void:
+    _status_label.bbcode_text = _format_status(message, severity)
 
 func _format_error(message: String) -> String:
-    return "[color=%s]%s[/color]" % [_ERROR_COLOR.to_html(), message]
+    return _format_status(message, "error")
+
+func _format_status(message: String, severity: String = "info") -> String:
+    var color := _INFO_COLOR
+    var icon := _STATUS_ICONS.get(severity, _STATUS_ICONS["info"])
+    match severity:
+        "warning":
+            color = _WARNING_COLOR
+        "error":
+            color = _ERROR_COLOR
+    return "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]
 
 func _stringify_value(value: Variant) -> String:
     if value is String:

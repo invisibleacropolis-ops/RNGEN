@@ -47,6 +47,12 @@ var _metadata_service_override: Object = null
 var _cached_metadata_service: Object = null
 var _steps: Array[StepConfig] = []
 var _strategy_panel_overrides: Dictionary = {}
+var _preferred_strategy_id := ""
+
+const _Preferences := preload("res://addons/platform_gui/services/platform_preferences.gd")
+const _PREFERENCES_SECTION := "hybrid_pipeline"
+const _PREFERENCE_KEY_LAST_STRATEGY := "last_strategy"
+const _PREFERENCE_KEY_PIPELINE_SEED := "pipeline_seed"
 
 @onready var _metadata_summary: Label = %MetadataSummary
 @onready var _notes_label: Label = %NotesLabel
@@ -90,10 +96,17 @@ func _ready() -> void:
     _pipeline_tree.set_column_title(4, "RNG Stream")
     _pipeline_tree.set_column_titles_visible(true)
     _refresh_metadata()
+    _load_preferences()
     _refresh_strategy_selector()
     _rebuild_pipeline_tree()
     _update_seed_helper()
     _update_preview_state(null)
+
+func _load_preferences() -> void:
+    _preferred_strategy_id = String(_Preferences.load_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_STRATEGY, ""))
+    var stored_seed := String(_Preferences.load_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_PIPELINE_SEED, ""))
+    if stored_seed != "":
+        _seed_edit.text = stored_seed
 
 func apply_config_payload(config: Dictionary) -> void:
     _clear_all_steps()
@@ -262,8 +275,11 @@ func _on_remove_step_pressed() -> void:
     _notify_configuration_changed()
 
 func _on_strategy_option_changed(_index: int) -> void:
-    # No-op hook so tests can simulate menu selections before pressing Add.
-    pass
+    var strategy_id := _get_selected_strategy_id()
+    if strategy_id == "":
+        return
+    _preferred_strategy_id = strategy_id
+    _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_STRATEGY, strategy_id)
 
 func _on_step_selected(index: int) -> void:
     var step := _get_step_by_index(index)
@@ -299,9 +315,11 @@ func _on_seed_changed(_text: String) -> void:
     var step := _get_selected_step()
     _update_step_details(step)
     _notify_configuration_changed()
+    _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_PIPELINE_SEED, _seed_edit.text.strip_edges())
 
 func _on_seed_submitted(text: String) -> void:
     _seed_edit.text = text
+    _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_PIPELINE_SEED, _seed_edit.text.strip_edges())
     _on_preview_button_pressed()
 
 func _on_preview_button_pressed() -> void:
@@ -655,12 +673,19 @@ func _refresh_metadata() -> void:
 func _refresh_strategy_selector() -> void:
     _strategy_selector.clear()
     var index := 0
+    var preferred_index := -1
     for strategy_id in STRATEGY_PANEL_SCENES.keys():
         _strategy_selector.add_item(strategy_id.capitalize())
         _strategy_selector.set_item_metadata(index, strategy_id)
+        if strategy_id == _preferred_strategy_id:
+            preferred_index = index
         index += 1
     if _strategy_selector.item_count > 0:
-        _strategy_selector.select(0)
+        var target_index := preferred_index if preferred_index >= 0 else 0
+        _strategy_selector.select(target_index)
+        var metadata := _strategy_selector.get_item_metadata(target_index)
+        if typeof(metadata) == TYPE_STRING:
+            _preferred_strategy_id = String(metadata)
 
 func _rebuild_pipeline_tree() -> void:
     _pipeline_tree.clear()
