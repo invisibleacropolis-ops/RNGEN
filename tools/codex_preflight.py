@@ -36,6 +36,12 @@ from typing import Iterable, List, Optional, Sequence
 
 from gdscript_parse_helper import collect_issues, iter_gd_files, read_context
 
+# ---------------------------------------------------------------------------
+# Allow the helper to be executed directly with ``python tools/codex_preflight.py``.
+# See ``codex_run_manifest_tests`` for the detailed explanation.
+if __package__ is None:  # pragma: no cover - import side effect
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from tools import codex_run_manifest_tests as manifest_runner
 
 
