@@ -195,12 +195,16 @@ func _execute_inspector() -> Dictionary:
     if not ResourceLoader.exists(script_path):
         capture["errors"].append("Dataset inspector not found at %s." % script_path)
         return capture
-    var script := load(script_path)
-    if script == null:
+    var script_resource := load(script_path)
+    if script_resource == null:
         capture["errors"].append("Unable to load dataset inspector script.")
         return capture
+    if not (script_resource is Script):
+        capture["errors"].append("Dataset inspector must be a valid Script resource.")
+        return capture
+    var inspector_script: Script = script_resource
     capture = _capture_messages(func():
-        var instance := script.new()
+        var instance: Object = inspector_script.new()
         if instance != null:
             instance.free()
     )

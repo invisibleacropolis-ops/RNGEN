@@ -5,7 +5,7 @@
 ## deterministic whenever a custom [RandomNumberGenerator] instance is
 ## provided, which is useful for tests and replay systems.  When no RNG is
 ## provided the helpers will instantiate one on demand.
-class_name ArrayUtils
+## Script class intentionally left unnamed to avoid collisions with name_generator ArrayUtils.
 extends RefCounted
 
 ## Picks a single value from ``values`` using uniform probability.

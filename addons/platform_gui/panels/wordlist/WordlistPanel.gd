@@ -66,7 +66,7 @@ func refresh() -> void:
 
 func get_selected_resource_paths() -> Array:
     ## Return the resource paths for every selected entry in the resource list.
-    var paths: Array[String] = []
+    var paths: Array = []
     for index in _resource_list.get_selected_items():
         var metadata: Dictionary = _resource_list.get_item_metadata(index)
         var path: String = String(metadata.get("path", ""))
@@ -101,7 +101,7 @@ func apply_config_payload(config: Dictionary) -> void:
     var seed_value := String(config.get("seed", ""))
     if _seed_edit.text != seed_value:
         _seed_edit.text = seed_value
-    var target_paths: Array[String] = []
+    var target_paths: Array = []
     var paths_variant := config.get("wordlist_paths", [])
     if paths_variant is Array:
         for entry in paths_variant:
@@ -131,44 +131,46 @@ func _refresh_metadata() -> void:
         _notes_label.text = ""
         return
 
-    var required_variant := []
+    var required_variant: Variant = []
     if service.has_method("get_required_keys"):
         required_variant = service.call("get_required_keys", "wordlist")
     var optional: Dictionary = {}
     if service.has_method("get_optional_key_types"):
         optional = service.call("get_optional_key_types", "wordlist")
-    var notes_variant := []
+    var notes_variant: Variant = []
     if service.has_method("get_default_notes"):
         notes_variant = service.call("get_default_notes", "wordlist")
 
-    var required_list: Array[String] = []
+    var required_list := []
     if required_variant is PackedStringArray:
-        required_list.assign(required_variant)
+        for value in required_variant:
+            required_list.append(String(value))
     elif required_variant is Array:
         for value in required_variant:
             required_list.append(String(value))
 
     var summary := []
     if not required_list.is_empty():
-        summary.append("Requires: %s" % ", ".join(required_list))
+        summary.append("Requires: %s" % _join_strings(required_list, ", "))
     if optional is Dictionary and not optional.is_empty():
-        var optional_strings: Array[String] = []
+        var optional_strings := []
         for key in optional.keys():
             var variant_type := int(optional[key])
-            optional_strings.append("%s (%s)" % [key, Variant.get_type_name(variant_type)])
+            optional_strings.append("%s (%s)" % [key, type_string(variant_type)])
         optional_strings.sort()
-        summary.append("Optional: %s" % ", ".join(optional_strings))
-    _metadata_summary.text = " | ".join(summary)
+        summary.append("Optional: %s" % _join_strings(optional_strings, ", "))
+    _metadata_summary.text = _join_strings(summary, " | ")
 
-    var notes: Array[String] = []
+    var notes := []
     if notes_variant is PackedStringArray:
-        notes.assign(notes_variant)
+        for value in notes_variant:
+            notes.append(String(value))
     elif notes_variant is Array:
         for value in notes_variant:
             notes.append(String(value))
 
     if not notes.is_empty():
-        _notes_label.text = "\n".join(notes)
+        _notes_label.text = _join_strings(notes, "\n")
     else:
         _notes_label.text = ""
 
@@ -201,12 +203,12 @@ func _refresh_resource_catalog() -> void:
             "domain": String(descriptor.get("domain", "")),
             "has_weights": bool(descriptor.get("has_weights", false)),
         }
-        var detail_parts: Array[String] = []
+        var detail_parts: Array = []
         if metadata["locale"] != "":
             detail_parts.append(metadata["locale"])
         if metadata["domain"] != "":
             detail_parts.append(metadata["domain"])
-        var detail_suffix := detail_parts.join(" · ")
+        var detail_suffix := _join_strings(detail_parts, " · ")
         var weight_suffix := ""
         if metadata["has_weights"]:
             weight_suffix = " (Weighted)"
@@ -229,14 +231,14 @@ func _discover_wordlist_resources() -> Array:
     ## readability over micro-optimisations because the catalogue is refreshed
     ## only on demand.
     var results: Array = []
-    var stack: Array[String] = ["res://data"]
+    var stack: Array = ["res://data"]
     while not stack.is_empty():
-        var path := stack.pop_back()
+        var path: String = String(stack.pop_back())
         var dir := DirAccess.open(path)
         if dir == null:
             continue
         dir.list_dir_begin()
-        var entry := dir.get_next()
+        var entry: String = dir.get_next()
         while entry != "":
             if dir.current_is_dir():
                 if entry.begins_with("."):
@@ -247,7 +249,7 @@ func _discover_wordlist_resources() -> Array:
                 if not (entry.ends_with(".tres") or entry.ends_with(".res")):
                     entry = dir.get_next()
                     continue
-                var resource_path := path.path_join(entry)
+                var resource_path: String = path.path_join(entry)
                 if not ResourceLoader.exists(resource_path):
                     entry = dir.get_next()
                     continue
@@ -268,11 +270,11 @@ func _discover_wordlist_resources() -> Array:
     return results
 
 func _derive_display_name(path: String) -> String:
-    var segments := path.split("/")
+    var segments: PackedStringArray = path.split("/")
     if segments.is_empty():
         return path
-    var filename := segments.back()
-    var trimmed := filename.replace(".tres", "").replace(".res", "")
+    var filename: String = String(segments[segments.size() - 1])
+    var trimmed: String = filename.replace(".tres", "").replace(".res", "")
     return trimmed.capitalize()
 
 func _on_preview_button_pressed() -> void:
@@ -309,8 +311,8 @@ func _on_preview_button_pressed() -> void:
         "message": output_text,
     })
 
-func _update_preview_state(payload: Dictionary) -> void:
-    if payload == null:
+func _update_preview_state(payload: Variant = null) -> void:
+    if not (payload is Dictionary):
         _preview_label.visible = false
         _preview_label.text = ""
         _validation_label.visible = false
@@ -370,3 +372,17 @@ func _is_object_valid(candidate: Object) -> bool:
     if candidate is Node:
         return is_instance_valid(candidate)
     return true
+
+func _join_strings(parts: Array, separator: String) -> String:
+    if parts.is_empty():
+        return ""
+    var pieces: Array = []
+    for part in parts:
+        pieces.append(String(part))
+    var result := ""
+    for index in range(pieces.size()):
+        if index > 0:
+            result += separator
+        result += pieces[index]
+    return result
+
