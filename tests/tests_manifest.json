@@ -61,6 +61,10 @@
       "path": "res://tests/gui/test_dataset_inspector_panel.gd"
     },
     {
+      "name": "Platform GUI Main Interface Suite",
+      "path": "res://tests/interface/test_main_interface_scene.gd"
+    },
+    {
       "name": "Formulas Workspace Suite",
       "path": "res://tests/gui/test_formulas_workspace.gd"
     },
