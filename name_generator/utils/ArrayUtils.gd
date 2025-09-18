@@ -5,9 +5,28 @@
 ## results can be achieved across gameplay, tooling, and automated tests.
 class_name ArrayUtils
 
-static func assert_not_empty(collection: Array, context: String = "Collection") -> void:
-    if collection == null or collection.is_empty():
+static var _last_assertion: Dictionary = {}
+static var _last_fallback: Dictionary = {}
+
+static func assert_not_empty(collection: Variant, context: String = "Collection") -> void:
+    var is_empty := false
+    if collection == null:
+        is_empty = true
+    elif collection is Array:
+        is_empty = (collection as Array).is_empty()
+    elif collection is Dictionary:
+        is_empty = (collection as Dictionary).is_empty()
+    elif collection is Object:
+        if collection.has_method("is_empty"):
+            is_empty = bool(collection.call("is_empty"))
+        elif collection.has_method("size"):
+            is_empty = int(collection.call("size")) == 0
+    else:
+        is_empty = false
+
+    if is_empty:
         var message: String = "%s must not be empty." % context
+        _record_assertion(message)
         push_error(message)
         assert(false, message)
 
@@ -33,6 +52,7 @@ static func pick_weighted(entries: Array, rng: RandomNumberGenerator) -> Variant
 
     if total_weight <= 0.0:
         var message: String = "Weighted entries must have a combined positive weight."
+        _record_assertion(message)
         push_error(message)
         assert(false, message)
 
@@ -58,6 +78,8 @@ static func handle_empty_with_fallback(
         "value": null,
     }
 
+    _last_fallback.clear()
+
     if collection != null and not collection.is_empty():
         return state
 
@@ -65,14 +87,19 @@ static func handle_empty_with_fallback(
     var message: String = "%s must not be empty." % context
 
     if fallback == null:
+        _record_assertion(message)
+        _record_fallback(context, null, false, 0, true)
         push_error(message)
         assert(false, message)
         return state
 
     if fallback is Callable and not fallback.is_null():
-        state["value"] = fallback.call()
+        var fallback_value: Variant = fallback.call()
+        state["value"] = fallback_value
+        _record_fallback(context, fallback_value, true, 1, true)
     else:
         state["value"] = fallback
+        _record_fallback(context, state["value"], false, 0, true)
 
     return state
 
@@ -99,16 +126,46 @@ static func _parse_weighted_entry(entry: Variant) -> Dictionary:
 
     if weight == null:
         var message: String = "Weighted entry %s is missing a weight." % [entry]
+        _record_assertion(message)
         push_error(message)
         assert(false, message)
 
     var weight_number: float = float(weight)
     if weight_number < 0.0:
         var message: String = "Weighted entry %s cannot use a negative weight." % [entry]
+        _record_assertion(message)
         push_error(message)
         assert(false, message)
 
     return {
         "value": value,
         "weight": weight_number,
+    }
+
+static func clear_last_assertion() -> void:
+    _last_assertion.clear()
+
+static func get_last_assertion() -> Dictionary:
+    return _last_assertion.duplicate(true)
+
+static func clear_last_fallback() -> void:
+    _last_fallback.clear()
+
+static func get_last_fallback() -> Dictionary:
+    return _last_fallback.duplicate(true)
+
+static func _record_assertion(message: String) -> void:
+    _last_assertion = {
+        "message": message,
+        "timestamp": Time.get_ticks_usec(),
+    }
+
+static func _record_fallback(context: String, value: Variant, via_callable: bool, call_count: int, was_empty: bool) -> void:
+    _last_fallback = {
+        "context": context,
+        "value": value,
+        "via_callable": via_callable,
+        "call_count": call_count,
+        "was_empty": was_empty,
+        "timestamp": Time.get_ticks_usec(),
     }

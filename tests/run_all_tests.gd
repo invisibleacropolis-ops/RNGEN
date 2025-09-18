@@ -137,22 +137,22 @@ func _execute() -> int:
         else:
             for entry in diagnostics:
                 var diagnostic_info: Dictionary = entry if entry is Dictionary else {}
-                var diagnostic_id: String = diagnostic_info.get("id", "").strip_edges()
-                var diagnostic_name: String = diagnostic_info.get("name", diagnostic_id if diagnostic_id != "" else "Unnamed Diagnostic")
+                var entry_diagnostic_id: String = diagnostic_info.get("id", "").strip_edges()
+                var diagnostic_name: String = diagnostic_info.get("name", entry_diagnostic_id if entry_diagnostic_id != "" else "Unnamed Diagnostic")
                 var diagnostic_summary: String = diagnostic_info.get("summary", "")
 
-                print("Running diagnostic: %s (%s)" % [diagnostic_name, diagnostic_id])
+                print("Running diagnostic: %s (%s)" % [diagnostic_name, entry_diagnostic_id])
                 if diagnostic_summary != "":
                     print("  Summary: %s" % diagnostic_summary)
 
-                if diagnostic_id == "":
+                if entry_diagnostic_id == "":
                     overall_success = false
                     var missing_id_message := "Diagnostic entry is missing an 'id' field."
                     print("  ✗ %s" % missing_id_message)
                     failure_summaries.append("Diagnostic %s :: %s" % [diagnostic_name, missing_id_message])
                     continue
 
-                var diagnostic_result_variant: Variant = runner_script.call("run_diagnostic", diagnostic_id)
+                var diagnostic_result_variant: Variant = runner_script.call("run_diagnostic", entry_diagnostic_id)
                 var diagnostic_result: Dictionary = {}
                 var diagnostic_exit_code := 1
 

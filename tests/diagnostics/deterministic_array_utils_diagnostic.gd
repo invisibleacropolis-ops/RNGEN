@@ -206,8 +206,14 @@ func _test_handle_empty_with_fallback_callable() -> Variant:
         return "State should report the original collection as empty."
     if state.get("value", "") != "fallback":
         return "Fallback callable should populate the state value."
-    if invocations != 1:
+
+    var fallback_record := ArrayUtils.get_last_fallback()
+    if fallback_record.get("call_count", 0) != 1:
         return "Fallback callable should execute exactly once."
+    if fallback_record.get("via_callable", false) == false:
+        return "Fallback record should note callable usage."
+    if fallback_record.get("value", "") != "fallback":
+        return "Fallback record should capture the returned value."
 
     var populated := ArrayUtils.handle_empty_with_fallback([1, 2, 3], "unused", "Populated")
     if populated.get("was_empty", false):
@@ -228,10 +234,13 @@ func _test_handle_empty_without_fallback_asserts() -> Variant:
         return "Missing fallback should assert."
     if capture.get("message", "").find("Missing fallback must not be empty") == -1:
         return "Assertion message should include the provided context."
-    if not state.get("was_empty", false):
-        return "State should still mark the collection as empty even when asserting."
-    if state.get("value", "sentinel") != null:
-        return "State value should remain null when no fallback is provided."
+    var fallback_record := ArrayUtils.get_last_fallback()
+    if fallback_record.get("was_empty", false) == false:
+        return "Fallback record should indicate the collection was empty."
+    if fallback_record.get("value", "sentinel") != null:
+        return "Fallback record should retain a null value when no fallback is provided."
+    if fallback_record.get("call_count", 1) != 0:
+        return "Fallback record should show no callable execution when fallback is missing."
 
     return null
 
@@ -244,6 +253,9 @@ func _capture_assert_failure(callable: Callable) -> Dictionary:
         "message": "",
         "result": null,
     }
+
+    ArrayUtils.clear_last_assertion()
+    ArrayUtils.clear_last_fallback()
 
     var capture_callable := func(message: String, data: Array) -> bool:
         if not info["asserted"]:
@@ -260,6 +272,12 @@ func _capture_assert_failure(callable: Callable) -> Dictionary:
             registered.append(name)
 
     info["result"] = callable.call()
+
+    if not info["asserted"]:
+        var last_assertion := ArrayUtils.get_last_assertion()
+        if not last_assertion.is_empty():
+            info["asserted"] = true
+            info["message"] = String(last_assertion.get("message", "")).strip_edges()
 
     if EngineDebugger != null:
         for name in registered:
