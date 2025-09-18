@@ -24,11 +24,12 @@ func run_from_args(args: PackedStringArray, manifest_path: String = DEFAULT_MANI
     ## Execute the manifest runner while honouring CLI-style diagnostic filters.
     _start_run(yield_frames)
     var diagnostic_request := resolve_diagnostic_request(args)
+    var group_request := resolve_group_request(args)
     var summary: Dictionary
     if diagnostic_request != "":
         summary = await _execute_single_diagnostic(diagnostic_request)
     else:
-        summary = await _execute_manifest(manifest_path)
+        summary = await _execute_manifest(manifest_path, group_request)
     summary["logs"] = _logs.duplicate()
     return summary
 
@@ -36,6 +37,13 @@ func run_manifest(manifest_path: String = DEFAULT_MANIFEST_PATH, yield_frames: b
     ## Execute the full manifest and return structured summary data.
     _start_run(yield_frames)
     var summary := await _execute_manifest(manifest_path)
+    summary["logs"] = _logs.duplicate()
+    return summary
+
+func run_group(manifest_path: String, group_id: String, yield_frames: bool = false) -> Dictionary:
+    ## Execute a manifest subset filtered by group ID.
+    _start_run(yield_frames)
+    var summary := await _execute_manifest(manifest_path, group_id)
     summary["logs"] = _logs.duplicate()
     return summary
 
@@ -72,6 +80,18 @@ static func resolve_diagnostic_request(args: PackedStringArray) -> String:
         return cli_request
 
     return env_request
+
+static func resolve_group_request(args: PackedStringArray) -> String:
+    var group_request := ""
+    var arg_count := args.size()
+    for index in range(arg_count):
+        var arg := String(args[index])
+        if arg.begins_with("--group="):
+            group_request = arg.substr("--group=".length()).strip_edges()
+        elif arg == "--group":
+            if index + 1 < arg_count:
+                group_request = String(args[index + 1]).strip_edges()
+    return group_request
 
 static func list_available_diagnostics() -> Array[Dictionary]:
     ## Build a merged diagnostic index from the manifest and script diagnostics files.
@@ -326,7 +346,7 @@ func _execute_single_diagnostic(diagnostic_id: String) -> Dictionary:
 
     return _finalize_summary(summary)
 
-func _execute_manifest(manifest_path: String) -> Dictionary:
+func _execute_manifest(manifest_path: String, group_filter: String = "") -> Dictionary:
     var summary := _make_summary_payload()
 
     if not FileAccess.file_exists(manifest_path):
@@ -356,6 +376,15 @@ func _execute_manifest(manifest_path: String) -> Dictionary:
     var manifest: Dictionary = json.data if json.data is Dictionary else {}
     var suites: Array = manifest.get("suites", [])
     var diagnostics: Array = manifest.get("diagnostics", [])
+
+    var normalized_group := group_filter.strip_edges()
+    if normalized_group != "":
+        await _log("Applying manifest group filter: %s" % normalized_group)
+        suites = _filter_manifest_entries_by_group(suites, normalized_group)
+        diagnostics = _filter_manifest_entries_by_group(diagnostics, normalized_group)
+        if suites.is_empty() and diagnostics.is_empty():
+            await _log("No test suites or diagnostics matched group '%s'." % normalized_group)
+            return _finalize_summary(summary)
 
     if suites.is_empty() and diagnostics.is_empty():
         await _log("No test suites or diagnostics declared in manifest. Nothing to run.")
@@ -469,6 +498,15 @@ func _execute_manifest(manifest_path: String) -> Dictionary:
         await _log("TESTS FAILED")
 
     return _finalize_summary(summary)
+
+static func _filter_manifest_entries_by_group(entries: Array, group_id: String) -> Array:
+    var filtered: Array = []
+    for entry in entries:
+        var entry_dict: Dictionary = entry if entry is Dictionary else {}
+        var entry_group := String(entry_dict.get("group", "")).strip_edges()
+        if entry_group == group_id:
+            filtered.append(entry_dict)
+    return filtered
 
 func _log(message: String) -> void:
     _logs.append(message)
