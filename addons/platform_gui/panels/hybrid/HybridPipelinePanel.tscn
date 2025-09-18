@@ -1,0 +1,164 @@
+[gd_scene load_steps=2 format=3 uid="uid://hybridpipelinepanel"]
+
+[ext_resource type="Script" path="res://addons/platform_gui/panels/hybrid/HybridPipelinePanel.gd" id="1_rksh5"]
+
+[node name="HybridPipelinePanel" type="VBoxContainer"]
+custom_minimum_size = Vector2(620, 0)
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+theme_override_constants/separation = 12
+script = ExtResource("1_rksh5")
+
+[node name="Header" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Header"]
+theme_override_font_sizes/font_size = 18
+text = "Hybrid Pipeline"
+
+[node name="HeaderSpacer" type="Control" parent="Header"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="RefreshButton" type="Button" parent="Header"]
+flat = true
+text = "Refresh"
+tooltip_text = "Reload strategy metadata."
+
+[node name="MetadataSummary" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+[node name="NotesLabel" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+[node name="PipelineControls" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 4
+
+[node name="SeedRow" type="HBoxContainer" parent="PipelineControls"]
+theme_override_constants/separation = 8
+
+[node name="SeedLabel" type="Label" parent="SeedRow"]
+text = "Pipeline seed"
+
+[node name="SeedInput" type="LineEdit" parent="SeedRow"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+placeholder_text = "Optional parent seed"
+
+[node name="SeedHelper" type="Label" parent="PipelineControls"]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+text = "Hybrid steps derive seeds as pipeline_seed::step_$alias."
+
+[node name="TemplateSection" type="VBoxContainer" parent="PipelineControls"]
+theme_override_constants/separation = 4
+
+[node name="TemplateLabel" type="Label" parent="TemplateSection"]
+text = "Optional template"
+
+[node name="TemplateInput" type="TextEdit" parent="TemplateSection"]
+custom_minimum_size = Vector2(0, 80)
+placeholder_text = "Forged from $material, this $item hums with $effect."
+scroll_fit_content_height = true
+wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+
+[node name="PipelineOverviewLabel" type="Label" parent="."]
+text = "Pipeline overview"
+
+[node name="PipelineTree" type="Tree" parent="."]
+columns = 5
+custom_minimum_size = Vector2(0, 200)
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+[node name="EditorSection" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+[node name="StepSidebar" type="VBoxContainer" parent="EditorSection"]
+custom_minimum_size = Vector2(220, 0)
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+[node name="StepHeader" type="HBoxContainer" parent="StepSidebar"]
+theme_override_constants/separation = 6
+
+[node name="StepLabel" type="Label" parent="StepHeader"]
+text = "Steps"
+
+[node name="StepControls" type="HBoxContainer" parent="StepSidebar"]
+theme_override_constants/separation = 6
+
+[node name="StrategySelector" type="OptionButton" parent="StepControls"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="AddStepButton" type="Button" parent="StepControls"]
+text = "Add"
+
+[node name="RemoveStepButton" type="Button" parent="StepControls"]
+text = "Remove"
+
+[node name="StepList" type="ItemList" parent="StepSidebar"]
+allow_rearrange = true
+custom_minimum_size = Vector2(0, 220)
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+[node name="StepDetails" type="VBoxContainer" parent="EditorSection"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+[node name="AliasRow" type="HBoxContainer" parent="StepDetails"]
+theme_override_constants/separation = 8
+
+[node name="AliasLabel" type="Label" parent="AliasRow"]
+text = "Alias"
+
+[node name="AliasEdit" type="LineEdit" parent="AliasRow"]
+editable = false
+placeholder_text = "store_as alias"
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="StepMetadataLabel" type="RichTextLabel" parent="StepDetails"]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="StrategyConfigHost" type="VBoxContainer" parent="StepDetails"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+theme_override_constants/separation = 8
+
+[node name="FeedbackSection" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 4
+
+[node name="ErrorLabel" type="Label" parent="FeedbackSection"]
+self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
+visible = false
+
+[node name="HintLabel" type="Label" parent="FeedbackSection"]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+visible = false
+
+[node name="DetailLabel" type="RichTextLabel" parent="FeedbackSection"]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+visible = false
+
+[node name="PreviewRow" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+
+[node name="PreviewButton" type="Button" parent="PreviewRow"]
+text = "Preview"
+
+[node name="PreviewSpacer" type="Control" parent="PreviewRow"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="PreviewOutput" type="RichTextLabel" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+visible = false
+
+[node name="StepPanelCache" type="Node" parent="."]
+visible = false

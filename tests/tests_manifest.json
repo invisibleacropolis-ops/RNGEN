@@ -37,6 +37,10 @@
       "path": "res://tests/gui/test_markov_panel.gd"
     },
     {
+      "name": "Platform GUI Hybrid Pipeline Panel Suite",
+      "path": "res://tests/gui/test_hybrid_pipeline_panel.gd"
+    },
+    {
       "name": "Name Generator Diagnostic",
       "path": "res://tests/diagnostics/name_generator_diagnostic.gd",
       "id": "name_generator"
