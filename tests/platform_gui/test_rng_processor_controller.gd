@@ -13,6 +13,7 @@ func run() -> Dictionary:
     _run_test("wraps_rng_processor_api", func(): _test_wraps_rng_processor_api())
     _run_test("forwards_generation_signals", func(): _test_forwards_generation_signals())
     _run_test("exposes_debug_rng_helpers", func(): _test_exposes_debug_rng_helpers())
+    _run_test("exposes_seed_dashboard_helpers", func(): _test_exposes_seed_dashboard_helpers())
 
     return {
         "suite": "Platform GUI RNGProcessor Controller",
@@ -143,6 +144,42 @@ func _test_exposes_debug_rng_helpers() -> Variant:
 
     return null
 
+func _test_exposes_seed_dashboard_helpers() -> Variant:
+    var processor := StubRNGProcessor.new()
+    var event_bus := StubEventBus.new()
+    var controller := _make_controller(processor, event_bus)
+
+    processor.master_seed = 42
+    if controller.get_master_seed() != 42:
+        return "get_master_seed should proxy the processor value."
+
+    processor.randomize_return_value = 77
+    if controller.randomize_master_seed() != 77:
+        return "randomize_master_seed should forward processor results."
+
+    var streams := controller.describe_rng_streams()
+    if streams.get("mode", "") != "rng_manager":
+        return "describe_rng_streams should duplicate the processor payload."
+    streams["mode"] = "tampered"
+    if processor.stream_payload.get("mode", "") != "rng_manager":
+        return "describe_rng_streams must protect the processor payload from mutation."
+
+    var routing := controller.describe_stream_routing(PackedStringArray(["alpha"]))
+    if routing.get("requested", "") != "alpha":
+        return "describe_stream_routing should forward requested stream names."
+    if processor.last_routing_request.size() != 1 or processor.last_routing_request[0] != "alpha":
+        return "describe_stream_routing should forward the provided stream filter."
+
+    var export_payload := controller.export_seed_state()
+    if export_payload.get("master_seed", 0) != 42:
+        return "export_seed_state should duplicate the processor payload."
+
+    controller.import_seed_state({"master_seed": 99})
+    if processor.import_payloads.size() != 1:
+        return "import_seed_state should forward payloads to the processor."
+
+    return null
+
 func _make_controller(processor: StubRNGProcessor, event_bus: StubEventBus) -> Node:
     var controller: Node = CONTROLLER_SCENE.instantiate()
     controller.set_rng_processor_override(processor)
@@ -175,6 +212,13 @@ class StubRNGProcessor:
     var last_debug_rng: Variant = null
     var last_attach_to_debug: bool = true
     var debug_rng_return_value: Variant = null
+    var master_seed: int = 0
+    var randomize_return_value: int = 0
+    var stream_payload: Dictionary = {"mode": "rng_manager", "streams": {"alpha": {"seed": 1, "state": 2}}}
+    var routing_payload: Dictionary = {"requested": "alpha"}
+    var export_payload: Dictionary = {"master_seed": 42}
+    var last_routing_request: PackedStringArray = PackedStringArray()
+    var import_payloads: Array = []
 
     func initialize_master_seed(seed_value: int) -> void:
         initialize_calls.append(seed_value)
@@ -182,11 +226,30 @@ class StubRNGProcessor:
     func reset_master_seed() -> int:
         return reset_return_value
 
+    func get_master_seed() -> int:
+        return master_seed
+
+    func randomize_master_seed() -> int:
+        return randomize_return_value
+
     func list_strategies() -> PackedStringArray:
         return strategies
 
     func describe_strategies() -> Dictionary:
         return descriptions
+
+    func describe_rng_streams() -> Dictionary:
+        return stream_payload
+
+    func describe_stream_routing(stream_names: PackedStringArray = PackedStringArray()) -> Dictionary:
+        last_routing_request = PackedStringArray(stream_names)
+        return routing_payload
+
+    func export_rng_state() -> Dictionary:
+        return export_payload
+
+    func import_rng_state(payload: Variant) -> void:
+        import_payloads.append(payload)
 
     func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Variant:
         last_generate_config = config

@@ -21,6 +21,7 @@ func run() -> Dictionary:
 
     _run_test("seed_management_controls_master_seed", func(): _test_seed_management())
     _run_test("strategy_introspection_matches_name_generator", func(): _test_strategy_introspection())
+    _run_test("rng_state_introspection", func(): _test_rng_state_introspection())
     _run_test("generate_emits_success_signals", func(): _test_generate_success())
     _run_test("generate_emits_failure_signals", func(): _test_generate_failure())
 
@@ -204,8 +205,67 @@ func _test_generate_failure() -> Variant:
 
     return null
 
+func _test_rng_state_introspection() -> Variant:
+    var processor := _make_processor()
+    processor.initialize_master_seed(9001)
+    processor.get_rng("alpha")
+
+    var topology := processor.describe_rng_streams()
+    if topology.get("mode", "") != "rng_manager":
+        return "describe_rng_streams should report rng_manager when the singleton is available."
+    var streams: Dictionary = topology.get("streams", {})
+    if not streams.has("alpha"):
+        return "describe_rng_streams should expose the requested stream payload."
+
+    var exported := processor.export_rng_state()
+    if exported.get("master_seed", 0) != processor.get_master_seed():
+        return "export_rng_state master seed should match get_master_seed."
+
+    var routing := processor.describe_stream_routing()
+    if routing.get("master_seed", 0) != processor.get_master_seed():
+        return "describe_stream_routing should echo the active master seed."
+
+    var original_manager := Engine.get_singleton("RNGManager")
+    if original_manager == null:
+        return "RNGManager singleton must exist for the test to continue."
+    Engine.unregister_singleton("RNGManager")
+
+    var fallback_processor := _make_processor_without_rng_manager()
+    fallback_processor.initialize_master_seed(31415)
+    fallback_processor.get_rng("beta")
+
+    var fallback_topology := fallback_processor.describe_rng_streams()
+    if fallback_topology.get("mode", "") != "fallback":
+        Engine.register_singleton("RNGManager", original_manager)
+        return "describe_rng_streams should report fallback mode when RNGManager is missing."
+    if not fallback_topology.get("streams", {}).has("beta"):
+        Engine.register_singleton("RNGManager", original_manager)
+        return "Fallback topology should include locally derived streams."
+
+    var fallback_routing := fallback_processor.describe_stream_routing()
+    if fallback_routing.get("mode", "") != "fallback":
+        Engine.register_singleton("RNGManager", original_manager)
+        return "describe_stream_routing should note fallback mode when RNGManager is missing."
+
+    var export_payload := fallback_processor.export_rng_state()
+    var seed_before := fallback_processor.get_master_seed()
+    fallback_processor.initialize_master_seed(123)
+    fallback_processor.import_rng_state(export_payload)
+    if fallback_processor.get_master_seed() != seed_before:
+        Engine.register_singleton("RNGManager", original_manager)
+        return "import_rng_state should restore the exported master seed in fallback mode."
+
+    Engine.register_singleton("RNGManager", original_manager)
+    return null
+
 func _make_processor() -> RNGProcessor:
     _ensure_required_singletons()
+    var processor := RNGProcessor.new()
+    processor._ready()
+    return processor
+
+func _make_processor_without_rng_manager() -> RNGProcessor:
+    _ensure_name_generator_singleton()
     var processor := RNGProcessor.new()
     processor._ready()
     return processor
@@ -217,6 +277,9 @@ func _ensure_required_singletons() -> void:
         rng_manager_instance._ready()
         Engine.register_singleton("RNGManager", rng_manager_instance)
 
+    _ensure_name_generator_singleton()
+
+func _ensure_name_generator_singleton() -> void:
     if not Engine.has_singleton("NameGenerator"):
         var name_generator_script: GDScript = load("res://name_generator/NameGenerator.gd")
         var generator_instance: Node = name_generator_script.new()

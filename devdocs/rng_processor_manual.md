@@ -26,6 +26,9 @@ The class lives at `res://name_generator/RNGProcessor.gd` and can be retrieved a
 - `reset_master_seed() -> int` – Alias that randomises and returns the new seed; helpful for UI buttons that need to display the updated value immediately.
 - `get_master_seed() -> int` – Query the currently active master seed (falls back to the processor’s cached copy when `RNGManager` is not registered, e.g. during headless unit tests).
 - `get_rng(stream_name: String) -> RandomNumberGenerator` – Request a deterministic stream. When `RNGManager` is present the call is proxied; otherwise a hashed fallback stream derived from the current master seed is served.
+- `describe_rng_streams() -> Dictionary` – Return a snapshot of the master seed plus every known RNG stream. When `RNGManager` is online the dictionary mirrors `RNGManager.save_state()`. In fallback mode it exposes the middleware’s cached streams together with their router paths so tooling can visualise derivations.
+- `describe_stream_routing(stream_names := PackedStringArray()) -> Dictionary` – Build a deterministic routing preview by hashing the supplied stream names (or every observed stream when left empty) with `RNGStreamRouter`. The payload includes the resolved seeds and human-readable notes describing whether the data came from `RNGManager` or the fallback cache.
+- `export_rng_state() -> Dictionary` / `import_rng_state(payload: Variant)` – Persist and restore the entire RNG topology. These calls round-trip `RNGManager.save_state()` / `load_state()` when the singleton is present and fall back to the middleware’s cache when running in isolation.
 
 ### Request execution & strategy metadata
 

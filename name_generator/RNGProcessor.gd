@@ -12,6 +12,7 @@ signal generation_failed(request_config: Dictionary, error: Dictionary, metadata
 const NameGeneratorScript := preload("res://name_generator/NameGenerator.gd")
 const RNGManagerScript := preload("res://name_generator/RNGManager.gd")
 const DebugRNG := preload("res://name_generator/tools/DebugRNG.gd")
+const RNGStreamRouter := preload("res://name_generator/utils/RNGManager.gd")
 
 var _name_generator: Object = null
 var _rng_manager: Object = null
@@ -69,12 +70,149 @@ func get_rng(stream_name: String) -> RandomNumberGenerator:
 
     var key := stream_name if not stream_name.is_empty() else "default"
     if not _fallback_streams.has(key):
-        var rng := RandomNumberGenerator.new()
-        var seed := int(hash("%s::%s" % [_fallback_master_seed, key]) & 0x7fffffffffffffff)
-        rng.seed = seed
-        rng.state = seed
+        var router: RNGStreamRouter = _build_router_for_stream(_fallback_master_seed, key)
+        var rng := router.to_rng()
         _fallback_streams[key] = rng
     return _fallback_streams[key]
+
+func describe_rng_streams() -> Dictionary:
+    ## Provide a snapshot of the active RNG topology. When RNGManager is
+    ## available the method proxies its `save_state()` payload so tooling can
+    ## inspect live stream seeds. In fallback mode we expose the locally cached
+    ## streams derived from RNGStreamRouter semantics, mirroring how
+    ## `get_rng(...)` hashes stream paths.
+    var payload: Dictionary = {
+        "mode": "rng_manager",
+        "master_seed": get_master_seed(),
+        "streams": {},
+    }
+
+    var manager := _get_rng_manager()
+    if manager != null and manager.has_method("save_state"):
+        var state_payload: Variant = manager.call("save_state")
+        if state_payload is Dictionary:
+            var state_dict: Dictionary = state_payload
+            var streams_payload: Variant = state_dict.get("streams", {})
+            if streams_payload is Dictionary:
+                for stream_name in streams_payload.keys():
+                    var name := String(stream_name)
+                    payload["streams"][name] = _normalise_stream_payload(streams_payload[stream_name])
+            return payload
+
+    payload["mode"] = "fallback"
+    for stream_name in _fallback_streams.keys():
+        var rng: RandomNumberGenerator = _fallback_streams[stream_name]
+        payload["streams"][String(stream_name)] = {
+            "seed": int(rng.seed),
+            "state": int(rng.state),
+            "path": _build_fallback_path(String(stream_name)),
+        }
+    return payload
+
+func describe_stream_routing(stream_names: PackedStringArray = PackedStringArray()) -> Dictionary:
+    ## Summarise how RNG streams are derived from the master seed. The response
+    ## mirrors RNGStreamRouter semantics so UI tooling can render routing trees
+    ## and explain fallback behaviour when RNGManager is unavailable.
+    var topology := describe_rng_streams()
+    var routes: Array = []
+    var master_seed := int(topology.get("master_seed", 0))
+    var observed_streams: Dictionary = topology.get("streams", {})
+
+    var names: Array = []
+    if stream_names.is_empty():
+        for key in observed_streams.keys():
+            names.append(String(key))
+    else:
+        for value in stream_names:
+            names.append(String(value))
+
+    names.sort()
+
+    for stream_name in names:
+        var path := _build_fallback_path(stream_name)
+        var router: RNGStreamRouter = _build_router_for_stream(master_seed, stream_name)
+        var derived_rng := router.to_rng()
+        var stream_info: Dictionary = observed_streams.get(stream_name, {})
+        var route: Dictionary = {
+            "stream": stream_name,
+            "path": path,
+            "derived_seed": int(derived_rng.seed),
+            "derived_state": int(derived_rng.state),
+        }
+        if stream_info.has("seed"):
+            route["resolved_seed"] = int(stream_info["seed"])
+        if stream_info.has("state"):
+            route["resolved_state"] = int(stream_info["state"])
+        if stream_info.has("path"):
+            route["fallback_path"] = stream_info["path"]
+        routes.append(route)
+
+    var notes: Array = []
+    if topology.get("mode", "rng_manager") == "fallback":
+        notes.append("RNGManager unavailable; fallback streams derive deterministic seeds via RNGStreamRouter using the listed path segments.")
+    else:
+        notes.append("RNGManager authoritative; router preview illustrates the deterministic path used when replaying streams in tools.")
+
+    return {
+        "mode": topology.get("mode", "rng_manager"),
+        "master_seed": master_seed,
+        "routes": routes,
+        "notes": notes,
+    }
+
+func export_rng_state() -> Dictionary:
+    ## Serialize the current seed topology so it can be imported later. The
+    ## payload mirrors `RNGManager.save_state()` when the singleton is
+    ## available, falling back to the processor's cached streams in isolated
+    ## environments.
+    var manager := _get_rng_manager()
+    if manager != null and manager.has_method("save_state"):
+        var state_payload: Variant = manager.call("save_state")
+        if state_payload is Dictionary:
+            return (state_payload as Dictionary).duplicate(true)
+
+    var exported_streams: Dictionary = {}
+    for stream_name in _fallback_streams.keys():
+        var rng: RandomNumberGenerator = _fallback_streams[stream_name]
+        exported_streams[String(stream_name)] = {
+            "seed": int(rng.seed),
+            "state": int(rng.state),
+        }
+
+    return {
+        "master_seed": _fallback_master_seed,
+        "streams": exported_streams,
+    }
+
+func import_rng_state(payload: Variant) -> void:
+    ## Restore a previously exported seed topology. The call proxies
+    ## `RNGManager.load_state(...)` when possible and otherwise hydrates the
+    ## fallback caches maintained by the processor.
+    var manager := _get_rng_manager()
+    if manager != null and manager.has_method("load_state"):
+        manager.call("load_state", payload)
+        _fallback_master_seed = int(manager.call("get_master_seed"))
+        _fallback_streams.clear()
+        return
+
+    if typeof(payload) != TYPE_DICTIONARY:
+        push_warning("RNGProcessor.import_rng_state expected a Dictionary payload when RNGManager is unavailable.")
+        return
+
+    var data: Dictionary = payload
+    _fallback_master_seed = int(data.get("master_seed", 0))
+    _fallback_streams.clear()
+
+    var streams_payload: Variant = data.get("streams", {})
+    if streams_payload is Dictionary:
+        for stream_name in streams_payload.keys():
+            var name := String(stream_name)
+            var router: RNGStreamRouter = _build_router_for_stream(_fallback_master_seed, name)
+            var rng := router.to_rng()
+            var stream_state: Dictionary = _normalise_stream_payload(streams_payload[stream_name])
+            rng.seed = int(stream_state.get("seed", rng.seed))
+            rng.state = int(stream_state.get("state", rng.state))
+            _fallback_streams[name] = rng
 
 func list_strategies() -> PackedStringArray:
     ## Mirror NameGenerator.list_strategies so tooling can enumerate available
@@ -266,3 +404,31 @@ func _record_debug_stream_usage(stream_name: String, strategy_id: String, seed: 
         "source": source,
     }
     _debug_rng.record_stream_usage(stream_name, context)
+
+func _normalise_stream_payload(payload: Variant) -> Dictionary:
+    var result: Dictionary = {"seed": 0, "state": 0}
+    if typeof(payload) in [TYPE_INT, TYPE_FLOAT]:
+        var value := int(payload)
+        result["seed"] = value
+        result["state"] = value
+        return result
+    if payload is Dictionary:
+        var data: Dictionary = payload
+        if typeof(data.get("seed", null)) in [TYPE_INT, TYPE_FLOAT]:
+            result["seed"] = int(data["seed"])
+        if typeof(data.get("state", null)) in [TYPE_INT, TYPE_FLOAT]:
+            result["state"] = int(data["state"])
+        elif data.has("seed"):
+            result["state"] = result["seed"]
+    return result
+
+func _build_router_for_stream(seed_value: int, stream_name: String) -> RNGStreamRouter:
+    var key := stream_name if not stream_name.is_empty() else "default"
+    var path := _build_fallback_path(key)
+    return (RNGStreamRouter.new(seed_value, path) as RNGStreamRouter)
+
+func _build_fallback_path(stream_name: String) -> PackedStringArray:
+    var path := PackedStringArray()
+    path.append("rng_processor")
+    path.append(stream_name if not stream_name.is_empty() else "default")
+    return path
