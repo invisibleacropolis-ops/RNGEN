@@ -1,4 +1,4 @@
-extends GeneratorStrategy
+extends "res://name_generator/strategies/GeneratorStrategy.gd"
 class_name MarkovChainStrategy
 
 const MarkovModelResource := preload("res://name_generator/resources/MarkovModelResource.gd")

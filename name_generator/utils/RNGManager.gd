@@ -8,6 +8,8 @@
 class_name RNGStreamRouter
 extends RefCounted
 
+const Self := preload("res://name_generator/utils/RNGManager.gd")
+
 const HASH_ALGORITHM := HashingContext.HASH_SHA256
 const SEGMENT_SEPARATOR_BYTE := 0x1F
 
@@ -35,7 +37,7 @@ func branch(extra_segments: Array = []) -> RNGStreamRouter:
     var segments := PackedStringArray(_path)
     for segment in extra_segments:
         segments.append(str(segment))
-    return RNGStreamRouter.new(_root_seed, segments)
+    return (Self.new(_root_seed, segments) as RNGStreamRouter)
 
 func to_rng() -> RandomNumberGenerator:
     return _make_rng_for_path(_path)
@@ -78,5 +80,5 @@ static func derive_child_rng(
         push_error("RNGStreamRouter.derive_child_rng requires a valid parent RNG.")
         return RandomNumberGenerator.new()
 
-    var router := RNGStreamRouter.new(parent_rng.seed)
+    var router: RNGStreamRouter = Self.new(parent_rng.seed) as RNGStreamRouter
     return router.derive_rng([key, depth])

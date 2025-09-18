@@ -213,7 +213,7 @@ func _on_generation_failed(config: Dictionary, error: Dictionary, metadata: Dict
         "error": _duplicate_variant(error),
     })
 
-func _on_strategy_error(strategy_id: String, code: String, message: String, details: Dictionary) -> void:
+func _on_strategy_error(code: String, message: String, details: Dictionary, strategy_id: String) -> void:
     _stats["strategy_errors"] += 1
     _log_entries.append({
         "type": "strategy_error",

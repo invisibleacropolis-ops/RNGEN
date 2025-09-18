@@ -1,4 +1,4 @@
-extends GeneratorStrategy
+extends "res://name_generator/strategies/GeneratorStrategy.gd"
 class_name SyllableChainStrategy
 
 ## Strategy that concatenates syllables from a [SyllableSetResource].
@@ -28,6 +28,7 @@ class_name SyllableChainStrategy
 ## seed.
 
 const ArrayUtils := preload("res://name_generator/utils/ArrayUtils.gd")
+const SyllableSetResource := preload("res://name_generator/resources/SyllableSetResource.gd")
 
 func _get_expected_config_keys() -> Dictionary:
     return {
