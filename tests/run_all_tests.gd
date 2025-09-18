@@ -22,7 +22,10 @@ func _execute() -> int:
         if not runner_script.has_method("run_diagnostic"):
             push_error("Diagnostic runner script missing required `run_diagnostic()` function.")
             return 1
-        return runner_script.call("run_diagnostic", diagnostic_id)
+        var single_result: Variant = runner_script.call("run_diagnostic", diagnostic_id)
+        if single_result is Dictionary:
+            return int(single_result.get("exit_code", 1))
+        return int(single_result)
 
     if not FileAccess.file_exists(MANIFEST_PATH):
         push_error("Test manifest not found at %s" % MANIFEST_PATH)
@@ -46,14 +49,23 @@ func _execute() -> int:
         return 1
 
     var suites: Array = manifest.get("suites", [])
-    if suites.is_empty():
-        push_warning("No test suites declared in manifest. Nothing to run.")
+    var diagnostics: Array = manifest.get("diagnostics", [])
+
+    if suites.is_empty() and diagnostics.is_empty():
+        push_warning("No test suites or diagnostics declared in manifest. Nothing to run.")
         return 0
 
     var overall_success := true
     var aggregate_total := 0
     var aggregate_passed := 0
     var aggregate_failed := 0
+    var suite_total := 0
+    var suite_passed := 0
+    var suite_failed := 0
+    var diagnostic_total := 0
+    var diagnostic_passed := 0
+    var diagnostic_failed := 0
+    var failure_summaries: Array = []
 
     for entry in suites:
         var suite_info: Dictionary = entry if entry is Dictionary else {}
@@ -98,6 +110,9 @@ func _execute() -> int:
         aggregate_total += total
         aggregate_passed += passed
         aggregate_failed += failed
+        suite_total += total
+        suite_passed += passed
+        suite_failed += failed
 
         print("  Total: %d" % total)
         print("  Passed: %d" % passed)
@@ -110,10 +125,76 @@ func _execute() -> int:
                 var test_name: String = failure_info.get("name", "Unnamed Test")
                 var message: String = failure_info.get("message", "")
                 print("    ✗ %s -- %s" % [test_name, message])
+                failure_summaries.append("Suite %s :: %s -- %s" % [suite_name, test_name, message])
         else:
             print("  ✅ All tests passed in suite: %s" % suite_name)
 
-    print("\nTest summary: %d passed, %d failed, %d total." % [aggregate_passed, aggregate_failed, aggregate_total])
+    if not diagnostics.is_empty():
+        var runner_script: Resource = load(DIAGNOSTIC_RUNNER_PATH)
+        if runner_script == null or not runner_script.has_method("run_diagnostic"):
+            overall_success = false
+            push_error("Unable to load diagnostic runner for manifest diagnostics.")
+        else:
+            for entry in diagnostics:
+                var diagnostic_info: Dictionary = entry if entry is Dictionary else {}
+                var diagnostic_id: String = diagnostic_info.get("id", "").strip_edges()
+                var diagnostic_name: String = diagnostic_info.get("name", diagnostic_id if diagnostic_id != "" else "Unnamed Diagnostic")
+                var diagnostic_summary: String = diagnostic_info.get("summary", "")
+
+                print("Running diagnostic: %s (%s)" % [diagnostic_name, diagnostic_id])
+                if diagnostic_summary != "":
+                    print("  Summary: %s" % diagnostic_summary)
+
+                if diagnostic_id == "":
+                    overall_success = false
+                    var missing_id_message := "Diagnostic entry is missing an 'id' field."
+                    print("  ✗ %s" % missing_id_message)
+                    failure_summaries.append("Diagnostic %s :: %s" % [diagnostic_name, missing_id_message])
+                    continue
+
+                var diagnostic_result_variant: Variant = runner_script.call("run_diagnostic", diagnostic_id)
+                var diagnostic_result: Dictionary = {}
+                var diagnostic_exit_code := 1
+
+                if diagnostic_result_variant is Dictionary:
+                    diagnostic_result = diagnostic_result_variant
+                    diagnostic_exit_code = int(diagnostic_result.get("exit_code", 1))
+                else:
+                    diagnostic_exit_code = int(diagnostic_result_variant)
+
+                var total: int = int(diagnostic_result.get("total", 0))
+                var passed: int = int(diagnostic_result.get("passed", 0))
+                var failed: int = int(diagnostic_result.get("failed", 0))
+                var failures_variant: Variant = diagnostic_result.get("failures", [])
+                var failures: Array = failures_variant if failures_variant is Array else []
+
+                aggregate_total += total
+                aggregate_passed += passed
+                aggregate_failed += failed
+                diagnostic_total += total
+                diagnostic_passed += passed
+                diagnostic_failed += failed
+
+                if diagnostic_exit_code != 0:
+                    overall_success = false
+
+                if not failures.is_empty():
+                    for failure in failures:
+                        var failure_info: Dictionary = failure if failure is Dictionary else {}
+                        var test_name: String = failure_info.get("name", "Unnamed Check")
+                        var message: String = failure_info.get("message", "")
+                        failure_summaries.append("Diagnostic %s :: %s -- %s" % [diagnostic_name, test_name, message])
+                elif diagnostic_exit_code != 0:
+                    failure_summaries.append("Diagnostic %s :: Reported failures without details." % diagnostic_name)
+
+    print("\nSuite summary: %d passed, %d failed, %d total." % [suite_passed, suite_failed, suite_total])
+    print("Diagnostic summary: %d passed, %d failed, %d total." % [diagnostic_passed, diagnostic_failed, diagnostic_total])
+    print("Overall summary: %d passed, %d failed, %d total." % [aggregate_passed, aggregate_failed, aggregate_total])
+
+    if not failure_summaries.is_empty():
+        print("\nFailure details:")
+        for failure_summary in failure_summaries:
+            print("  - %s" % failure_summary)
 
     if overall_success:
         print("ALL TESTS PASSED")
