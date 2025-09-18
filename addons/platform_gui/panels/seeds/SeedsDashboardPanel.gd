@@ -10,7 +10,18 @@ extends VBoxContainer
 signal seed_applied(new_seed: int)
 
 const _ERROR_COLOR := Color(1.0, 0.2, 0.2)
+const _WARNING_COLOR := Color(0.82, 0.49, 0.09)
 const _INFO_COLOR := Color(0.3, 0.6, 0.9)
+
+const _STATUS_ICONS := {
+    "info": "ℹ️",
+    "warning": "⚠️",
+    "error": "❌",
+}
+
+const _Preferences := preload("res://addons/platform_gui/services/platform_preferences.gd")
+const _PREFERENCES_SECTION := "seeds_dashboard"
+const _PREFERENCE_KEY_LAST_SEED := "last_manual_seed"
 
 @onready var _master_seed_label: Label = %MasterSeedLabel
 @onready var _seed_input: LineEdit = %SeedInput
@@ -46,7 +57,13 @@ func _ready() -> void:
     _routing_tree.set_column_title(1, "Router path")
     _routing_tree.set_column_title(2, "Derived seed")
     _routing_tree.set_column_title(3, "Resolved seed")
+    _load_preferences()
     _refresh_dashboard()
+
+func _load_preferences() -> void:
+    var stored_seed := String(_Preferences.load_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_SEED, ""))
+    if stored_seed != "":
+        _seed_input.text = stored_seed
 
 func refresh() -> void:
     _refresh_dashboard()
@@ -64,7 +81,7 @@ func clear_controller_override() -> void:
 func _refresh_dashboard() -> void:
     var controller := _get_controller()
     if controller == null:
-        _update_status(_format_error("RNGProcessor controller unavailable."))
+        _update_status("RNGProcessor controller unavailable.", "error")
         _master_seed_label.text = "--"
         _streams_tree.clear()
         _routing_tree.clear()
@@ -83,7 +100,7 @@ func _refresh_master_seed(controller: Object) -> void:
         _update_status("Master seed sourced from middleware.")
     else:
         _master_seed_label.text = "--"
-        _update_status(_format_error("Controller missing get_master_seed()."))
+        _update_status("Controller missing get_master_seed().", "error")
 
 func _refresh_streams(controller: Object) -> void:
     _streams_tree.clear()
@@ -139,30 +156,31 @@ func _refresh_routing(controller: Object) -> void:
             item.set_tooltip_text(0, String(route["notes"]))
     var notes: Array = routing.get("notes", [])
     if notes.size() > 0:
-        var current := _status_label.text
+        var current := _status_label.bbcode_text
         var error_tag := _ERROR_COLOR.to_html()
         if current == "" or current.find(error_tag) == -1:
-            _status_label.text = "[color=%s]%s[/color]" % [_INFO_COLOR.to_html(), String(notes[0])]
+            _status_label.bbcode_text = _format_status(String(notes[0]))
 
 func _on_apply_pressed() -> void:
     var seed_text := _seed_input.text.strip_edges()
     if not seed_text.is_valid_int():
-        _update_status(_format_error("Seed must be an integer."))
+        _update_status("Seed must be an integer.", "error")
         return
     var controller := _get_controller()
     if controller == null or not controller.has_method("initialize_master_seed"):
-        _update_status(_format_error("Controller unavailable; seed not applied."))
+        _update_status("Controller unavailable; seed not applied.", "error")
         return
     var seed_value := int(seed_text)
     controller.call("initialize_master_seed", seed_value)
     _update_status("Applied master seed %s." % seed_value)
+    _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_SEED, str(seed_value))
     seed_applied.emit(seed_value)
     _refresh_dashboard()
 
 func _on_randomize_pressed() -> void:
     var controller := _get_controller()
     if controller == null:
-        _update_status(_format_error("Controller unavailable; cannot randomize."))
+        _update_status("Controller unavailable; cannot randomize.", "error")
         return
     var seed_value := 0
     if controller.has_method("randomize_master_seed"):
@@ -171,6 +189,7 @@ func _on_randomize_pressed() -> void:
         seed_value = int(controller.call("reset_master_seed"))
     _seed_input.text = str(seed_value)
     _update_status("Randomized master seed to %s." % seed_value)
+    _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_SEED, str(seed_value))
     seed_applied.emit(seed_value)
     _refresh_dashboard()
 
@@ -181,11 +200,11 @@ func _on_seed_submitted(text: String) -> void:
 func _on_export_pressed() -> void:
     var controller := _get_controller()
     if controller == null or not controller.has_method("export_seed_state"):
-        _update_status(_format_error("Controller unavailable; export skipped."))
+        _update_status("Controller unavailable; export skipped.", "error")
         return
     var payload: Variant = controller.call("export_seed_state")
     if not (payload is Dictionary):
-        _update_status(_format_error("Export failed; middleware returned unexpected payload."))
+        _update_status("Export failed; middleware returned unexpected payload.", "error")
         return
     var json := JSON.stringify(payload, "  ")
     _export_text.text = json
@@ -194,16 +213,16 @@ func _on_export_pressed() -> void:
 func _on_import_pressed() -> void:
     var controller := _get_controller()
     if controller == null or not controller.has_method("import_seed_state"):
-        _update_status(_format_error("Controller unavailable; import skipped."))
+        _update_status("Controller unavailable; import skipped.", "error")
         return
     var text := _export_text.text.strip_edges()
     if text == "":
-        _update_status(_format_error("Paste a JSON payload before importing."))
+        _update_status("Paste a JSON payload before importing.", "error")
         return
     var parser := JSON.new()
     var error := parser.parse(text)
     if error != OK:
-        _update_status(_format_error("Invalid JSON: %s." % parser.get_error_message()))
+        _update_status("Invalid JSON: %s." % parser.get_error_message(), "error")
         return
     controller.call("import_seed_state", parser.data)
     _update_status("Imported seed topology.")
@@ -226,8 +245,18 @@ func _get_controller() -> Object:
             return _cached_controller
     return null
 
-func _update_status(message: String) -> void:
-    _status_label.text = message
+func _update_status(message: String, severity: String = "info") -> void:
+    _status_label.bbcode_text = _format_status(message, severity)
 
 func _format_error(message: String) -> String:
-    return "[color=%s]%s[/color]" % [_ERROR_COLOR.to_html(), message]
+    return _format_status(message, "error")
+
+func _format_status(message: String, severity: String = "info") -> String:
+    var color := _INFO_COLOR
+    var icon := _STATUS_ICONS.get(severity, _STATUS_ICONS["info"])
+    match severity:
+        "warning":
+            color = _WARNING_COLOR
+        "error":
+            color = _ERROR_COLOR
+    return "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]

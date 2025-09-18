@@ -28,6 +28,12 @@ const _INFO_COLOR := Color(0.27, 0.56, 0.86)
 const _WARNING_COLOR := Color(0.82, 0.49, 0.09)
 const _ERROR_COLOR := Color(0.86, 0.23, 0.23)
 
+const _STATUS_ICONS := {
+    "info": "ℹ️",
+    "warning": "⚠️",
+    "error": "❌",
+}
+
 @onready var _inspect_button: Button = %InspectButton
 @onready var _builder_button: Button = %SyllableBuilderButton
 @onready var _docs_button: Button = %DocsButton
@@ -265,11 +271,12 @@ func _refresh_context_message() -> void:
 
 func _set_status(message: String, severity: String = "info") -> void:
     var color := _INFO_COLOR
+    var icon := _STATUS_ICONS.get(severity, _STATUS_ICONS["info"])
     if severity == "warning":
         color = _WARNING_COLOR
     elif severity == "error":
         color = _ERROR_COLOR
-    _status_label.bbcode_text = "[color=%s]%s[/color]" % [color.to_html(), message]
+    _status_label.bbcode_text = "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]
 
 func _get_editor_interface() -> Object:
     if _editor_interface_override != null:

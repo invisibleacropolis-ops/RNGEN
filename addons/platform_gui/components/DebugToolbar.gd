@@ -13,7 +13,14 @@ extends HBoxContainer
 const DebugRNG := preload("res://name_generator/tools/DebugRNG.gd")
 
 const _INFO_COLOR := Color(0.3, 0.6, 0.9)
+const _WARNING_COLOR := Color(0.82, 0.49, 0.09)
 const _ERROR_COLOR := Color(0.86, 0.23, 0.23)
+
+const _STATUS_ICONS := {
+    "info": "ℹ️",
+    "warning": "⚠️",
+    "error": "❌",
+}
 
 @onready var _session_label_edit: LineEdit = %SessionLabel
 @onready var _ticket_edit: LineEdit = %TicketInput
@@ -63,11 +70,11 @@ func _on_start_pressed() -> void:
 
 func _on_attach_pressed() -> void:
     if _debug_rng == null:
-        _set_status(_format_error("Start a DebugRNG session before attaching."))
+        _set_status("Start a DebugRNG session before attaching.", "error")
         return
     var controller := _get_controller()
     if controller == null or not controller.has_method("set_debug_rng"):
-        _set_status(_format_error("RNGProcessor controller unavailable; attach skipped."))
+        _set_status("RNGProcessor controller unavailable; attach skipped.", "error")
         return
     controller.call("set_debug_rng", _debug_rng, true)
     _set_status("Attached DebugRNG helper to middleware.")
@@ -112,7 +119,7 @@ func _detach_helper(update_status: bool = true) -> bool:
     var controller := _get_controller()
     if controller == null or not controller.has_method("set_debug_rng"):
         if update_status:
-            _set_status(_format_error("RNGProcessor controller unavailable; detach skipped."))
+            _set_status("RNGProcessor controller unavailable; detach skipped.", "error")
         return false
     controller.call("set_debug_rng", null)
     return true
@@ -123,11 +130,21 @@ func _update_button_states() -> void:
     _detach_button.disabled = _get_controller() == null
     _stop_button.disabled = not has_debug
 
-func _set_status(message: String) -> void:
-    _status_label.text = message
+func _set_status(message: String, severity: String = "info") -> void:
+    _status_label.bbcode_text = _format_status(message, severity)
 
 func _format_error(message: String) -> String:
-    return "[color=%s]%s[/color]" % [_ERROR_COLOR.to_html(), message]
+    return _format_status(message, "error")
+
+func _format_status(message: String, severity: String) -> String:
+    var color := _INFO_COLOR
+    var icon := _STATUS_ICONS.get(severity, _STATUS_ICONS["info"])
+    match severity:
+        "warning":
+            color = _WARNING_COLOR
+        "error":
+            color = _ERROR_COLOR
+    return "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]
 
 func _get_controller() -> Object:
     if _controller_override != null:
