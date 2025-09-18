@@ -165,13 +165,17 @@ func _on_preview_button_pressed() -> void:
     if response is Dictionary and response.has("code"):
         var error_dict: Dictionary = response
         var message := String(error_dict.get("message", "Generation failed."))
-        var hint := _lookup_error_hint(String(error_dict.get("code", "")))
+        var guidance := _lookup_error_guidance(String(error_dict.get("code", "")))
+        var composed := _compose_guidance_display(guidance)
+        var hint := String(composed.get("text", ""))
+        var tooltip := String(composed.get("tooltip", ""))
         if hint != "":
             message += "\n%s" % hint
         _update_preview_state({
             "status": "error",
             "message": message,
             "details": error_dict.get("details", {}),
+            "tooltip": tooltip,
         })
         _update_seed_helper()
         return
@@ -470,8 +474,10 @@ func _populate_token_children(parent: TreeItem, children: Array) -> void:
 func _apply_validation_feedback(errors: Array) -> void:
     _validation_label.visible = false
     _validation_label.text = ""
+    _validation_label.tooltip_text = ""
     _fix_it_label.visible = false
     _fix_it_label.text = ""
+    _fix_it_label.tooltip_text = ""
     _set_control_highlight(_template_input, false)
     _set_control_highlight(_sub_generators_edit, false)
     _set_control_highlight(_max_depth_spin, false)
@@ -482,18 +488,31 @@ func _apply_validation_feedback(errors: Array) -> void:
     var primary := errors[0]
     _validation_label.visible = true
     _validation_label.text = String(primary.get("message", "Template configuration invalid."))
+    _validation_label.tooltip_text = _validation_label.text
 
-    var hint_messages := []
+    var hint_messages: Array[String] = []
+    var hint_tooltips: Array[String] = []
     for error in errors:
-        var hint := _lookup_error_hint(String(error.get("code", "")))
+        var guidance := _lookup_error_guidance(String(error.get("code", "")))
+        if guidance.is_empty():
+            continue
+        var composed := _compose_guidance_display(guidance)
+        var hint := String(composed.get("text", ""))
         if hint == "":
             continue
         if hint_messages.has(hint):
             continue
+        var tooltip := String(composed.get("tooltip", ""))
+        if tooltip != "":
+            hint_tooltips.append(tooltip)
         hint_messages.append(hint)
     if not hint_messages.is_empty():
         _fix_it_label.visible = true
-        _fix_it_label.text = "\n".join(hint_messages)
+        _fix_it_label.text = "\n\n".join(hint_messages)
+        if hint_tooltips.is_empty():
+            _fix_it_label.tooltip_text = _fix_it_label.text
+        else:
+            _fix_it_label.tooltip_text = "\n\n".join(hint_tooltips)
 
     for error in errors:
         match String(error.get("target", "")):
@@ -507,6 +526,8 @@ func _apply_validation_feedback(errors: Array) -> void:
 func _update_preview_state(payload: Dictionary) -> void:
     _preview_label.visible = false
     _preview_label.text = ""
+    _preview_label.tooltip_text = ""
+    _validation_label.tooltip_text = ""
     if payload == null:
         return
     var status := String(payload.get("status", ""))
@@ -515,17 +536,59 @@ func _update_preview_state(payload: Dictionary) -> void:
         _validation_label.visible = false
         _preview_label.visible = true
         _preview_label.text = "[b]Preview:[/b]\n%s" % message
+        _preview_label.tooltip_text = message
     else:
         _validation_label.visible = true
         _validation_label.text = message
+        var tooltip := String(payload.get("tooltip", message))
+        if tooltip == "":
+            tooltip = message
+        _validation_label.tooltip_text = tooltip
 
-func _lookup_error_hint(code: String) -> String:
+func _lookup_error_guidance(code: String) -> Dictionary:
     if code == "" or code == "invalid_json":
-        return ""
+        return {}
     var service := _get_metadata_service()
-    if service != null and service.has_method("get_generator_error_hint"):
-        return String(service.call("get_generator_error_hint", TEMPLATE_STRATEGY_ID, code))
-    return ""
+    if service == null:
+        return {}
+    if service.has_method("get_generator_error_guidance"):
+        var guidance: Variant = service.call("get_generator_error_guidance", TEMPLATE_STRATEGY_ID, code)
+        if guidance is Dictionary:
+            return guidance
+    if service.has_method("get_generator_error_hint"):
+        var fallback := String(service.call("get_generator_error_hint", TEMPLATE_STRATEGY_ID, code))
+        if fallback != "":
+            return {"message": fallback}
+    return {}
+
+func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
+    if guidance.is_empty():
+        return {"text": "", "tooltip": ""}
+    var text_segments: Array[String] = []
+    var tooltip_segments: Array[String] = []
+    var message := String(guidance.get("message", ""))
+    if message != "":
+        text_segments.append(message)
+        tooltip_segments.append(message)
+    var remediation := String(guidance.get("remediation", ""))
+    if remediation != "":
+        var fix_line := "Try: %s" % remediation
+        text_segments.append(fix_line)
+        tooltip_segments.append(fix_line)
+    var handbook_label := String(guidance.get("handbook_label", ""))
+    if handbook_label != "":
+        var anchor := String(guidance.get("handbook_anchor", ""))
+        var handbook_line := "Handbook: %s" % handbook_label
+        if anchor != "":
+            handbook_line += " (#%s)" % anchor
+            tooltip_segments.append("Platform GUI Handbook › %s (#%s)" % [handbook_label, anchor])
+        else:
+            tooltip_segments.append("Platform GUI Handbook › %s" % handbook_label)
+        text_segments.append(handbook_line)
+    return {
+        "text": "\n".join(text_segments),
+        "tooltip": "\n".join(tooltip_segments),
+    }
 
 func _track_default_modulate(control: Control) -> void:
     if control == null:

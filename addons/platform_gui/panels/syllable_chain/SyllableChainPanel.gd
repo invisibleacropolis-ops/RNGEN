@@ -365,7 +365,10 @@ func _on_preview_button_pressed() -> void:
     if response is Dictionary and response.has("code"):
         var error_dict: Dictionary = response
         var message := String(error_dict.get("message", "Generation failed."))
-        var hint := _lookup_error_hint(String(error_dict.get("code", "")))
+        var guidance := _lookup_error_guidance(String(error_dict.get("code", "")))
+        var composed := _compose_guidance_display(guidance)
+        var hint := String(composed.get("text", ""))
+        var tooltip := String(composed.get("tooltip", ""))
         if hint != "":
             message += "\n%s" % hint
         _update_preview_state({
@@ -374,6 +377,7 @@ func _on_preview_button_pressed() -> void:
             "details": error_dict.get("details", {}),
             "highlight_resource": String(error_dict.get("code", "")) == "missing_resource",
             "highlight_range": _should_highlight_range(error_dict.get("code", "")),
+            "tooltip": tooltip,
         })
         return
 
@@ -383,13 +387,21 @@ func _on_preview_button_pressed() -> void:
         "message": output_text,
     })
 
-func _lookup_error_hint(code: String) -> String:
+func _lookup_error_guidance(code: String) -> Dictionary:
     if code == "":
-        return ""
+        return {}
     var service := _get_metadata_service()
-    if service != null and service.has_method("get_generator_error_hint"):
-        return String(service.call("get_generator_error_hint", "syllable", code))
-    return ""
+    if service == null:
+        return {}
+    if service.has_method("get_generator_error_guidance"):
+        var guidance: Variant = service.call("get_generator_error_guidance", "syllable", code)
+        if guidance is Dictionary:
+            return guidance
+    if service.has_method("get_generator_error_hint"):
+        var fallback := String(service.call("get_generator_error_hint", "syllable", code))
+        if fallback != "":
+            return {"message": fallback}
+    return {}
 
 func _should_highlight_range(code: String) -> bool:
     match code:
@@ -405,8 +417,10 @@ func _should_highlight_range(code: String) -> bool:
 func _update_preview_state(payload: Dictionary) -> void:
     _preview_label.visible = false
     _preview_label.text = ""
+    _preview_label.tooltip_text = ""
     _validation_label.visible = false
     _validation_label.text = ""
+    _validation_label.tooltip_text = ""
     _set_control_highlight(_resource_list, false)
     _set_control_highlight(_middle_min_spin, false)
     _set_control_highlight(_middle_max_spin, false)
@@ -419,14 +433,48 @@ func _update_preview_state(payload: Dictionary) -> void:
     if status == "success":
         _preview_label.visible = true
         _preview_label.text = "[b]Preview:[/b]\n%s" % message
+        _preview_label.tooltip_text = message
     else:
         _validation_label.visible = true
         _validation_label.text = message
+        var tooltip := String(payload.get("tooltip", message))
+        if tooltip == "":
+            tooltip = message
+        _validation_label.tooltip_text = tooltip
         if bool(payload.get("highlight_resource", false)):
             _set_control_highlight(_resource_list, true)
         if bool(payload.get("highlight_range", false)):
             _set_control_highlight(_middle_min_spin, true)
             _set_control_highlight(_middle_max_spin, true)
+
+func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
+    if guidance.is_empty():
+        return {"text": "", "tooltip": ""}
+    var text_segments: Array[String] = []
+    var tooltip_segments: Array[String] = []
+    var message := String(guidance.get("message", ""))
+    if message != "":
+        text_segments.append(message)
+        tooltip_segments.append(message)
+    var remediation := String(guidance.get("remediation", ""))
+    if remediation != "":
+        var fix_line := "Try: %s" % remediation
+        text_segments.append(fix_line)
+        tooltip_segments.append(fix_line)
+    var handbook_label := String(guidance.get("handbook_label", ""))
+    if handbook_label != "":
+        var anchor := String(guidance.get("handbook_anchor", ""))
+        var handbook_line := "Handbook: %s" % handbook_label
+        if anchor != "":
+            handbook_line += " (#%s)" % anchor
+            tooltip_segments.append("Platform GUI Handbook › %s (#%s)" % [handbook_label, anchor])
+        else:
+            tooltip_segments.append("Platform GUI Handbook › %s" % handbook_label)
+        text_segments.append(handbook_line)
+    return {
+        "text": "\n".join(text_segments),
+        "tooltip": "\n".join(tooltip_segments),
+    }
 
 func _update_selected_resource_summary() -> void:
     var metadata := _get_selected_resource_metadata()
