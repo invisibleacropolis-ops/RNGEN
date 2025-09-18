@@ -36,6 +36,19 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence
 from xml.etree import ElementTree
 
+# ---------------------------------------------------------------------------
+# Ensure the repository root is importable when the module is executed as a
+# script via ``python tools/codex_run_manifest_tests.py``.
+#
+# Python initialises ``sys.path[0]`` with the directory containing the script
+# being executed.  When this file is launched directly that directory is the
+# ``tools`` folder itself, which means attempts to import ``tools.*`` resolve to
+# ``<tools>/tools`` instead of the repository root.  By appending the parent of
+# this file we make the top level package discoverable without affecting module
+# executions (where ``__package__`` is populated by the interpreter).
+if __package__ is None:  # pragma: no cover - import side effect
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from tools.codex_godot_process_manager import CodexGodotProcessManager
 
 
