@@ -26,7 +26,7 @@ CI provided defaults.
 ```python
 from tools.codex_godot_process_manager import CodexGodotProcessManager
 
-with CodexGodotProcessManager(extra_args=["-s", "res://tests/run_all_tests.gd"]) as manager:
+with CodexGodotProcessManager(extra_args=["--script", "res://tests/run_generator_tests.gd", "--quit"]) as manager:
     # Send JSON-RPC commands and iterate over responses.
     request_id = manager.send_command("scenario.load", {"name": "Arena"})
     for message in manager.iter_messages(timeout=1.0):
@@ -170,25 +170,30 @@ embed the same helper in CI pipelines to mirror the production guard rails.
    runs.
 
 3. Invoke the runner.  By default it cleans stale `tests/results.*` artifacts,
-   launches Godot headlessly, and emits both a human friendly summary and a
-   JSON payload that Codex can stream back to the operator:
+   launches the generator core, diagnostics, and platform GUI runners in
+   sequence, and emits both a human friendly summary and a JSON payload that
+   Codex can stream back to the operator:
 
    ```bash
    python tools/codex_run_manifest_tests.py
    ```
 
-4. When you need persistent evidence for a review, add `--output snapshots/` to
+4. Supply `--group <group_id>` to focus on a single runner.  Accepted group IDs
+   are `generator_core`, `diagnostics`, and `platform_gui`; the helper launches
+   the matching `run_<group>_tests.gd` Godot script under the hood.
+
+5. When you need persistent evidence for a review, add `--output snapshots/` to
    capture `summary.txt` and `codex_payload.json` artifacts.  These files mirror
    what Codex archives during CI validation.
 
-5. Use `--max-retries 3 --retry-delay 2` if you suspect flaky tests.  Each retry
+6. Use `--max-retries 3 --retry-delay 2` if you suspect flaky tests.  Each retry
    clears the report files before relaunching Godot so the resulting payloads
    accurately represent the final attempt.
 
-6. Inspect `tests/results.json` and `tests/results.xml` after the run for the
-   detailed assertion counts and per-script diagnostics that power the summary.
-   The JSON structure is parsed into a rich payload that the runner prints to
-   stderr for Codex to consume.
+7. Inspect `tests/results.json` and `tests/results.xml` after the run for the
+   merged assertion counts and per-script diagnostics.  The JSON payload now
+   records a `group` field for each test entry so engineers can map failures
+   back to the originating runner without scraping console logs.
 
 ### Example Codex prompts
 
