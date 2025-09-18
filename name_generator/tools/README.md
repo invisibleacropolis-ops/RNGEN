@@ -33,4 +33,8 @@ The tool applies the project’s heuristic syllabification algorithm, treating t
 
 After building a set you can review or fine-tune the generated syllables directly in the saved resource.
 
+### Troubleshooting missing files
+
+Both the dock and CLI helpers warn with a `Missing resource` status when the selected asset or the `res://data/` directory cannot be found. The most common fixes are to confirm that the `.tres` file still exists at the path reported in the message or to re-import the `data` folder into the project. Once the asset is back in place, repeat the action and the dock will resume normal operation.
+
 

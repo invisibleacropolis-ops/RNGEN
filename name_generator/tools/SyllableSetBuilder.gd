@@ -113,6 +113,10 @@ func _on_load_word_list_pressed() -> void:
         _file_dialog.popup_centered_ratio()
 
 func _on_word_list_selected(path: String) -> void:
+    if not ResourceLoader.exists(path):
+        _set_status("[color=yellow]Missing resource: %s[/color]" % path)
+        return
+
     var resource := load(path)
     if resource == null or not (resource is WORD_LIST_TYPE):
         _set_status("[color=yellow]The selected file is not a WordListResource.[/color]")

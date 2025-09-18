@@ -9,7 +9,7 @@ func _inspect_datasets() -> void:
     var data_path := "res://data"
     var dir := DirAccess.open(data_path)
     if dir == null:
-        push_error("Data directory not found at %s" % data_path)
+        push_error("Missing resource: data directory not found at %s" % data_path)
         return
 
     dir.list_dir_begin()
