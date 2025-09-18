@@ -1,6 +1,19 @@
 # Test Harness
 
 The project ships standalone headless scenarios alongside the manifest runner.
+
+## Aggregated manifest runner
+
+Execute every suite plus the curated diagnostics from `tests/tests_manifest.json`:
+
+```
+godot --headless --script res://tests/run_all_tests.gd
+```
+
+The script prints individual suite results followed by each manifest diagnostic (including the diagnostic summaries now captured in the manifest). After all executions complete, it reports suite totals, diagnostic totals, and an overall aggregate along with a failure digest drawn from every failing test or diagnostic check.
+
+## Focused scenarios
+
 To execute the RNG processor integration suite directly, run:
 
 ```
@@ -9,3 +22,9 @@ godot --headless --script res://tests/test_rng_processor_headless.gd
 
 Invoke the command from the project root so Godot can resolve the resource
 paths declared in the test script.
+
+For an individual diagnostic registered in the manifest, call the diagnostic runner with the desired ID:
+
+```
+godot --headless --script res://tests/run_script_diagnostic.gd --diagnostic-id wordlist_strategy
+```

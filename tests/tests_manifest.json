@@ -38,24 +38,27 @@
   "diagnostics": [
     {
       "id": "utils_array_utils",
+      "name": "Array Utilities Diagnostic",
+      "summary": "Verifies deterministic helpers for RNG-aware array operations.",
       "path": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
-
     },
     {
       "id": "deterministic_array_utils",
+      "name": "Deterministic Array Utilities Diagnostic",
+      "summary": "Checks the deterministic shuffle helpers used by the generator stack.",
       "path": "res://tests/diagnostics/deterministic_array_utils_diagnostic.gd"
-
-
     },
     {
       "id": "wordlist_strategy",
+      "name": "Word List Strategy Diagnostic",
+      "summary": "Validates list-driven name generation strategies and supporting data.",
       "path": "res://tests/diagnostics/wordlist_strategy_diagnostic.gd"
-
     },
     {
       "id": "syllable_chain_strategy",
+      "name": "Syllable Chain Strategy Diagnostic",
+      "summary": "Exercises syllable chain configuration and generation edge cases.",
       "path": "res://tests/diagnostics/syllable_chain_strategy_diagnostic.gd"
-
     }
   ]
 }

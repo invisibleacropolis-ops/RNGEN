@@ -41,7 +41,8 @@ func _run() -> void:
         quit(1)
         return
 
-    var exit_code: int = run_diagnostic(diagnostic_id)
+    var result: Variant = run_diagnostic(diagnostic_id)
+    var exit_code: int = _extract_exit_code(result)
     quit(exit_code)
 
 static func resolve_diagnostic_request(args: PackedStringArray) -> String:
@@ -66,61 +67,80 @@ static func resolve_diagnostic_request(args: PackedStringArray) -> String:
 
     return env_request
 
-static func run_diagnostic(diagnostic_id: String) -> int:
+static func run_diagnostic(diagnostic_id: String) -> Dictionary:
+    # Returns a structured result with the diagnostic exit code, totals, and
+    # normalized failure entries so callers (including the aggregate runner)
+    # can surface consistent summaries.
     if diagnostic_id.strip_edges() == "":
-        push_error("Diagnostic ID cannot be empty.")
-        return 1
+        var message := "Diagnostic ID cannot be empty."
+        push_error(message)
+        return _build_error_result(diagnostic_id, message)
 
     var manifest_variant: Variant = _load_manifest()
     if manifest_variant == null:
-        return 1
+        return _build_error_result(diagnostic_id, "Unable to load diagnostics manifest.")
 
     if not (manifest_variant is Dictionary):
-        push_error("Diagnostics manifest must be a dictionary.")
-        return 1
+        var message := "Diagnostics manifest must be a dictionary."
+        push_error(message)
+        return _build_error_result(diagnostic_id, message)
 
     var manifest: Dictionary = manifest_variant
 
     var diagnostics_variant: Variant = manifest.get(DIAGNOSTIC_COLLECTION_KEY, {})
     if not (diagnostics_variant is Dictionary):
-        push_error("Diagnostics manifest must expose a '%s' dictionary." % DIAGNOSTIC_COLLECTION_KEY)
-        return 1
+        var message := "Diagnostics manifest must expose a '%s' dictionary." % DIAGNOSTIC_COLLECTION_KEY
+        push_error(message)
+        return _build_error_result(diagnostic_id, message)
 
     var diagnostics: Dictionary = diagnostics_variant
 
     if not diagnostics.has(diagnostic_id):
-        push_error("Unknown diagnostic ID '%s'." % diagnostic_id)
+        var message := "Unknown diagnostic ID '%s'." % diagnostic_id
+        push_error(message)
         _print_available_entries(diagnostics)
-        return 1
+        return _build_error_result(diagnostic_id, message)
 
     var script_path: String = String(diagnostics[diagnostic_id])
     if script_path.strip_edges() == "":
-        push_error("Manifest entry for '%s' is missing a script path." % diagnostic_id)
-        return 1
+        var message := "Manifest entry for '%s' is missing a script path." % diagnostic_id
+        push_error(message)
+        return _build_error_result(diagnostic_id, message)
 
     var script: Script = load(script_path) as Script
     if script == null:
-        push_error("Unable to load diagnostic script at %s" % script_path)
-        return 1
+        var message := "Unable to load diagnostic script at %s" % script_path
+        push_error(message)
+        return _build_error_result(diagnostic_id, message)
 
     var instance: Object = script.new()
     if instance == null or not instance.has_method("run"):
-        push_error("Diagnostic %s must implement a `run()` method." % script_path)
-        return 1
+        var message := "Diagnostic %s must implement a `run()` method." % script_path
+        push_error(message)
+        return _build_error_result(diagnostic_id, message)
 
     print("Running diagnostic '%s' (%s)" % [diagnostic_id, script_path])
-    var result: Variant = instance.run()
+    var raw_result: Variant = instance.run()
 
-    if not (result is Dictionary):
-        push_error("Diagnostic '%s' returned an unexpected result type." % diagnostic_id)
-        return 1
+    if not (raw_result is Dictionary):
+        var message := "Diagnostic '%s' returned an unexpected result type." % diagnostic_id
+        push_error(message)
+        return _build_error_result(diagnostic_id, message)
 
-    var diagnostic_name: String = result.get("name", diagnostic_id)
-    var total: int = int(result.get("total", 0))
-    var passed: int = int(result.get("passed", 0))
-    var failed: int = int(result.get("failed", 0))
-    var failures_variant: Variant = result.get("failures", [])
+    var diagnostic_name: String = raw_result.get("name", diagnostic_id)
+    var total: int = int(raw_result.get("total", 0))
+    var passed: int = int(raw_result.get("passed", 0))
+    var failed: int = int(raw_result.get("failed", 0))
+    var failures_variant: Variant = raw_result.get("failures", [])
     var failures: Array = failures_variant if failures_variant is Array else []
+
+    var normalized_failures: Array = []
+    for failure in failures:
+        var failure_info: Dictionary = failure if failure is Dictionary else {}
+        normalized_failures.append({
+            "name": failure_info.get("name", "Unnamed Check"),
+            "message": failure_info.get("message", "")
+        })
 
     print("  Name: %s" % diagnostic_name)
     print("  Total: %d" % total)
@@ -128,28 +148,57 @@ static func run_diagnostic(diagnostic_id: String) -> int:
     print("  Failed: %d" % failed)
 
     var exit_code: int = 0
-    if not failures.is_empty():
+    if not normalized_failures.is_empty():
         exit_code = 1
-        for failure in failures:
-            var failure_info: Dictionary = failure if failure is Dictionary else {}
-            var test_name: String = failure_info.get("name", "Unnamed Check")
-            var message: String = failure_info.get("message", "")
+        for failure in normalized_failures:
+            var test_name: String = failure.get("name", "Unnamed Check")
+            var message: String = failure.get("message", "")
             print("    ✗ %s -- %s" % [test_name, message])
     elif failed > 0:
         exit_code = 1
-        print("  ✗ Diagnostic '%s' reported failures without failure details." % diagnostic_id)
+        var missing_detail_message := "Diagnostic '%s' reported failures without failure details." % diagnostic_id
+        normalized_failures.append({
+            "name": diagnostic_name,
+            "message": missing_detail_message
+        })
+        print("  ✗ %s" % missing_detail_message)
     elif failed == 0:
         print("  ✅ Diagnostic passed: %s" % diagnostic_name)
-
-    if exit_code == 0 and failed > 0:
-        exit_code = 1
 
     if exit_code == 0:
         print("DIAGNOSTIC PASSED")
     else:
         print("DIAGNOSTIC FAILED")
 
-    return exit_code
+    return {
+        "exit_code": exit_code,
+        "id": diagnostic_id,
+        "name": diagnostic_name,
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "failures": normalized_failures.duplicate(true)
+    }
+
+static func _extract_exit_code(result: Variant) -> int:
+    if result is Dictionary:
+        return int(result.get("exit_code", 1))
+    return int(result)
+
+static func _build_error_result(diagnostic_id: String, message: String) -> Dictionary:
+    var diagnostic_name := diagnostic_id if diagnostic_id != "" else "Diagnostic"
+    return {
+        "exit_code": 1,
+        "id": diagnostic_id,
+        "name": diagnostic_name,
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "failures": [{
+            "name": diagnostic_name,
+            "message": message
+        }]
+    }
 
 static func _load_manifest():
     if not FileAccess.file_exists(MANIFEST_PATH):

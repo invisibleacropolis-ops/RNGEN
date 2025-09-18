@@ -23,16 +23,18 @@ Additional sub-system references:
 
 ## Running the tests
 
-Execute the automated suite from the repository root to validate gameplay strategies, middleware, and tooling scripts:
+Execute the automated suite from the repository root to validate gameplay strategies, middleware, and tooling scripts. The harness consumes `tests/tests_manifest.json`, running every declared suite followed by the curated diagnostics collection:
 
 ```bash
 godot --headless --script res://tests/run_all_tests.gd
 ```
 
+Each manifest diagnostic now carries a human-readable name and summary, allowing the runner to surface the same per-check context as the suites. At the end of the run, the script prints discrete suite and diagnostic totals plus a combined overall summary and enumerated failure details so engineers can immediately review the concrete issues that need attention.
+
 For targeted debugging, the diagnostics runner executes an individual scenario declared in the diagnostics manifest. Pass the desired ID after a double dash so Godot forwards it to the script unchanged:
 
 ```bash
-godot --headless --script res://tests/run_script_diagnostic.gd -- strategy:hybrid:overlap_window
+godot --headless --script res://tests/run_script_diagnostic.gd --diagnostic-id wordlist_strategy
 ```
 
-The example above isolates the hybrid strategy's overlap window diagnostic without replaying every manifest suite. Refer to `devdocs/tooling.md` for additional QA workflows and manifest management tips.
+The example above isolates the word list strategy diagnostic without replaying every manifest suite. Refer to `devdocs/tooling.md` for additional QA workflows and manifest management tips.
