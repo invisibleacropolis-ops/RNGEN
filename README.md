@@ -12,6 +12,7 @@ This repository hosts the Godot 4.4 project that powers the deterministic name g
 | --- | --- | --- |
 | System designers | `DevDoc.txt` | Architectural rationale, deterministic design patterns, strategy deep dives. |
 | Integrators & tool engineers | `docs/rng_processor_manual.md` | Middleware responsibilities, API/signal reference, DebugRNG log format, Platform GUI context. |
+| Artists & narrative leads | `devdocs/platform_gui_handbook.md` | Platform GUI overview, step-by-step workflows, seed replaying, DebugRNG review tips, accessibility guidance. |
 | Gameplay programmers | `devdocs/rng_processor.md` | Task-focused guide (initialising the processor, registering custom strategies, running tests, capturing logs). |
 | Content authors | `devdocs/strategies.md`, `name_generator/resources/README.md` | Resource authoring workflows and data expectations. |
 
