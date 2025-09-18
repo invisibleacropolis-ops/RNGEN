@@ -36,6 +36,6 @@ See the core dataset workflow overview in [`devdocs/strategies.md`](../../devdoc
 Run the established tooling after adding or updating faction datasets:
 
 1. `dataset_inspector.gd` – Confirms the new `factions/` folder and highlights empty or missing resources.
-2. Regression suite – Execute `godot --headless --script res://tests/run_all_tests.gd` to ensure hybrid strategies consuming the faction data still pass.
+2. Regression suites – Execute `godot --headless --script res://tests/run_generator_tests.gd` and `godot --headless --script res://tests/run_diagnostics_tests.gd` to ensure hybrid strategies consuming the faction data still pass and curated diagnostics stay green.
 
 Log QA outcomes in change reviews so other engineers can trace dataset provenance and validation history.

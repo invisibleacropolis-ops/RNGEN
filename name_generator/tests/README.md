@@ -19,10 +19,10 @@ This directory now contains automated coverage for the name generator module. Th
 
 ## Running the suite
 
-Use the project-wide runner script to execute every registered suite:
+Use the project-wide group runner to execute every registered suite:
 
 ```bash
-godot4 --headless --path . --script res://tests/run_all_tests.gd
+godot --headless --path . --script res://tests/run_generator_tests.gd
 ```
 
 ### Expected output

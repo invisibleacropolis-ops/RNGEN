@@ -158,7 +158,8 @@ state tracking.
   expectations still hold:
 
   ```bash
-  godot --headless --path . --script res://tests/run_all_tests.gd
+  godot --headless --path . --script res://tests/run_generator_tests.gd
+  godot --headless --path . --script res://tests/run_diagnostics_tests.gd
   ```
 
 Document the test output in your pull request so reviewers can verify the

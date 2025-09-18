@@ -70,9 +70,10 @@ Follow the shared [dataset workflow guide](../../devdocs/tooling.md) when integr
    ```bash
    godot --headless --path . --script res://name_generator/tools/dataset_inspector.gd
    ```
-2. Execute the regression suite to confirm new datasets do not break strategy expectations:
+2. Execute the regression suites to confirm new datasets do not break strategy expectations:
    ```bash
-   godot --headless --script res://tests/run_all_tests.gd
+   godot --headless --script res://tests/run_generator_tests.gd
+   godot --headless --script res://tests/run_diagnostics_tests.gd
    ```
 
 Record the command output alongside merge requests so downstream engineers can trace the validation history.

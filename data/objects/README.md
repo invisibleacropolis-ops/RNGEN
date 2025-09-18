@@ -41,6 +41,7 @@ This folder holds themed vocabularies for equipment, curios, relics, and other i
   ```
 - Execute the regression suites (`pytest` equivalents live in `tests/`) so Hybrid and template pipelines stay deterministic:
   ```
-  godot --headless --path . --script res://tests/run_all.gd
+  godot --headless --path . --script res://tests/run_generator_tests.gd
+  godot --headless --path . --script res://tests/run_diagnostics_tests.gd
   ```
 - If a new resource introduces additional wordlists, update or add focused tests so failures surface through CI before designers hit broken content.

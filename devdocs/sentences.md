@@ -185,7 +185,8 @@ Each nested seed shares the `faction_mission_demo` prefix, so any change to the 
 After updating template or hybrid configurations, run the regression suite to ensure no deterministic guarantees regressed:
 
 ```bash
-godot --headless --script res://tests/run_all_tests.gd
+godot --headless --script res://tests/run_generator_tests.gd
+godot --headless --script res://tests/run_diagnostics_tests.gd
 ```
 
-The command executes both strategy-level tests and RNGProcessor coverage, providing confidence that sentence changes still align with the engine’s deterministic contracts.
+The commands execute the strategy-level suites and curated diagnostics, providing confidence that sentence changes still align with the engine’s deterministic contracts.【F:tests/run_generator_tests.gd†L1-L36】【F:tests/run_diagnostics_tests.gd†L1-L36】

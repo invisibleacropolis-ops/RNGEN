@@ -206,9 +206,11 @@ func run_full_test_suite() -> String:
     ## Launch the grouped manifest runner backed by `tests/test_suite_runner.gd`.
     ##
     ## The helper spawns a QA run that iterates the generator core, platform GUI,
-    ## and diagnostics manifest groups defined in `tests/tests_manifest.json`.
-    ## Results are merged into a single payload so downstream panels receive a
-    ## concise status alongside per-group breakdowns.
+    ## and diagnostics manifest groups defined in `tests/tests_manifest.json`,
+    ## mirroring the CLI scripts (`run_generator_tests.gd`,
+    ## `run_platform_gui_tests.gd`, and `run_diagnostics_tests.gd`). Results are
+    ## merged into a single payload so downstream panels receive a concise status
+    ## alongside per-group breakdowns.
     return _launch_qa_run(_make_grouped_manifest_request(
         TestSuiteRunner.DEFAULT_MANIFEST_PATH,
         _DEFAULT_MANIFEST_GROUPS

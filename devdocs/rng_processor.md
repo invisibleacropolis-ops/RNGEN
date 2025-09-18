@@ -27,10 +27,11 @@ If you instantiate `RNGProcessor` manually (e.g., inside an isolated test scene)
 The repository bundles regression coverage for the middleware and related components. Run the suite from the project root:
 
 ```bash
-godot --headless --script res://tests/run_all_tests.gd
+godot --headless --script res://tests/run_generator_tests.gd
+godot --headless --script res://tests/run_platform_gui_tests.gd
 ```
 
-This exercises both the in-engine tests (`name_generator/tests/*.gd`) and any headless scenarios (`tests/test_rng_processor_headless.gd`) that rely on the middleware. Attach the `DebugRNG` helper during new tests if you need additional telemetry—the suite already records warnings so logs stay informative.
+These commands exercise the in-engine tests (`name_generator/tests/*.gd`), middleware integration suites (including `tests/test_rng_processor_headless.gd`), and the Platform GUI regression coverage that consumes the controller APIs. Attach the `DebugRNG` helper during new tests if you need additional telemetry—the suites already record warnings so logs stay informative.【F:tests/test_rng_processor_headless.gd†L1-L210】【F:tests/run_generator_tests.gd†L1-L36】【F:tests/run_platform_gui_tests.gd†L1-L36】
 
 ## 4. Collecting DebugRNG logs
 
