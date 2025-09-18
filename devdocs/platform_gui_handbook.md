@@ -75,6 +75,13 @@ Follow these steps whenever you need to work inside the Platform GUI:
 7. Review the **Token expansion preview** tree. Each row lists the recursion depth, resolved strategy display name, and the seed that TemplateStrategy will pass to the child generator. Nested template configs expand inline so you can verify cascaded definitions without leaving the panel.
 8. Press **Preview** to request a deterministic sample. Middleware validation errors reuse the metadata service's guidance (for example, empty tokens or missing strategy keys) so the fix is always spelled out next to the relevant control.
 
+### Auditing dataset health
+
+1. Switch to the **Dataset health** tab (`res://addons/platform_gui/panels/datasets/DatasetInspectorPanel.tscn`). The header button runs `dataset_inspector.gd`, captures stdout and warning output through the editor, and renders an inline folder inventory so you can triage missing assets without launching the headless tool.【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L1-L110】
+2. Review the **Warnings** stack beneath the listing. Empty directories, missing roots, or other script warnings show up with ⚠️ markers and red status text so you know exactly which folders still need content before sign-off.【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L101-L144】
+3. Use **Open syllable builder** when the inspection highlights syllable gaps. The button enables the Syllable Set Builder plugin and nudges artists toward the dock that converts curated word lists into `SyllableSetResource` files.【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L67-L84】【F:name_generator/tools/SyllableSetBuilder.gd†L1-L95】
+4. Click **Dataset guide** or the contextual link at the bottom of the panel whenever you need sourcing and normalisation reminders while you clean up the data. The shortcut jumps straight to [`devdocs/datasets.md`](./datasets.md).【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L85-L119】
+
 ### Crafting sentence formulas
 
 1. Open the **Formulas** workspace (`res://addons/platform_gui/workspaces/formulas/FormulasWorkspace.tscn`). The top banner links to the matching anchor inside [`devdocs/sentences.md`](./sentences.md) so you can cross-reference the original blueprint while you work.

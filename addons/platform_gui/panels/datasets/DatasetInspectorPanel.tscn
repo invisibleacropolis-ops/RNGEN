@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://datasetinspectorpanel"]
+
+[ext_resource type="Script" path="res://addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd" id="1_9p7k1"]
+
+[node name="DatasetInspectorPanel" type="VBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+theme_override_constants/separation = 12
+script = ExtResource("1_9p7k1")
+
+[node name="Header" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Header"]
+text = "Dataset health"
+theme_override_font_sizes/font_size = 18
+
+[node name="HeaderSpacer" type="Control" parent="Header"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="InspectButton" type="Button" parent="Header"]
+text = "Inspect datasets"
+
+[node name="SyllableBuilderButton" type="Button" parent="Header"]
+text = "Open syllable builder"
+
+[node name="DocsButton" type="Button" parent="Header"]
+text = "Dataset guide"
+
+[node name="StatusLabel" type="RichTextLabel" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+fit_content = true
+scroll_active = false
+
+[node name="ResultLabel" type="Label" parent="."]
+text = "Folder contents"
+
+[node name="ResultDisplay" type="RichTextLabel" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+fit_content = true
+scroll_active = false
+
+[node name="WarningsBlock" type="VBoxContainer" parent="."]
+visible = false
+theme_override_constants/separation = 4
+
+[node name="WarningsHeader" type="Label" parent="WarningsBlock"]
+text = "Warnings"
+
+[node name="WarningsDisplay" type="RichTextLabel" parent="WarningsBlock"]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+fit_content = true
+scroll_active = false
+
+[node name="ContextLabel" type="RichTextLabel" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+fit_content = true
+scroll_active = false

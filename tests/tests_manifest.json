@@ -49,6 +49,10 @@
       "path": "res://tests/gui/test_debug_log_panel.gd"
     },
     {
+      "name": "Platform GUI Dataset Inspector Panel Suite",
+      "path": "res://tests/gui/test_dataset_inspector_panel.gd"
+    },
+    {
       "name": "Formulas Workspace Suite",
       "path": "res://tests/gui/test_formulas_workspace.gd"
     },
