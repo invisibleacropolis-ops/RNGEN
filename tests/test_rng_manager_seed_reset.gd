@@ -42,7 +42,7 @@ func _test_reseed_existing_streams() -> Variant:
     var rng := manager.get_rng(stream_name)
 
     # Advance the RNG to ensure reseeding replaces the state rather than leaving it untouched.
-    _ = rng.randf()
+    rng.randf()
 
     manager.set_master_seed(2222)
 
@@ -67,7 +67,7 @@ func _test_new_streams_use_updated_seed() -> Variant:
     manager.set_master_seed(7007)
 
     var initial_rng := manager.get_rng("baseline")
-    _ = initial_rng.randf()
+    initial_rng.randf()
 
     manager.set_master_seed(9090)
 

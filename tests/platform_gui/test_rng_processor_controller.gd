@@ -46,16 +46,16 @@ func _test_wraps_rng_processor_api() -> Variant:
         return "initialize_master_seed should forward to the processor."
 
     processor.reset_return_value = 8080
-    var reset_value := controller.reset_master_seed()
+    var reset_value: int = int(controller.reset_master_seed())
     if reset_value != 8080:
         return "reset_master_seed should forward return values."
 
     processor.strategies = PackedStringArray(["alpha", "beta"])
-    var strategies := controller.list_strategies()
+    var strategies: PackedStringArray = controller.list_strategies()
     if strategies.size() != 2 or strategies[0] != "alpha" or strategies[1] != "beta":
         return "list_strategies must proxy PackedStringArray responses."
 
-    var descriptions := controller.describe_strategies()
+    var descriptions: Dictionary = controller.describe_strategies()
     if descriptions.get("wordlist", {}).get("id", "") != "wordlist":
         return "describe_strategies should return metadata dictionaries."
     descriptions["wordlist"]["notes"] = "mutated"
@@ -63,7 +63,7 @@ func _test_wraps_rng_processor_api() -> Variant:
         return "describe_strategies must duplicate dictionaries to avoid side effects."
 
     var config := {"strategy": "wordlist"}
-    var result := controller.generate(config)
+    var result: Variant = controller.generate(config)
     if result != processor.generate_result:
         return "generate should return the processor payload."
     if processor.last_generate_config == null:
@@ -82,7 +82,7 @@ func _test_forwards_generation_signals() -> Variant:
 
     if event_bus.events.size() != 1:
         return "generation_started should publish exactly one event."
-    var started := event_bus.events[0]
+    var started: Dictionary = event_bus.events[0]
     if started.get("name", "") != "rng_generation_started":
         return "generation_started events must use the rng_generation_started channel."
     var started_payload: Dictionary = started.get("payload", {})
@@ -95,7 +95,7 @@ func _test_forwards_generation_signals() -> Variant:
     if started_payload.get("metadata", {}).get("rng_stream", "") != "seeded::wordlist":
         return "generation_started payload should duplicate metadata dictionaries."
 
-    var tracked_metadata := controller.get_latest_generation_metadata()
+    var tracked_metadata: Dictionary = controller.get_latest_generation_metadata()
     if tracked_metadata.get("rng_stream", "") != "seeded::wordlist":
         return "Controller should expose the latest metadata snapshot."
     tracked_metadata["rng_stream"] = "tampered"
@@ -108,7 +108,7 @@ func _test_forwards_generation_signals() -> Variant:
     processor.emit_generation_completed(complete_config, complete_result, complete_metadata)
     if event_bus.events.size() != 2:
         return "generation_completed should publish a follow-up event."
-    var completed := event_bus.events[1]
+    var completed: Dictionary = event_bus.events[1]
     if completed.get("name", "") != "rng_generation_completed":
         return "generation_completed events must use the rng_generation_completed channel."
     var completed_payload: Dictionary = completed.get("payload", {})
@@ -121,7 +121,7 @@ func _test_forwards_generation_signals() -> Variant:
     processor.emit_generation_failed(failure_config, failure_error, failure_metadata)
     if event_bus.events.size() != 3:
         return "generation_failed should publish an error event."
-    var failed := event_bus.events[2]
+    var failed: Dictionary = event_bus.events[2]
     if failed.get("name", "") != "rng_generation_failed":
         return "generation_failed events must use the rng_generation_failed channel."
     var failed_payload: Dictionary = failed.get("payload", {})
@@ -158,20 +158,20 @@ func _test_exposes_seed_dashboard_helpers() -> Variant:
     if controller.randomize_master_seed() != 77:
         return "randomize_master_seed should forward processor results."
 
-    var streams := controller.describe_rng_streams()
+    var streams: Dictionary = controller.describe_rng_streams()
     if streams.get("mode", "") != "rng_manager":
         return "describe_rng_streams should duplicate the processor payload."
     streams["mode"] = "tampered"
     if processor.stream_payload.get("mode", "") != "rng_manager":
         return "describe_rng_streams must protect the processor payload from mutation."
 
-    var routing := controller.describe_stream_routing(PackedStringArray(["alpha"]))
+    var routing: Dictionary = controller.describe_stream_routing(PackedStringArray(["alpha"]))
     if routing.get("requested", "") != "alpha":
         return "describe_stream_routing should forward requested stream names."
     if processor.last_routing_request.size() != 1 or processor.last_routing_request[0] != "alpha":
         return "describe_stream_routing should forward the provided stream filter."
 
-    var export_payload := controller.export_seed_state()
+    var export_payload: Dictionary = controller.export_seed_state()
     if export_payload.get("master_seed", 0) != 42:
         return "export_seed_state should duplicate the processor payload."
 
@@ -198,7 +198,7 @@ func _test_manages_qa_runs() -> Variant:
     controller.qa_run_output.connect(func(run_id: String, line: String): output_events.append({"id": run_id, "line": line}), CONNECT_REFERENCE_COUNTED)
     controller.qa_run_completed.connect(func(run_id: String, payload: Dictionary): completed_events.append({"id": run_id, "payload": payload.duplicate(true)}), CONNECT_REFERENCE_COUNTED)
 
-    var run_id := controller.run_full_test_suite()
+    var run_id: String = String(controller.run_full_test_suite())
     if run_id == "":
         return "run_full_test_suite should return a run identifier."
 
@@ -213,15 +213,15 @@ func _test_manages_qa_runs() -> Variant:
     if completed_events.size() != 1:
         return "qa_run_completed should emit when the run finishes."
 
-    var completion := completed_events[0].get("payload", {})
+    var completion: Dictionary = completed_events[0].get("payload", {})
     if completion.get("result", {}).get("exit_code", 1) != 0:
         return "Completion payload should report a passing exit code."
 
-    var history := controller.get_recent_qa_runs()
+    var history: Array = controller.get_recent_qa_runs()
     if history.size() != 1:
         return "Controller should cache recent QA runs."
 
-    var record: Dictionary = history[0]
+    var record: Dictionary = history[0] if history.size() > 0 and history[0] is Dictionary else {}
     if String(record.get("log_path", "")) == "":
         return "QA run should persist a log path for later inspection."
 
