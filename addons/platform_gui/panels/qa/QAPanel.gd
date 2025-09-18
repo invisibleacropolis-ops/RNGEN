@@ -1,0 +1,322 @@
+extends VBoxContainer
+
+## Panel that orchestrates regression and diagnostic runs directly from the Platform GUI.
+##
+## The QA panel exposes quick actions for the headless `run_all_tests.gd` suite,
+## streams log output as the helper executes, and caches recent runs so support
+## engineers can jump to stored summaries or open generated log files. Results
+## are sourced from the RNGProcessor controller to keep middleware wiring
+## consistent with the rest of the editor tooling.
+
+@export var controller_path: NodePath
+
+const _INFO_COLOR := Color(0.3, 0.6, 0.9)
+const _SUCCESS_COLOR := Color(0.32, 0.7, 0.36)
+const _ERROR_COLOR := Color(0.86, 0.23, 0.23)
+
+@onready var _run_suite_button: Button = %RunSuiteButton
+@onready var _diagnostic_selector: OptionButton = %DiagnosticSelector
+@onready var _run_diagnostic_button: Button = %RunDiagnosticButton
+@onready var _refresh_diagnostics_button: Button = %RefreshDiagnosticsButton
+@onready var _log_view: RichTextLabel = %LogView
+@onready var _clear_log_button: Button = %ClearLogButton
+@onready var _open_log_button: Button = %OpenLogButton
+@onready var _log_path_field: LineEdit = %LogPathField
+@onready var _status_label: RichTextLabel = %StatusLabel
+@onready var _history_list: ItemList = %HistoryList
+@onready var _guidance_label: RichTextLabel = %GuidanceLabel
+
+var _controller_override: Object = null
+var _cached_controller: Object = null
+var _connected_controller: Object = null
+var _diagnostic_catalog: Array = []
+var _log_lines: PackedStringArray = PackedStringArray()
+var _active_run_id: String = ""
+var _active_log_path: String = ""
+var _history_lookup: Dictionary = {}
+
+func _ready() -> void:
+    _log_view.bbcode_enabled = true
+    _status_label.bbcode_enabled = true
+    _guidance_label.bbcode_enabled = true
+    _guidance_label.meta_clicked.connect(_on_meta_clicked)
+
+    _run_suite_button.pressed.connect(_on_run_suite_pressed)
+    _run_diagnostic_button.pressed.connect(_on_run_diagnostic_pressed)
+    _refresh_diagnostics_button.pressed.connect(_on_refresh_diagnostics_pressed)
+    _clear_log_button.pressed.connect(_on_clear_log_pressed)
+    _open_log_button.pressed.connect(_on_open_log_pressed)
+    _history_list.item_selected.connect(_on_history_selected)
+
+    _log_path_field.editable = false
+
+    _guidance_label.bbcode_text = "Capture the suite output, then [url=res://devdocs/platform_gui_handbook.md#deterministic-qa-workflow]archive DebugRNG timelines[/url] via the Logs panel when failures occur."
+
+    _ensure_controller_connections()
+    _populate_diagnostics()
+    _refresh_history()
+    _update_buttons()
+
+func set_controller_override(controller: Object) -> void:
+    _controller_override = controller
+    _cached_controller = null
+    _ensure_controller_connections()
+    _populate_diagnostics()
+    _refresh_history()
+    _update_buttons()
+
+func clear_controller_override() -> void:
+    _controller_override = null
+    _cached_controller = null
+    _ensure_controller_connections()
+    _populate_diagnostics()
+    _refresh_history()
+    _update_buttons()
+
+func refresh() -> void:
+    _cached_controller = null
+    _ensure_controller_connections()
+    _populate_diagnostics()
+    _refresh_history()
+    _update_buttons()
+
+func _on_run_suite_pressed() -> void:
+    var controller := _get_controller()
+    if controller == null or not controller.has_method("run_full_test_suite"):
+        _set_status(_format_error("RNGProcessor controller unavailable; suite launch skipped."))
+        return
+    var run_id_variant := controller.call("run_full_test_suite")
+    _handle_run_start(String(run_id_variant), {"label": "Full suite"})
+
+func _on_run_diagnostic_pressed() -> void:
+    var controller := _get_controller()
+    if controller == null or not controller.has_method("run_targeted_diagnostic"):
+        _set_status(_format_error("RNGProcessor controller unavailable; diagnostic launch skipped."))
+        return
+    var selected_id := _get_selected_diagnostic_id()
+    if selected_id == "":
+        _set_status(_format_error("Select a diagnostic before launching."))
+        return
+    var run_id_variant := controller.call("run_targeted_diagnostic", selected_id)
+    _handle_run_start(String(run_id_variant), {"label": "Diagnostic %s" % selected_id})
+
+func _on_refresh_diagnostics_pressed() -> void:
+    _populate_diagnostics(true)
+
+func _on_clear_log_pressed() -> void:
+    _log_lines.clear()
+    _log_view.bbcode_text = ""
+    _active_log_path = ""
+    _log_path_field.text = ""
+
+func _on_open_log_pressed() -> void:
+    if _active_log_path == "":
+        _set_status(_format_error("Select a run with a saved log before opening."))
+        return
+    var global_path := ProjectSettings.globalize_path(_active_log_path)
+    var error := OS.shell_open(global_path)
+    if error != OK:
+        _set_status(_format_error("Unable to open log at %s." % _active_log_path))
+    else:
+        _set_status(_format_info("Opened log at %s." % _active_log_path))
+
+func _on_history_selected(index: int) -> void:
+    if index < 0 or index >= _history_list.item_count:
+        return
+    var run_id := String(_history_list.get_item_metadata(index))
+    if not _history_lookup.has(run_id):
+        return
+    var record: Dictionary = _history_lookup[run_id]
+    _active_run_id = run_id
+    _active_log_path = String(record.get("log_path", ""))
+    _log_path_field.text = _active_log_path
+    _render_history_log_hint(record)
+    _update_buttons()
+
+func _on_controller_run_started(run_id: String, request: Dictionary) -> void:
+    _handle_run_start(run_id, request)
+
+func _on_controller_run_output(run_id: String, line: String) -> void:
+    if _active_run_id != "" and run_id != _active_run_id:
+        return
+    _append_log_line(line)
+
+func _on_controller_run_completed(run_id: String, payload: Dictionary) -> void:
+    var result: Dictionary = payload.get("result", {}) if payload.has("result") else {}
+    var log_path := String(payload.get("log_path", ""))
+    _active_log_path = log_path
+    _log_path_field.text = log_path
+    var exit_code := int(result.get("exit_code", payload.get("exit_code", 1)))
+    if exit_code == 0:
+        _set_status(_format_success("QA run completed successfully."))
+    else:
+        _set_status(_format_error("QA run reported failures. Review the log for details."))
+    _active_run_id = ""
+    _refresh_history()
+    _update_buttons()
+
+func _handle_run_start(run_id: String, request: Dictionary) -> void:
+    if run_id == "":
+        _set_status(_format_error("QA run could not be started."))
+        return
+    _active_run_id = run_id
+    _active_log_path = ""
+    _log_lines.clear()
+    _log_view.bbcode_text = ""
+    _log_path_field.text = ""
+    var label := String(request.get("label", "QA run"))
+    _set_status(_format_info("Started %s." % label))
+    _update_buttons()
+
+func _append_log_line(line: String) -> void:
+    _log_lines.append(line)
+    _log_view.bbcode_text = "\n".join(_log_lines)
+    call_deferred("_scroll_log_to_end")
+
+func _scroll_log_to_end() -> void:
+    _log_view.scroll_to_line(_log_lines.size())
+
+func _populate_diagnostics(force: bool = false) -> void:
+    if not force and not _diagnostic_catalog.is_empty():
+        return
+    _diagnostic_catalog.clear()
+    _diagnostic_selector.clear()
+    var controller := _get_controller()
+    if controller == null or not controller.has_method("get_available_qa_diagnostics"):
+        _diagnostic_selector.add_item("No diagnostics available")
+        _diagnostic_selector.disabled = true
+        return
+    var catalog_variant := controller.call("get_available_qa_diagnostics")
+    var catalog: Array = catalog_variant if catalog_variant is Array else []
+    if catalog.is_empty():
+        _diagnostic_selector.add_item("No diagnostics available")
+        _diagnostic_selector.disabled = true
+        return
+    _diagnostic_selector.disabled = false
+    _diagnostic_catalog = catalog.duplicate(true)
+    _diagnostic_selector.add_item("Select diagnostic", -1)
+    for entry_variant in _diagnostic_catalog:
+        var entry: Dictionary = entry_variant if entry_variant is Dictionary else {}
+        var display_name := String(entry.get("name", entry.get("id", "Unnamed diagnostic")))
+        var id_value := String(entry.get("id", ""))
+        _diagnostic_selector.add_item(display_name)
+        _diagnostic_selector.set_item_metadata(_diagnostic_selector.item_count - 1, id_value)
+
+func _refresh_history() -> void:
+    _history_list.clear()
+    _history_lookup.clear()
+    var controller := _get_controller()
+    if controller == null or not controller.has_method("get_recent_qa_runs"):
+        return
+    var history_variant := controller.call("get_recent_qa_runs")
+    var history: Array = history_variant if history_variant is Array else []
+    for record_variant in history:
+        if not (record_variant is Dictionary):
+            continue
+        var record: Dictionary = record_variant
+        var run_id := String(record.get("run_id", ""))
+        var label := _format_history_label(record)
+        var index := _history_list.add_item(label)
+        _history_list.set_item_metadata(index, run_id)
+        _history_lookup[run_id] = record.duplicate(true)
+    _update_buttons()
+
+func _format_history_label(record: Dictionary) -> String:
+    var label := String(record.get("label", record.get("mode", "QA run")))
+    var exit_code := int(record.get("exit_code", 1))
+    var completed_ms := int(record.get("completed_at", 0))
+    var completed := ""
+    if completed_ms > 0:
+        var seconds := completed_ms / 1000
+        completed = Time.get_datetime_string_from_unix_time(seconds)
+    var status_icon := "✅" if exit_code == 0 else "✗"
+    if completed != "":
+        return "%s %s (%s)" % [status_icon, label, completed]
+    return "%s %s" % [status_icon, label]
+
+func _render_history_log_hint(record: Dictionary) -> void:
+    var exit_code := int(record.get("exit_code", 1))
+    var label := String(record.get("label", record.get("mode", "QA run")))
+    if exit_code == 0:
+        _set_status(_format_success("%s completed successfully." % label))
+    else:
+        _set_status(_format_error("%s reported failures; inspect the stored log for details." % label))
+
+func _get_selected_diagnostic_id() -> String:
+    var selected := _diagnostic_selector.get_selected_id()
+    if selected >= 0:
+        var metadata := _diagnostic_selector.get_item_metadata(_diagnostic_selector.selected)
+        return String(metadata)
+    return ""
+
+func _update_buttons() -> void:
+    var controller := _get_controller()
+    var controller_ready := controller != null
+    var run_active := _active_run_id != ""
+    _run_suite_button.disabled = not controller_ready or run_active
+    _run_diagnostic_button.disabled = not controller_ready or run_active or _diagnostic_selector.disabled
+    _refresh_diagnostics_button.disabled = not controller_ready
+    _clear_log_button.disabled = _log_lines.is_empty()
+    _open_log_button.disabled = _active_log_path == ""
+
+func _set_status(message: String) -> void:
+    _status_label.bbcode_text = message
+
+func _format_info(message: String) -> String:
+    return "[color=%s]%s[/color]" % [_INFO_COLOR.to_html(), message]
+
+func _format_success(message: String) -> String:
+    return "[color=%s]%s[/color]" % [_SUCCESS_COLOR.to_html(), message]
+
+func _format_error(message: String) -> String:
+    return "[color=%s]%s[/color]" % [_ERROR_COLOR.to_html(), message]
+
+func _ensure_controller_connections() -> void:
+    var controller := _get_controller()
+    if controller == _connected_controller:
+        return
+    if _connected_controller != null and _is_object_valid(_connected_controller):
+        if _connected_controller.has_signal("qa_run_started") and _connected_controller.is_connected("qa_run_started", Callable(self, "_on_controller_run_started")):
+            _connected_controller.disconnect("qa_run_started", Callable(self, "_on_controller_run_started"))
+        if _connected_controller.has_signal("qa_run_output") and _connected_controller.is_connected("qa_run_output", Callable(self, "_on_controller_run_output")):
+            _connected_controller.disconnect("qa_run_output", Callable(self, "_on_controller_run_output"))
+        if _connected_controller.has_signal("qa_run_completed") and _connected_controller.is_connected("qa_run_completed", Callable(self, "_on_controller_run_completed")):
+            _connected_controller.disconnect("qa_run_completed", Callable(self, "_on_controller_run_completed"))
+    _connected_controller = null
+    if controller == null:
+        return
+    if controller.has_signal("qa_run_started"):
+        controller.connect("qa_run_started", Callable(self, "_on_controller_run_started"), CONNECT_REFERENCE_COUNTED)
+    if controller.has_signal("qa_run_output"):
+        controller.connect("qa_run_output", Callable(self, "_on_controller_run_output"), CONNECT_REFERENCE_COUNTED)
+    if controller.has_signal("qa_run_completed"):
+        controller.connect("qa_run_completed", Callable(self, "_on_controller_run_completed"), CONNECT_REFERENCE_COUNTED)
+    _connected_controller = controller
+
+func _get_controller() -> Object:
+    if _controller_override != null:
+        return _controller_override
+    if _cached_controller != null and _is_object_valid(_cached_controller):
+        return _cached_controller
+    if controller_path != NodePath("") and has_node(controller_path):
+        var node := get_node(controller_path)
+        if node != null:
+            _cached_controller = node
+            return _cached_controller
+    if Engine.has_singleton("RNGProcessorController"):
+        var singleton := Engine.get_singleton("RNGProcessorController")
+        if singleton != null:
+            _cached_controller = singleton
+            return _cached_controller
+    return null
+
+func _is_object_valid(candidate: Object) -> bool:
+    if candidate == null:
+        return false
+    if candidate is Node:
+        return is_instance_valid(candidate)
+    return true
+
+func _on_meta_clicked(meta: Variant) -> void:
+    if meta is String:
+        OS.shell_open(ProjectSettings.globalize_path(String(meta)))

@@ -1,0 +1,76 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/platform_gui/panels/qa/QAPanel.gd" id="1_o4vml"]
+
+[node name="QAPanel" type="VBoxContainer"]
+custom_minimum_size = Vector2(0, 320)
+size_flags_vertical = 3
+script = ExtResource("1_o4vml")
+
+[node name="RunControls" type="HBoxContainer" parent="."]
+
+[node name="RunSuiteButton" type="Button" parent="RunControls"]
+text = "Run full suite"
+
+[node name="DiagnosticSelector" type="OptionButton" parent="RunControls"]
+size_flags_horizontal = 3
+
+[node name="RunDiagnosticButton" type="Button" parent="RunControls"]
+text = "Run diagnostic"
+
+[node name="RefreshDiagnosticsButton" type="Button" parent="RunControls"]
+text = "Refresh list"
+
+[node name="LogPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(0, 220)
+size_flags_vertical = 3
+
+[node name="LogScroll" type="ScrollContainer" parent="LogPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_vertical = 3
+
+[node name="LogView" type="RichTextLabel" parent="LogPanel/LogScroll"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_vertical = 3
+scroll_active = true
+
+[node name="LogActions" type="HBoxContainer" parent="."]
+
+[node name="ClearLogButton" type="Button" parent="LogActions"]
+text = "Clear"
+
+[node name="OpenLogButton" type="Button" parent="LogActions"]
+text = "Open log"
+
+[node name="LogPathField" type="LineEdit" parent="LogActions"]
+size_flags_horizontal = 3
+placeholder_text = "Log path (saved after run completes)"
+
+[node name="StatusLabel" type="RichTextLabel" parent="."]
+custom_minimum_size = Vector2(0, 40)
+size_flags_vertical = 1
+scroll_active = false
+
+[node name="HistoryPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(0, 180)
+size_flags_vertical = 3
+
+[node name="HistoryVBox" type="VBoxContainer" parent="HistoryPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="HistoryTitle" type="Label" parent="HistoryPanel/HistoryVBox"]
+text = "Recent runs"
+
+[node name="HistoryList" type="ItemList" parent="HistoryPanel/HistoryVBox"]
+size_flags_vertical = 3
+
+[node name="GuidanceLabel" type="RichTextLabel" parent="."]
+custom_minimum_size = Vector2(0, 48)
+size_flags_vertical = 1
+scroll_active = false

@@ -210,6 +210,14 @@ which tests or diagnostics need attention.【F:tests/run_all_tests.gd†L1-L141�
 checks during investigation.【F:tests/run_all_tests.gd†L12-L105】 Attach DebugRNG
 logs to QA reports whenever deterministic reproduction details are required.
 
+The Platform GUI bundles a dedicated QA panel
+(`res://addons/platform_gui/panels/qa/QAPanel.tscn`) that wraps these headless
+commands, streams log output while suites execute, and records recent runs with
+links to the generated log files.【F:addons/platform_gui/panels/qa/QAPanel.gd†L1-L268】
+Use the panel for exploratory testing or quick repro captures, but always export
+the full console transcript when running headless in CI so downstream reviewers
+can audit every warning and failure line without launching Godot.【F:devdocs/tooling.md†L1-L120】
+
 ## Platform GUI readiness
 
 The forthcoming Platform GUI consumes the middleware APIs outlined here:

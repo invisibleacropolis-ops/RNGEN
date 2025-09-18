@@ -5,6 +5,12 @@ extends Node
 ## calls, and forwards RNGProcessor signals to the Platform GUI event bus so
 ## panels can subscribe without touching the autoload directly.
 
+const TestSuiteRunner := preload("res://tests/test_suite_runner.gd")
+
+signal qa_run_started(run_id: String, request: Dictionary)
+signal qa_run_output(run_id: String, line: String)
+signal qa_run_completed(run_id: String, payload: Dictionary)
+
 @export var event_bus_path: NodePath
 
 var _rng_processor_override: Object = null
@@ -13,6 +19,15 @@ var _connected_processor: Object = null
 var _event_bus_override: Object = null
 var _cached_event_bus: Object = null
 var _latest_generation_metadata: Dictionary = {}
+var _qa_runner_override: Object = null
+var _qa_runner: Object = null
+var _qa_active_request: Dictionary = {}
+var _qa_log_callable: Callable = Callable()
+var _qa_run_in_progress: bool = false
+var _qa_recent_runs: Array = []
+var _qa_yield_between_logs: bool = true
+
+const _MAX_QA_RUN_HISTORY := 5
 
 func _ready() -> void:
     _refresh_event_bus()
@@ -135,6 +150,59 @@ func get_debug_rng() -> Object:
 func get_latest_generation_metadata() -> Dictionary:
     return _latest_generation_metadata.duplicate(true)
 
+func get_available_qa_diagnostics() -> Array:
+    ## Return the merged diagnostic catalog used by the QA panel.
+    var diagnostics := TestSuiteRunner.list_available_diagnostics()
+    var copies: Array = []
+    for entry in diagnostics:
+        if entry is Dictionary:
+            copies.append((entry as Dictionary).duplicate(true))
+        else:
+            copies.append(entry)
+    return copies
+
+func get_recent_qa_runs() -> Array:
+    ## Return cached QA run summaries for panel display.
+    var history: Array = []
+    for record in _qa_recent_runs:
+        if record is Dictionary:
+            history.append((record as Dictionary).duplicate(true))
+        else:
+            history.append(record)
+    return history
+
+func is_qa_run_active() -> bool:
+    ## Indicate whether an automated QA run is currently executing.
+    return _qa_run_in_progress
+
+func run_full_test_suite() -> String:
+    ## Launch the complete regression manifest used by run_all_tests.gd.
+    return _launch_qa_run({
+        "mode": "manifest",
+        "manifest_path": TestSuiteRunner.DEFAULT_MANIFEST_PATH,
+        "label": "Full suite",
+    })
+
+func run_targeted_diagnostic(diagnostic_id: String) -> String:
+    ## Launch a specific diagnostic by manifest ID.
+    return _launch_qa_run({
+        "mode": "diagnostic",
+        "diagnostic_id": diagnostic_id,
+        "label": "Diagnostic %s" % diagnostic_id,
+    })
+
+func set_qa_runner_override(runner: Object) -> void:
+    ## Inject a deterministic QA runner for tests.
+    _qa_runner_override = runner
+
+func clear_qa_runner_override() -> void:
+    ## Clear the QA runner override and fall back to runtime instances.
+    _qa_runner_override = null
+
+func set_qa_stream_yield(enabled: bool) -> void:
+    ## Configure whether QA runs yield between log lines (used by tests).
+    _qa_yield_between_logs = enabled
+
 func set_rng_processor_override(processor: Object) -> void:
     _rng_processor_override = processor
     _cached_rng_processor = null
@@ -161,6 +229,175 @@ func refresh_connections() -> void:
     _refresh_event_bus()
     _refresh_rng_processor()
     _ensure_processor_connections()
+
+func _launch_qa_run(request: Dictionary) -> String:
+    if _qa_run_in_progress:
+        push_warning("QA run already in progress; request ignored.")
+        return ""
+
+    var runner := _get_qa_runner()
+    if runner == null:
+        push_warning("QA test runner unavailable; request skipped.")
+        return ""
+
+    var run_id := "qa_%d" % Time.get_ticks_msec()
+    var prepared := request.duplicate(true)
+    prepared["run_id"] = run_id
+    prepared["requested_at"] = Time.get_ticks_msec()
+    prepared["yield_frames"] = _qa_yield_between_logs
+
+    _qa_runner = runner
+    _qa_runner.forward_to_console = false
+    _qa_active_request = prepared
+    _qa_run_in_progress = true
+
+    var log_callable := Callable(self, "_on_qa_runner_log").bind(run_id)
+    _qa_log_callable = log_callable
+    if not _qa_runner.log_emitted.is_connected(log_callable):
+        _qa_runner.log_emitted.connect(log_callable, CONNECT_DEFERRED)
+
+    emit_signal("qa_run_started", run_id, prepared.duplicate(true))
+    call_deferred("_process_active_qa_run")
+    return run_id
+
+func _get_qa_runner() -> Object:
+    if _qa_runner_override != null and _is_object_valid(_qa_runner_override):
+        return _qa_runner_override
+    return TestSuiteRunner.new()
+
+func _normalize_logs(logs_variant: Variant) -> PackedStringArray:
+    if logs_variant is PackedStringArray:
+        var duplicate := PackedStringArray()
+        duplicate.append_array(logs_variant)
+        return duplicate
+    if logs_variant is Array:
+        var converted := PackedStringArray()
+        for value in logs_variant:
+            converted.append(String(value))
+        return converted
+    return PackedStringArray()
+
+func _strip_logs(result: Variant) -> Dictionary:
+    var summary := {}
+    if not (result is Dictionary):
+        return summary
+    var dictionary: Dictionary = result
+    for key in dictionary.keys():
+        if key == "logs":
+            continue
+        summary[key] = _duplicate_variant(dictionary[key])
+    return summary
+
+func _process_active_qa_run() -> void:
+    var request := _qa_active_request.duplicate(true)
+    var runner := _qa_runner
+    if runner == null:
+        _finish_qa_run(request, {
+            "exit_code": 1,
+            "logs": PackedStringArray(["QA runner unavailable."]),
+        })
+        return
+
+    var mode := String(request.get("mode", "manifest"))
+    var yield_frames := bool(request.get("yield_frames", _qa_yield_between_logs))
+    var result: Dictionary = {}
+
+    if mode == "diagnostic":
+        if runner.has_method("run_single_diagnostic"):
+            var diagnostic_id := String(request.get("diagnostic_id", ""))
+            var diagnostic_result_variant := runner.call("run_single_diagnostic", diagnostic_id, yield_frames)
+            if diagnostic_result_variant is GDScriptFunctionState:
+                diagnostic_result_variant = await diagnostic_result_variant
+            if diagnostic_result_variant is Dictionary:
+                result = diagnostic_result_variant
+                result["diagnostic_id"] = diagnostic_id
+            else:
+                result = {
+                    "exit_code": 1,
+                    "logs": PackedStringArray(["Diagnostic runner returned an unexpected payload."]),
+                }
+        else:
+            result = {
+                "exit_code": 1,
+                "logs": PackedStringArray(["QA runner does not implement run_single_diagnostic()."]),
+            }
+    else:
+        if runner.has_method("run_manifest"):
+            var manifest_path := String(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
+            var manifest_result_variant := runner.call("run_manifest", manifest_path, yield_frames)
+            if manifest_result_variant is GDScriptFunctionState:
+                manifest_result_variant = await manifest_result_variant
+            if manifest_result_variant is Dictionary:
+                result = manifest_result_variant
+            else:
+                result = {
+                    "exit_code": 1,
+                    "logs": PackedStringArray(["Manifest runner returned an unexpected payload."]),
+                }
+        else:
+            result = {
+                "exit_code": 1,
+                "logs": PackedStringArray(["QA runner does not implement run_manifest()."]),
+            }
+
+    _finish_qa_run(request, result)
+
+func _finish_qa_run(request: Dictionary, result: Dictionary) -> void:
+    var run_id := String(request.get("run_id", ""))
+    var logs := _normalize_logs(result.get("logs", PackedStringArray()))
+    var log_path := _persist_qa_log(run_id, logs)
+    var summary := _strip_logs(result)
+
+    summary["run_id"] = run_id
+    summary["log_path"] = log_path
+    summary["mode"] = String(request.get("mode", ""))
+    summary["label"] = String(request.get("label", summary.get("mode", "")))
+    summary["diagnostic_id"] = String(request.get("diagnostic_id", ""))
+    summary["requested_at"] = int(request.get("requested_at", Time.get_ticks_msec()))
+    summary["completed_at"] = Time.get_ticks_msec()
+    summary["exit_code"] = int(summary.get("exit_code", result.get("exit_code", 1)))
+
+    _qa_recent_runs.insert(0, summary.duplicate(true))
+    if _qa_recent_runs.size() > _MAX_QA_RUN_HISTORY:
+        _qa_recent_runs.resize(_MAX_QA_RUN_HISTORY)
+
+    var payload := summary.duplicate(true)
+    payload["request"] = request.duplicate(true)
+    payload["result"] = summary.duplicate(true)
+    payload["logs"] = logs
+
+    emit_signal("qa_run_completed", run_id, payload)
+
+    if _qa_runner != null and _qa_log_callable.is_valid() and _qa_runner.log_emitted.is_connected(_qa_log_callable):
+        _qa_runner.log_emitted.disconnect(_qa_log_callable)
+
+    _qa_runner = null
+    _qa_log_callable = Callable()
+    _qa_active_request = {}
+    _qa_run_in_progress = false
+
+func _persist_qa_log(run_id: String, logs: PackedStringArray) -> String:
+    if logs.is_empty():
+        return ""
+
+    var dir_path := "user://qa_runs"
+    var absolute := ProjectSettings.globalize_path(dir_path)
+    DirAccess.make_dir_recursive_absolute(absolute)
+
+    var timestamp := Time.get_datetime_string_from_system().replace(":", "-")
+    var file_name := "%s_%s.log" % [timestamp, run_id]
+    var full_path := "%s/%s" % [dir_path, file_name]
+
+    var file := FileAccess.open(full_path, FileAccess.WRITE)
+    if file == null:
+        return ""
+    for line in logs:
+        file.store_line(String(line))
+    file.close()
+    return full_path
+
+func _on_qa_runner_log(run_id: String, line: String) -> void:
+    emit_signal("qa_run_output", run_id, String(line))
 
 func _refresh_rng_processor() -> void:
     _cached_rng_processor = null
