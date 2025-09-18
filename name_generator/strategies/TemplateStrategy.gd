@@ -264,7 +264,15 @@ func describe() -> Dictionary:
         "Provide max_depth to guard against accidental infinite recursion.",
         "Seed values cascade to child generators when omitted from sub-configs.",
     ])
+    var error_hints := {
+        "empty_token": "Populate every [token] with a name so it can map to a sub-generator.",
+        "missing_template_token": "Add matching entries to sub_generators for each template token.",
+        "template_recursion_depth_exceeded": "Increase max_depth or simplify nested templates to avoid infinite recursion.",
+        "invalid_max_depth": "Set max_depth to a positive integer before generating.",
+        "missing_strategy": "Each sub-generator must include a 'strategy' key before it can generate.",
+    }
     return {
         "expected_config": get_config_schema(),
         "notes": notes,
+        "error_hints": error_hints,
     }

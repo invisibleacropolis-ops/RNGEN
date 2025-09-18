@@ -1,0 +1,119 @@
+[gd_scene load_steps=2 format=3 uid="uid://templatepanel"]
+
+[ext_resource type="Script" path="res://addons/platform_gui/panels/template/TemplatePanel.gd" id="1_zl6r1"]
+
+[node name="TemplatePanel" type="VBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+theme_override_constants/separation = 12
+script = ExtResource("1_zl6r1")
+
+[node name="Header" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Header"]
+theme_override_font_sizes/font_size = 18
+text = "Template Strategy"
+
+[node name="HeaderSpacer" type="Control" parent="Header"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="RefreshButton" type="Button" parent="Header"]
+flat = true
+text = "Refresh"
+tooltip_text = "Reload strategy metadata."
+
+[node name="MetadataSummary" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+text = ""
+
+[node name="NotesLabel" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+text = ""
+
+[node name="TemplateSection" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 4
+
+[node name="TemplateLabel" type="Label" parent="TemplateSection"]
+text = "Template string"
+
+[node name="TemplateInput" type="TextEdit" parent="TemplateSection"]
+custom_minimum_size = Vector2(0, 80)
+placeholder_text = "Forge a [material] blade for the [title]."
+scroll_fit_content_height = true
+wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+
+[node name="MaxDepthRow" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 8
+
+[node name="MaxDepthLabel" type="Label" parent="MaxDepthRow"]
+text = "Max depth"
+
+[node name="MaxDepthSpin" type="SpinBox" parent="MaxDepthRow"]
+custom_minimum_size = Vector2(120, 0)
+max_value = 64.0
+min_value = 1.0
+step = 1.0
+value = 8.0
+
+[node name="SeedRow" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 8
+
+[node name="SeedLabel" type="Label" parent="SeedRow"]
+text = "Seed"
+
+[node name="SeedInput" type="LineEdit" parent="SeedRow"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+placeholder_text = "Optional seed label"
+
+[node name="SeedHelper" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+text = "Child seeds derive automatically as parent::token::occurrence."
+
+[node name="SubGeneratorSection" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 4
+
+[node name="SubGeneratorLabel" type="Label" parent="SubGeneratorSection"]
+text = "Child generator definitions (JSON)"
+
+[node name="SubGeneratorInput" type="TextEdit" parent="SubGeneratorSection"]
+custom_minimum_size = Vector2(0, 140)
+placeholder_text = "{\n    \"material\": {\"strategy\": \"wordlist\", \"wordlist_paths\": []},\n    \"title\": {\"strategy\": \"template\", \"template_string\": \"[rank] of [order]\"}\n}"
+scroll_fit_content_height = true
+wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+
+[node name="TokenTreeLabel" type="Label" parent="."]
+text = "Token expansion preview"
+
+[node name="TokenTree" type="Tree" parent="."]
+columns = 4
+custom_minimum_size = Vector2(0, 220)
+select_mode = Tree.SELECT_ROW
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+[node name="ValidationLabel" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
+visible = false
+
+[node name="FixItLabel" type="Label" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+visible = false
+
+[node name="PreviewRow" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+
+[node name="PreviewButton" type="Button" parent="PreviewRow"]
+text = "Preview"
+
+[node name="PreviewSpacer" type="Control" parent="PreviewRow"]
+size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+[node name="PreviewOutput" type="RichTextLabel" parent="."]
+autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+visible = false
