@@ -18,7 +18,9 @@ func _ready() -> void:
 
 func set_master_seed(seed_value: int) -> void:
     _master_seed = seed_value
-    _streams.clear()
+    for stream_name in _streams.keys():
+        var rng: RandomNumberGenerator = _streams[stream_name]
+        _initialize_stream(stream_name, rng)
 
 func get_master_seed() -> int:
     return _master_seed
@@ -80,6 +82,9 @@ func randi_range(stream_name: String, minimum: int, maximum: int) -> int:
 
 func _create_stream(name: String) -> RandomNumberGenerator:
     var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+    return _initialize_stream(name, rng)
+
+func _initialize_stream(name: String, rng: RandomNumberGenerator) -> RandomNumberGenerator:
     var seed: int = _compute_stream_seed(name)
     rng.seed = seed
     rng.state = seed
