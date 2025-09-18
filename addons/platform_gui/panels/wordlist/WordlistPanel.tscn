@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://wordlistpanel"]
+[gd_scene load_steps=3 format=3 uid="uid://wordlistpanel"]
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/wordlist/WordlistPanel.gd" id="1_x0gui"]
+[ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_z1lhr"]
 
 [node name="WordlistPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(480, 0)
@@ -23,6 +24,8 @@ size_flags_horizontal = Control.SIZE_EXPAND_FILL
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata and the resource catalogue."
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="MetadataSummary" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -45,12 +48,16 @@ custom_minimum_size = Vector2(0, 220)
 select_mode = ItemList.SELECT_MULTI
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 size_flags_vertical = Control.SIZE_EXPAND_FILL
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="OptionsSection" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 12
 
 [node name="UseWeights" type="CheckButton" parent="OptionsSection"]
 text = "Use weights when available"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="DelimiterContainer" type="HBoxContainer" parent="OptionsSection"]
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -63,6 +70,8 @@ text = "Delimiter"
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 text = " "
 tooltip_text = "Leave blank to use a single space between selections."
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="PreviewRow" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 12
@@ -73,9 +82,13 @@ text = "Seed"
 [node name="SeedInput" type="LineEdit" parent="PreviewRow"]
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 placeholder_text = "Optional seed label"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
 text = "Preview"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="ValidationLabel" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

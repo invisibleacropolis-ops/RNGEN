@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://syllablechainpanel"]
+[gd_scene load_steps=3 format=3 uid="uid://syllablechainpanel"]
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/syllable_chain/SyllableChainPanel.gd" id="1_w9vaf"]
+[ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_d2y25"]
 
 [node name="SyllableChainPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
@@ -23,6 +24,8 @@ size_flags_horizontal = Control.SIZE_EXPAND_FILL
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata and the resource catalogue."
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MetadataSummary" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -45,6 +48,8 @@ custom_minimum_size = Vector2(0, 220)
 select_mode = ItemList.SELECT_SINGLE
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 size_flags_vertical = Control.SIZE_EXPAND_FILL
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="ResourceSummary" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -55,6 +60,8 @@ theme_override_constants/separation = 8
 
 [node name="RequireMiddle" type="CheckButton" parent="OptionsSection"]
 text = "Require at least one middle syllable"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MiddleRangeRow" type="HBoxContainer" parent="OptionsSection"]
 theme_override_constants/separation = 6
@@ -76,6 +83,8 @@ max_value = 32.0
 min_value = 0.0
 step = 1.0
 value = 0.0
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MiddleMaxLabel" type="Label" parent="OptionsSection/MiddleRangeRow"]
 text = "Max"
@@ -88,6 +97,8 @@ max_value = 32.0
 min_value = 0.0
 step = 1.0
 value = 1.0
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MinLengthRow" type="HBoxContainer" parent="OptionsSection"]
 theme_override_constants/separation = 6
@@ -106,6 +117,8 @@ max_value = 64.0
 min_value = 0.0
 step = 1.0
 value = 0.0
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="RegexSection" type="VBoxContainer" parent="OptionsSection"]
 theme_override_constants/separation = 4
@@ -126,9 +139,13 @@ text = "Seed"
 [node name="SeedInput" type="LineEdit" parent="PreviewRow"]
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 placeholder_text = "Optional seed label"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
 text = "Preview"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="ValidationLabel" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

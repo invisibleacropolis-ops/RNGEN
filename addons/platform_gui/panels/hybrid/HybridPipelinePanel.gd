@@ -79,6 +79,7 @@ func _ready() -> void:
     _alias_edit.text_changed.connect(_on_alias_changed)
     _template_edit.text_changed.connect(_on_template_changed)
     _seed_edit.text_changed.connect(_on_seed_changed)
+    _seed_edit.text_submitted.connect(_on_seed_submitted)
     _preview_button.pressed.connect(_on_preview_button_pressed)
     %RefreshButton.pressed.connect(_on_refresh_pressed)
     _pipeline_tree.columns = 5
@@ -298,6 +299,10 @@ func _on_seed_changed(_text: String) -> void:
     var step := _get_selected_step()
     _update_step_details(step)
     _notify_configuration_changed()
+
+func _on_seed_submitted(text: String) -> void:
+    _seed_edit.text = text
+    _on_preview_button_pressed()
 
 func _on_preview_button_pressed() -> void:
     var controller := _get_controller()

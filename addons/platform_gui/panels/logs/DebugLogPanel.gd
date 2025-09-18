@@ -38,6 +38,7 @@ func _ready() -> void:
     _refresh_button.pressed.connect(_on_refresh_pressed)
     _download_button.pressed.connect(_on_download_pressed)
     _section_selector.item_selected.connect(_on_section_selected)
+    _download_path.text_submitted.connect(_on_download_path_submitted)
     _populate_sections()
     _update_display()
 
@@ -88,6 +89,10 @@ func _on_download_pressed() -> void:
         return
     file.store_string(content)
     _set_status("Saved DebugRNG report to %s." % target_path)
+
+func _on_download_path_submitted(text: String) -> void:
+    _download_path.text = text
+    _on_download_pressed()
 
 func _on_section_selected(index: int) -> void:
     _section_selector.selected = index

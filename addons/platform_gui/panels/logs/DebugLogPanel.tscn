@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/logs/DebugLogPanel.gd" id="1_r9a7o"]
+[ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_rqdjh"]
 
 [node name="DebugLogPanel" type="VBoxContainer"]
 layout_mode = 2
@@ -15,20 +16,28 @@ size_flags_horizontal = 3
 [node name="RefreshButton" type="Button" parent="Header"]
 layout_mode = 2
 text = "Refresh log"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="SectionSelector" type="OptionButton" parent="Header"]
 layout_mode = 2
 size_flags_horizontal = 1
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="DownloadPath" type="LineEdit" parent="Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(240, 0)
 placeholder_text = "user://debug_rng_copy.txt"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="DownloadButton" type="Button" parent="Header"]
 layout_mode = 2
 text = "Download"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_rqdjh")
 
 [node name="LogDisplay" type="RichTextLabel" parent="."]
 layout_mode = 2

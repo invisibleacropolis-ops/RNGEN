@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://markovpanel"]
+[gd_scene load_steps=3 format=3 uid="uid://markovpanel"]
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/markov/MarkovPanel.gd" id="1_s8t7f"]
+[ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_kr4tw"]
 
 [node name="MarkovPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
@@ -23,6 +24,8 @@ size_flags_horizontal = Control.SIZE_EXPAND_FILL
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata and the resource catalogue."
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="MetadataSummary" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -45,6 +48,8 @@ custom_minimum_size = Vector2(0, 220)
 select_mode = ItemList.SELECT_SINGLE
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 size_flags_vertical = Control.SIZE_EXPAND_FILL
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="ResourceSummary" type="RichTextLabel" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -80,6 +85,8 @@ max_value = 128.0
 min_value = 0.0
 step = 1.0
 value = 0.0
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="PreviewRow" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 12
@@ -90,9 +97,13 @@ text = "Seed"
 [node name="SeedInput" type="LineEdit" parent="PreviewRow"]
 size_flags_horizontal = Control.SIZE_EXPAND_FILL
 placeholder_text = "Optional seed label"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
 text = "Preview"
+focus_mode = Control.FOCUS_ALL
+theme_override_styles/focus = ExtResource("2_kr4tw")
 
 [node name="ValidationLabel" type="Label" parent="."]
 autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

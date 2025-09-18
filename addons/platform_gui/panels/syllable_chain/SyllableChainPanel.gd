@@ -13,6 +13,7 @@ extends VBoxContainer
 @export var metadata_service_path: NodePath
 
 const SyllableSetResource := preload("res://name_generator/resources/SyllableSetResource.gd")
+const FOCUS_STYLE := preload("res://addons/platform_gui/themes/focus_highlight.tres")
 
 @onready var _resource_list: ItemList = %ResourceList
 @onready var _resource_summary_label: Label = %ResourceSummary
@@ -74,6 +75,7 @@ func _ready() -> void:
     %RefreshButton.pressed.connect(_on_refresh_pressed)
     _resource_list.item_selected.connect(_on_resource_selected)
     _require_middle_toggle.toggled.connect(_on_require_middle_toggled)
+    _seed_edit.text_submitted.connect(_on_seed_submitted)
     _build_regex_preset_controls()
     _track_default_modulate(_resource_list)
     _track_default_modulate(_middle_min_spin)
@@ -140,6 +142,10 @@ func _on_require_middle_toggled(pressed: bool) -> void:
     if pressed and _middle_max_spin.value < 1:
         _middle_max_spin.value = 1
 
+func _on_seed_submitted(text: String) -> void:
+    _seed_edit.text = text
+    _on_preview_button_pressed()
+
 func _build_regex_preset_controls() -> void:
     for child in _regex_preset_container.get_children():
         child.queue_free()
@@ -154,6 +160,8 @@ func _build_regex_preset_controls() -> void:
         var button := CheckBox.new()
         button.text = String(preset.get("label", identifier.capitalize()))
         button.tooltip_text = String(preset.get("description", ""))
+        button.focus_mode = Control.FOCUS_ALL
+        button.theme_override_styles["focus"] = FOCUS_STYLE
         _regex_preset_container.add_child(button)
         _regex_presets[identifier] = {
             "definition": preset,
