@@ -6,12 +6,24 @@ The Platform GUI is the artist-facing control centre for deterministic name gene
 
 ## Launch checklist
 
-Follow these steps whenever you need to work inside the Platform GUI:
+Follow these steps whenever you need to work inside the Platform GUI. The condensed version lives in [`devdocs/platform_gui_checklists.md`](./platform_gui_checklists.md) so you can print, export, or embed it in production playbooks.
 
 1. **Open the Godot project** – Launch Godot 4.4 and open `project.godot` from the repository root. The GUI scene tree expects the `RNGProcessor` autoload to be active, so do not create a blank project or rename the root folder.
 2. **Confirm autoloads** – In the Godot editor, open **Project > Project Settings > Autoload** and verify that `RNGManager`, `NameGenerator`, and `RNGProcessor` are all enabled. These singletons are the bridges between the GUI and the middleware. If any are missing, press the refresh icon to reload project settings or re-add them by pointing to the corresponding `.gd` files in `res://autoloads/`.
-3. **Run the GUI scene** – Press <kbd>F5</kbd> (or click the play icon) to launch the default scene. The Platform GUI window should appear with tabs for *Generators*, *Seeds*, and *Debug Logs*.
+3. **Run the GUI scene** – Press <kbd>F5</kbd> (or click the play icon) to launch the default scene. The Platform GUI window should appear with tabs for *Generators*, *Seeds*, *Debug Logs*, *Exports*, and *Admin Tools*.
 4. **Optional: enable DebugRNG logging** – If you want the GUI to collect detailed telemetry, open the DebugRNG toolbar, capture the session metadata (label, ticket ID, quick notes), press **Start session**, and then click **Attach**. The toolbar wires the helper through `RNGProcessor.set_debug_rng(...)` so the middleware starts writing the session report immediately.
+
+## Tab overview
+
+| Tab | Purpose | Quick actions |
+| --- | --- | --- |
+| **Generators** | Configure, preview, and export strategy payloads. | Generate, preview, bookmark configs |
+| **Seeds** | Manage master seed, stream routing, and deterministic state exports. | Apply, randomise, import/export state |
+| **Debug Logs** | Inspect DebugRNG telemetry in real time. | Refresh log, filter sections, download reports |
+| **Dataset Health** | Audit on-disk resources, launch the syllable builder, and follow up on dataset warnings. | Refresh inventories, open tooling, deep-link docs |
+| **Formulas** | Combine hybrid and template strategies for deterministic sentences. | Preview formulas, inspect seed inheritance |
+| **Exports** | Batch queued generator runs into export-ready payloads and shareable manifests. | Stage batch jobs, export CSV/JSON, attach DebugRNG snapshot |
+| **Admin Tools** | Manage bookmarks, workspace layouts, feature flags, and onboarding presets. | Restore defaults, sync bookmarks, toggle experimental features |
 
 ## Common workflows
 
@@ -29,6 +41,22 @@ Follow these steps whenever you need to work inside the Platform GUI:
 3. Enter the desired parameters. Required fields are highlighted and include inline descriptions written for narrative teams.
 4. Press **Generate**. The GUI calls `RNGProcessor.generate(config)` behind the scenes. While the middleware processes the request, the interface shows a status spinner driven by the `generation_started` signal.
 5. Review the result. Successful runs display the returned payload alongside the resolved seed and RNG stream name reported by `generation_completed`. If the middleware emits `generation_failed`, the GUI surfaces the human-readable error message plus suggested fixes.
+
+### Staging batch exports
+
+1. Switch to the **Exports** tab. The top banner shows the active workspace profile and links to the printable checklists documented in [`devdocs/platform_gui_checklists.md`](./platform_gui_checklists.md#batch-export-readiness).
+2. Press **Add job** to capture the current generator configuration. Jobs store strategy IDs, config payloads, and the seed metadata so reproducibility survives between sessions.
+3. Use **Annotate** to record localisation, platform, or sprint identifiers. These annotations appear in the exported manifest and the DebugRNG snapshot bundle.
+4. Choose an export format. The GUI supports CSV (flattened results) and JSON (full payloads plus metadata). CSV exports automatically expand arrays into semicolon-separated strings for spreadsheet compatibility.
+5. Click **Run batch**. The GUI iterates through queued jobs, invoking `RNGProcessor.generate(...)` for each entry. Progress indicators echo the same lifecycle signals as the single-run workflow so you can monitor successes and failures in real time.
+6. When the batch completes, use **Download bundle** to retrieve the manifest, raw results, and optional DebugRNG TXT snapshot in a timestamped directory. The handoff is optimised for archival and external QA submission.
+
+### Managing bookmarks and workspace presets
+
+1. Open the **Admin Tools** tab. This view loads user-specific workspace preferences stored under `user://platform_gui/settings.json`.
+2. Use **Save current layout** to bookmark the active tab, panel sizing, and debug toolbar state. Artists can return to the layout later via **Restore layout**.
+3. Toggle feature flags in the **Experimental features** list to opt in or out of beta panels. Flags are validated against the middleware’s capabilities so unsupported experiments are hidden automatically.
+4. Press **Sync bookmarks** to export your presets as JSON. The file can be shared with other artists or restored during onboarding to guarantee consistent workspace defaults.
 
 ### Configuring word list strategies
 
@@ -108,6 +136,13 @@ Follow these steps whenever you need to work inside the Platform GUI:
 7. When recreating an issue, paste a previously exported payload and press **Import state**. The panel validates the JSON before calling `RNGProcessor.import_rng_state(...)`, restoring the master seed plus every captured stream position.
 8. For cross-checks while debugging, jump to the Debug Logs tab and read the Stream Usage section written by `record_stream_usage(stream_name, context)`. Entries mirror the same stream identifiers listed in the dashboard so analysts can trace GUI actions back to RNG derivations.
 
+### Publishing export bundles
+
+1. After collecting deterministic samples in the **Exports** tab, press **Open bundle location** to reveal the export directory in your file browser.
+2. Validate that the CSV/JSON files are accompanied by the DebugRNG TXT snapshot and the summary README. Use the [Batch export readiness checklist](./platform_gui_checklists.md#batch-export-readiness) to confirm everything is properly labelled.
+3. Zip the folder (or drag it into your studio’s asset handoff template) so the manifest, sample payloads, and seeds remain coupled.
+4. Attach the bundle to the tracking ticket. QA can import the `rng_state.json` file through the Seeds tab to replay the run with identical seeds.
+
 ### Deterministic QA workflow
 
 1. Use **Export state** in the Seeds Dashboard to capture the master seed and active stream positions before committing reproductions.
@@ -116,21 +151,50 @@ Follow these steps whenever you need to work inside the Platform GUI:
 
 ## Accessibility and UX considerations
 
-- **Keyboard-friendly navigation** – All tabs and primary actions are reachable via <kbd>Tab</kbd> order. Focus indicators are intentionally high-contrast to support artists who rely on keyboard navigation.
-- **Legible typography** – The default theme uses a minimum 14pt UI font with adjustable scaling in **Settings > Accessibility**. Scaling applies to both labels and input controls.
-- **Colour contrast** – Status badges use dual coding (colour plus iconography) so success, warning, and error states remain distinguishable for colour-blind users.
+- **Keyboard-friendly navigation** – All tabs and primary actions are reachable via <kbd>Tab</kbd> order. Focus indicators are intentionally high-contrast and animate with motion-reduced styles when **Settings > Accessibility > Reduce Motion** is enabled.
+- **Screen reader support** – Landmark regions label each primary tab, and all actionable buttons expose descriptive `accessible_description` strings that mirror the terminology in this handbook. Seed values are announced in groups so screen reader users hear the prefix, stream, and numeric seed without confusion.
+- **Legible typography** – The default theme uses a minimum 14pt UI font with adjustable scaling in **Settings > Accessibility**. Scaling applies to labels, inputs, status badges, and the Debug Logs viewer.
+- **Colour contrast** – Status badges use dual coding (colour plus iconography) so success, warning, and error states remain distinguishable for colour-blind users. High-contrast mode replaces subtle status colours with textured backgrounds for additional differentiation.
 - **Error explanations** – Middleware error payloads are translated into plain language tooltips with links back to this handbook, removing the need to parse stack traces.
-- **Session persistence** – The GUI remembers your last-used strategy and seed between sessions by reading and writing the same values exposed by the middleware, reducing repetitive configuration.
+- **Session persistence** – The GUI remembers your last-used strategy, seed, export preset, and Admin Tools flags between sessions by reading and writing the same values exposed by the middleware, reducing repetitive configuration.
+- **Input safeguards** – Numeric fields clamp to middleware-supported ranges, and sliders include optional text entry for artists who cannot comfortably use drag gestures.
 
 ## Troubleshooting (plain-language answers)
 
 | Symptom | What to try | Middleware link |
 | --- | --- | --- |
 | **"No strategies available" in the dropdown** | Ensure the Godot project autoloads are active (see the launch checklist) and press the **Reload Strategies** button. This re-invokes `RNGProcessor.list_strategies()` to rebuild the list. | `list_strategies()` |
-| **"Failed to generate" error banner** | Double-check your inputs; required fields turn red if missing. If the error persists, open the Debug Logs tab to read the detailed message captured from `generation_failed`. | `generate(...)`, `generation_failed` |
+| **Generator previews ignore the selected seed** | Verify that **Randomize seed before each run** is disabled and that the Seeds tab shows the seed you expect. If the Admin Tools flag **Force random seeds** is on, turn it off to respect manual seeds. | `set_master_seed(...)`, `randomize_master_seed()` |
+| **"Failed to generate" error banner** | Double-check your inputs; required fields turn red if missing. If the error persists, open the Debug Logs tab to read the detailed message captured from `generation_failed`. Use **Copy config JSON** to share the failing payload with engineers. | `generate(...)`, `generation_failed` |
 | **Debug Logs tab is empty** | Toggle "Record DebugRNG Session" and run the generator again. The button wires up `RNGProcessor.set_debug_rng(...)` so the middleware actually writes the log file. | `set_debug_rng(...)`, `get_debug_rng()` |
+| **Export bundle missing DebugRNG snapshot** | Confirm **Include DebugRNG snapshot** is enabled before running **Run batch** in the Exports tab. If the toggle is missing, open Admin Tools and enable the **Exports.DebugRNG** feature flag. | `set_debug_rng(...)`, `get_debug_rng()` |
 | **Seed value keeps changing unexpectedly** | Confirm you did not enable "Randomize seed before each run" in the toolbar. Disable it to keep using your manually applied seed via `set_master_seed(...)`. | `set_master_seed(...)`, `reset_master_seed()` |
+| **Admin Tools flags do not persist** | Check file permissions for `user://platform_gui/settings.json`. If Godot cannot write to that file, presets revert to defaults. Delete the file to regenerate it after fixing permissions. | Settings persistence |
 | **GUI window will not launch** | Open Godot's output panel for errors. Missing autoloads or a renamed project folder prevent the scene from finding `RNGProcessor`. Restore the original `project.godot` path and retry. | Autoload access |
+
+## Engineering implementation notes
+
+This section is designed for engineers extending or maintaining the Platform GUI. Artists can skip ahead to the resource links.
+
+### Code structure
+
+- **Primary entry points** – The GUI scene lives in `res://addons/platform_gui/PlatformGui.tscn`. Each tab is a dedicated panel script that emits signals consumed by `PlatformGuiController.gd`.
+- **Middleware integration** – All middleware calls are routed through `RNGProcessorController.gd` to keep UI layers testable. Avoid calling `RNGProcessor` directly from panel scripts unless the controller explicitly exposes the helper you need.
+- **Signals and telemetry** – When adding new actions, emit `generation_started`, `generation_completed`, or `generation_failed` signals through the controller so DebugRNG timelines remain accurate.
+- **Feature flags** – Admin Tools uses a lightweight feature flag service backed by `user://platform_gui/settings.json`. Add new flags here when shipping beta panels so QA can opt in without affecting everyone.
+
+### Development workflow
+
+1. **Scene isolation** – Launch panels in isolation by right-clicking their `.tscn` files and choosing **Open Scene**. The panel scripts stub middleware calls when the controller is absent, making it easier to iterate on UI while backend code evolves.
+2. **Unit tests** – Extend the existing Godot test harness with panel-specific scripts under `tests/gui/`. Tests should load the scene, inject a fake `RNGProcessorController`, and assert that signals and validation states change as expected.
+3. **DebugRNG integration** – When adding new workflows, update the DebugRNG toolbar annotations so exported bundles contain helpful context. Engineers should wire new panel actions into the telemetry stream before code review.
+4. **Documentation sync** – Any new tab or workflow must be reflected in this handbook and the printable checklists. Run `rg` for the tab name to ensure references stay in sync.
+
+### Performance guidelines
+
+- Batch exports stream results one job at a time; avoid blocking the UI thread with synchronous file writes. Use deferred calls or background threads when generating large bundles.
+- Keep dataset inventory scans within a worker so the Dataset Health tab stays responsive. Cache results and expose a manual refresh button instead of constant polling.
+- When integrating new middleware APIs, wrap them in throttled calls (e.g., only refresh Debug Logs when the window is visible) to reduce pressure on headless automation.
 
 ## Where to learn more
 
