@@ -24,6 +24,12 @@ RNGProcessor="*res://name_generator/RNGProcessor.gd"
 
 imported_folders=PackedStringArray("res://data", "res://data/markov_models", "res://data/syllable_sets", "res://data/wordlists", "res://data/objects", "res://data/people", "res://name_generator/resources", "res://name_generator/strategies", "res://name_generator/utils", "res://name_generator/tools", "res://name_generator/tests", "res://tests", "res://tests/test_assets")
 
+[debug]
+
+gdscript/warnings/enable=false
+gdscript/warnings/minimum_severity=0
+gdscript/warnings/treat_warnings_as_errors=false
+
 [global_script_class_icons]
 
 WordListResource=""
@@ -31,8 +37,53 @@ WordListResource=""
 [global_script_classes]
 
 global_script_classes=[{
+"base": "RefCounted",
+"class": "GeneratorStrategy",
+"language": "GDScript",
+"path": "res://name_generator/strategies/GeneratorStrategy.gd"
+}, {
+"base": "GeneratorStrategy",
+"class": "WordlistStrategy",
+"language": "GDScript",
+"path": "res://name_generator/strategies/WordlistStrategy.gd"
+}, {
+"base": "GeneratorStrategy",
+"class": "SyllableChainStrategy",
+"language": "GDScript",
+"path": "res://name_generator/strategies/SyllableChainStrategy.gd"
+}, {
+"base": "GeneratorStrategy",
+"class": "TemplateStrategy",
+"language": "GDScript",
+"path": "res://name_generator/strategies/TemplateStrategy.gd"
+}, {
+"base": "GeneratorStrategy",
+"class": "MarkovChainStrategy",
+"language": "GDScript",
+"path": "res://name_generator/strategies/MarkovChainStrategy.gd"
+}, {
+"base": "GeneratorStrategy",
+"class": "HybridStrategy",
+"language": "GDScript",
+"path": "res://name_generator/strategies/HybridStrategy.gd"
+}, {
+"base": "RefCounted",
+"class": "RNGStreamRouter",
+"language": "GDScript",
+"path": "res://name_generator/utils/RNGManager.gd"
+}, {
 "base": "Resource",
 "class": "WordListResource",
 "language": "GDScript",
 "path": "res://name_generator/resources/WordListResource.gd"
+}, {
+"base": "Resource",
+"class": "SyllableSetResource",
+"language": "GDScript",
+"path": "res://name_generator/resources/SyllableSetResource.gd"
+}, {
+"base": "Resource",
+"class": "MarkovModelResource",
+"language": "GDScript",
+"path": "res://name_generator/resources/MarkovModelResource.gd"
 }]

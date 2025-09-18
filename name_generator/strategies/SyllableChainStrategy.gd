@@ -41,11 +41,11 @@ func _get_expected_config_keys() -> Dictionary:
     }
 
 func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
-    var error := _validate_config(config)
+    var error: GeneratorError = _validate_config(config)
     if error:
         return error
 
-    var path_variant := config.get("syllable_set_path", "")
+    var path_variant: Variant = config.get("syllable_set_path", "")
     if typeof(path_variant) != TYPE_STRING or String(path_variant).is_empty():
         return _make_error(
             "invalid_syllable_set_path",
@@ -53,7 +53,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             {"syllable_set_path": path_variant},
         )
 
-    var syllable_resource := ResourceLoader.load(path_variant)
+    var syllable_resource: Resource = ResourceLoader.load(path_variant)
     if syllable_resource == null:
         return _make_error(
             "missing_syllable_set",
@@ -72,18 +72,18 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
         )
 
     var syllable_set: SyllableSetResource = syllable_resource
-    error = _validate_syllable_set(syllable_set, config, path_variant)
-    if error:
-        return error
+    var validation_error: GeneratorError = _validate_syllable_set(syllable_set, config, String(path_variant))
+    if validation_error:
+        return validation_error
 
-    var middle_range_variant := _parse_middle_range(config, syllable_set)
+    var middle_range_variant: Variant = _parse_middle_range(config, syllable_set)
     if middle_range_variant is GeneratorError:
         return middle_range_variant
 
     var middle_range: Dictionary = middle_range_variant
-    var middle_count := _pick_middle_count(middle_range, rng)
+    var middle_count: int = _pick_middle_count(middle_range, rng)
 
-    var fragments: Array = []
+    var fragments: Array[String] = []
     fragments.append(_pick_prefix(syllable_set, rng))
 
     for _i in range(middle_count):
@@ -91,10 +91,10 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
 
     fragments.append(_pick_suffix(syllable_set, rng))
 
-    var name := _join_with_smoothing(fragments)
-    var min_length := max(config.get("min_length", 0), 0)
+    var name: String = _join_with_smoothing(fragments)
+    var min_length: int = max(int(config.get("min_length", 0)), 0)
 
-    var attempts := 0
+    var attempts: int = 0
     while name.length() < min_length and middle_count < middle_range["max"]:
         if syllable_set.middles.is_empty():
             break
@@ -116,7 +116,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             },
         )
 
-    var processed_name := _apply_post_processing(name, config.get("post_processing_rules", []))
+    var processed_name: String = _apply_post_processing(name, config.get("post_processing_rules", []))
     return processed_name
 
 func _validate_syllable_set(
@@ -138,7 +138,7 @@ func _validate_syllable_set(
             {"syllable_set_path": path_variant},
         )
 
-    var require_middle := config.get("require_middle", false)
+    var require_middle: bool = bool(config.get("require_middle", false))
     if require_middle and syllable_set.middles.is_empty():
         return _make_error(
             "missing_required_middles",
@@ -152,11 +152,11 @@ func _parse_middle_range(
     config: Dictionary,
     syllable_set: SyllableSetResource,
 ) -> Variant:
-    var require_middle := config.get("require_middle", false)
-    var range_config := config.get("middle_syllables", null)
+    var require_middle: bool = bool(config.get("require_middle", false))
+    var range_config: Variant = config.get("middle_syllables", null)
 
-    var min_count := 0
-    var max_count := max(min_count, 1)
+    var min_count: int = 0
+    var max_count: int = max(min_count, 1)
 
     if require_middle:
         min_count = 1
@@ -231,7 +231,7 @@ func _pick_suffix(syllable_set: SyllableSetResource, rng: RandomNumberGenerator)
     return _pick_from_packed_strings(syllable_set.suffixes, rng)
 
 func _pick_from_packed_strings(values: PackedStringArray, rng: RandomNumberGenerator) -> String:
-    var as_array: Array = []
+    var as_array: Array[String] = []
     for value in values:
         as_array.append(String(value))
 
@@ -241,9 +241,9 @@ func _pick_from_packed_strings(values: PackedStringArray, rng: RandomNumberGener
     return String(ArrayUtils.pick_uniform(as_array, rng))
 
 func _join_with_smoothing(fragments: Array) -> String:
-    var result := ""
+    var result: String = ""
     for fragment in fragments:
-        var sanitized := String(fragment)
+        var sanitized: String = String(fragment)
         if sanitized.is_empty():
             continue
         if result.is_empty():
@@ -258,16 +258,16 @@ func _smooth_boundary(left: String, right: String) -> String:
     if right.is_empty():
         return left
 
-    var trimmed := _trim_duplicate_boundary(left, right)
-    var base_left := trimmed[0]
-    var base_right := trimmed[1]
+    var trimmed: Array = _trim_duplicate_boundary(left, right)
+    var base_left: String = String(trimmed[0])
+    var base_right: String = String(trimmed[1])
     base_right = _smooth_vowel_overlap(base_left, base_right)
     base_right = _smooth_consonant_overlap(base_left, base_right)
     return base_left + base_right
 
 func _trim_duplicate_boundary(left: String, right: String) -> Array:
-    var left_last := left.substr(left.length() - 1, 1)
-    var right_first := right.substr(0, 1)
+    var left_last: String = left.substr(left.length() - 1, 1)
+    var right_first: String = right.substr(0, 1)
 
     if left_last.is_empty() or right_first.is_empty():
         return [left, right]
@@ -281,8 +281,8 @@ func _smooth_vowel_overlap(left: String, right: String) -> String:
     if left.is_empty() or right.is_empty():
         return right
 
-    var left_last := left.substr(left.length() - 1, 1).to_lower()
-    var right_first := right.substr(0, 1).to_lower()
+    var left_last: String = left.substr(left.length() - 1, 1).to_lower()
+    var right_first: String = right.substr(0, 1).to_lower()
 
     if _is_vowel(left_last) and _is_vowel(right_first):
         return right.substr(1)
@@ -293,8 +293,8 @@ func _smooth_consonant_overlap(left: String, right: String) -> String:
     if left.is_empty() or right.is_empty():
         return right
 
-    var left_last := left.substr(left.length() - 1, 1).to_lower()
-    var right_first := right.substr(0, 1).to_lower()
+    var left_last: String = left.substr(left.length() - 1, 1).to_lower()
+    var right_first: String = right.substr(0, 1).to_lower()
 
     if _is_vowel(left_last) or _is_vowel(right_first):
         return right
@@ -302,7 +302,7 @@ func _smooth_consonant_overlap(left: String, right: String) -> String:
     if right.length() == 1:
         return right
 
-    var right_second := right.substr(1, 1).to_lower()
+    var right_second: String = right.substr(1, 1).to_lower()
     if right_first == right_second:
         return right.substr(1)
 
@@ -311,25 +311,25 @@ func _smooth_consonant_overlap(left: String, right: String) -> String:
 func _is_vowel(character: String) -> bool:
     if character.is_empty():
         return false
-    var vowels := "aeiou"
+    var vowels: String = "aeiou"
     return vowels.find(character[0]) != -1
 
 func _apply_post_processing(name: String, rules: Array) -> String:
     if rules == null or rules.is_empty():
         return name
 
-    var result := name
+    var result: String = name
     for rule in rules:
         if not (rule is Dictionary):
             continue
 
-        var pattern := String(rule.get("pattern", ""))
+        var pattern: String = String(rule.get("pattern", ""))
         if pattern.is_empty():
             continue
 
-        var replacement := String(rule.get("replacement", ""))
-        var regex := RegEx.new()
-        var compile_status := regex.compile(pattern)
+        var replacement: String = String(rule.get("replacement", ""))
+        var regex: RegEx = RegEx.new()
+        var compile_status: int = regex.compile(pattern)
         if compile_status != OK:
             continue
         result = regex.sub(result, replacement)

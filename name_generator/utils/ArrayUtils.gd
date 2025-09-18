@@ -7,7 +7,7 @@ class_name ArrayUtils
 
 static func assert_not_empty(collection: Array, context: String = "Collection") -> void:
     if collection == null or collection.is_empty():
-        var message := "%s must not be empty." % context
+        var message: String = "%s must not be empty." % context
         push_error(message)
         assert(false, message)
 
@@ -15,7 +15,7 @@ static func pick_uniform(items: Array, rng: RandomNumberGenerator) -> Variant:
     assert_not_empty(items, "Items")
     if items.size() == 1:
         return items[0]
-    var index := rng.randi_range(0, items.size() - 1)
+    var index: int = rng.randi_range(0, items.size() - 1)
     return items[index]
 
 static func pick_random_deterministic(items: Array, rng: RandomNumberGenerator) -> Variant:
@@ -23,21 +23,21 @@ static func pick_random_deterministic(items: Array, rng: RandomNumberGenerator) 
 
 static func pick_weighted(entries: Array, rng: RandomNumberGenerator) -> Variant:
     assert_not_empty(entries, "Weighted entries")
-    var normalised := []
-    var total_weight := 0.0
+    var normalised: Array[Dictionary] = []
+    var total_weight: float = 0.0
 
     for entry in entries:
-        var parsed := _parse_weighted_entry(entry)
+        var parsed: Dictionary = _parse_weighted_entry(entry)
         total_weight += parsed["weight"]
         normalised.append(parsed)
 
     if total_weight <= 0.0:
-        var message := "Weighted entries must have a combined positive weight."
+        var message: String = "Weighted entries must have a combined positive weight."
         push_error(message)
         assert(false, message)
 
-    var roll := rng.randf() * total_weight
-    var cumulative := 0.0
+    var roll: float = rng.randf() * total_weight
+    var cumulative: float = 0.0
     for entry in normalised:
         cumulative += entry["weight"]
         if roll <= cumulative:
@@ -50,10 +50,10 @@ static func pick_weighted_random_deterministic(entries: Array, rng: RandomNumber
 
 static func handle_empty_with_fallback(
     collection: Array,
-    fallback := null,
+    fallback: Variant = null,
     context: String = "Collection",
 ) -> Dictionary:
-    var state := {
+    var state: Dictionary = {
         "was_empty": false,
         "value": null,
     }
@@ -62,7 +62,7 @@ static func handle_empty_with_fallback(
         return state
 
     state["was_empty"] = true
-    var message := "%s must not be empty." % context
+    var message: String = "%s must not be empty." % context
 
     if fallback == null:
         push_error(message)
@@ -77,8 +77,8 @@ static func handle_empty_with_fallback(
     return state
 
 static func _parse_weighted_entry(entry: Variant) -> Dictionary:
-    var value := null
-    var weight := null
+    var value: Variant = null
+    var weight: Variant = null
 
     if entry is Dictionary:
         var dictionary := entry as Dictionary
@@ -98,13 +98,13 @@ static func _parse_weighted_entry(entry: Variant) -> Dictionary:
         weight = entry[1]
 
     if weight == null:
-        var message := "Weighted entry %s is missing a weight." % [entry]
+        var message: String = "Weighted entry %s is missing a weight." % [entry]
         push_error(message)
         assert(false, message)
 
-    var weight_number := float(weight)
+    var weight_number: float = float(weight)
     if weight_number < 0.0:
-        var message := "Weighted entry %s cannot use a negative weight." % [entry]
+        var message: String = "Weighted entry %s cannot use a negative weight." % [entry]
         push_error(message)
         assert(false, message)
 

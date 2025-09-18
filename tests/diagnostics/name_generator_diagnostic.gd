@@ -1,6 +1,7 @@
 extends RefCounted
 
 const NameGenerator := preload("res://name_generator/NameGenerator.gd")
+const DebugRNG := preload("res://name_generator/tools/DebugRNG.gd")
 
 class StubRNGManager:
     var rngs: Dictionary = {}
@@ -15,19 +16,11 @@ class StubRNGManager:
             rngs[stream_name] = rng
         return rngs[stream_name]
 
-class TrackingDebugRNG:
+class TrackingDebugRNG extends DebugRNG:
     var stream_records: Array[Dictionary] = []
 
-    func track_strategy(_identifier: String, _strategy: Variant) -> void:
-        pass
-
-    func untrack_strategy(_strategy: Variant) -> void:
-        pass
-
-    func clear_tracked_strategies() -> void:
-        stream_records.clear()
-
-    func record_stream_usage(stream_name: String, context: Dictionary) -> void:
+    func record_stream_usage(stream_name: String, context: Dictionary = {}) -> void:
+        super.record_stream_usage(stream_name, context)
         var entry := {
             "stream_name": stream_name,
             "context": context.duplicate(true) if context is Dictionary else {},
@@ -102,12 +95,13 @@ func _test_registers_builtin_strategies() -> Variant:
         if String(description.get("display_name", "")).is_empty():
             return "Strategy description should include a display name."
 
-        var expected_config := description.get("expected_config", {})
+        var expected_config: Dictionary = description.get("expected_config", {})
         if not (expected_config is Dictionary):
             return "Strategy descriptions must include an expected_config dictionary."
-        var required := expected_config.get("required", PackedStringArray())
-        if typeof(required) != TYPE_PACKED_STRING_ARRAY:
+        var required_variant: Variant = expected_config.get("required", PackedStringArray())
+        if typeof(required_variant) != TYPE_PACKED_STRING_ARRAY:
             return "expected_config.required should be a PackedStringArray."
+        var required: PackedStringArray = required_variant
         if not required.has("wordlist_paths"):
             return "expected_config.required should mention the wordlist_paths key."
 
@@ -251,22 +245,21 @@ func _create_generator() -> NameGenerator:
     return generator
 
 func _with_engine_stub(stub_manager: Variant, callable: Callable) -> Variant:
-    var original_has: Callable = Engine.has_singleton
-    var original_get: Callable = Engine.get_singleton
+    var had_original := Engine.has_singleton("RNGManager")
+    var original_manager: Object = null
+    if had_original:
+        original_manager = Engine.get_singleton("RNGManager")
 
-    Engine.has_singleton = func(name: String) -> bool:
-        if name == "RNGManager":
-            return stub_manager != null
-        return original_has.call(name)
-
-    Engine.get_singleton = func(name: String) -> Variant:
-        if name == "RNGManager":
-            return stub_manager
-        return original_get.call(name)
+    if stub_manager != null:
+        if had_original:
+            Engine.unregister_singleton("RNGManager")
+        Engine.register_singleton("RNGManager", stub_manager)
 
     var outcome = callable.call(stub_manager)
 
-    Engine.has_singleton = original_has
-    Engine.get_singleton = original_get
+    if stub_manager != null:
+        Engine.unregister_singleton("RNGManager")
+        if had_original and original_manager != null:
+            Engine.register_singleton("RNGManager", original_manager)
 
     return outcome

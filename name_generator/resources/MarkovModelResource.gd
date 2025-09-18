@@ -27,7 +27,7 @@ func has_state(token: String) -> bool:
 func get_transition_block(token: String) -> Array:
     if not transitions.has(token):
         return []
-    var block := transitions[token]
+    var block: Variant = transitions[token]
     if block is Array:
         return block
     return []

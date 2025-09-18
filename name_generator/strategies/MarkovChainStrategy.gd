@@ -10,11 +10,11 @@ const MarkovModelResource := preload("res://name_generator/resources/MarkovModel
 var _state_rngs: Dictionary = {}
 
 func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
-    var error := _validate_config(config)
+    var error: GeneratorError = _validate_config(config)
     if error:
         return error
 
-    var markov_path_variant = config.get("markov_model_path")
+    var markov_path_variant: Variant = config.get("markov_model_path")
     if typeof(markov_path_variant) != TYPE_STRING:
         return _make_error(
             "invalid_markov_model_path",
@@ -29,13 +29,14 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             "Configuration key 'markov_model_path' cannot be empty.",
         )
 
-    var max_length := config.get("max_length", 32)
-    if typeof(max_length) != TYPE_INT:
+    var max_length_variant: Variant = config.get("max_length", 32)
+    if typeof(max_length_variant) != TYPE_INT:
         return _make_error(
             "invalid_max_length_type",
             "Configuration value 'max_length' must be an integer when provided.",
-            {"received_type": typeof(max_length)},
+            {"received_type": typeof(max_length_variant)},
         )
+    var max_length: int = int(max_length_variant)
     if max_length <= 0:
         return _make_error(
             "invalid_max_length_value",
@@ -43,20 +44,20 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             {"received_value": max_length},
         )
 
-    var model_result := _load_model(markov_path)
+    var model_result: Variant = _load_model(markov_path)
     if model_result is GeneratorStrategy.GeneratorError:
         return model_result
     var model: MarkovModelResource = model_result
 
-    var validation_error := _validate_model(model)
+    var validation_error: GeneratorError = _validate_model(model)
     if validation_error:
         return validation_error
 
     _state_rngs.clear()
 
     var tokens: Array[String] = []
-    var step_count := 0
-    var next_token_result := _sample_start_token(model, rng)
+    var step_count: int = 0
+    var next_token_result: Variant = _sample_start_token(model, rng)
     if next_token_result is GeneratorStrategy.GeneratorError:
         return next_token_result
     var next_token: String = next_token_result
@@ -79,7 +80,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
                 },
             )
 
-        var sampled := _sample_transition(model, next_token, rng)
+        var sampled: Variant = _sample_transition(model, next_token, rng)
         if sampled is GeneratorStrategy.GeneratorError:
             return sampled
         next_token = sampled
@@ -102,7 +103,7 @@ func _load_model(path: String) -> Variant:
             {"path": path},
         )
 
-    var resource := ResourceLoader.load(path)
+    var resource: Resource = ResourceLoader.load(path)
     if resource == null:
         return _make_error(
             "resource_load_failed",
@@ -156,7 +157,7 @@ func _validate_model(model: MarkovModelResource) -> GeneratorError:
         )
 
     for token_key in model.token_temperatures.keys():
-        var temperature_value = model.token_temperatures[token_key]
+        var temperature_value: Variant = model.token_temperatures[token_key]
         if typeof(temperature_value) != TYPE_FLOAT and typeof(temperature_value) != TYPE_INT:
             return _make_error(
                 "invalid_token_temperature_type",
@@ -178,23 +179,24 @@ func _validate_model(model: MarkovModelResource) -> GeneratorError:
 
     var referenced_tokens := PackedStringArray()
 
-    var start_validation := _validate_transition_array(model.start_tokens, "start_tokens", referenced_tokens)
+    var start_validation: GeneratorError = _validate_transition_array(model.start_tokens, "start_tokens", referenced_tokens)
     if start_validation:
         return start_validation
 
     for key in model.transitions.keys():
-        var array := model.transitions[key]
-        if typeof(array) != TYPE_ARRAY:
+        var array_variant: Variant = model.transitions[key]
+        if typeof(array_variant) != TYPE_ARRAY:
             return _make_error(
                 "invalid_transition_block",
                 "Transitions for token '%s' must be provided as an Array of Dictionaries." % key,
                 {
                     "token": key,
-                    "received_type": typeof(array),
+                    "received_type": typeof(array_variant),
                 },
             )
 
-        var transition_error := _validate_transition_array(array, "transitions[%s]" % key, referenced_tokens)
+        var transition_array: Array = array_variant
+        var transition_error: GeneratorError = _validate_transition_array(transition_array, "transitions[%s]" % key, referenced_tokens)
         if transition_error:
             return transition_error
 
@@ -229,7 +231,7 @@ func _validate_transition_array(array: Array, context: String, referenced_tokens
                 "%s entries must include a 'token' field." % context,
             )
 
-        var token_value = item["token"]
+        var token_value: Variant = item["token"]
         if typeof(token_value) != TYPE_STRING:
             return _make_error(
                 "invalid_transition_token_type",
@@ -240,7 +242,7 @@ func _validate_transition_array(array: Array, context: String, referenced_tokens
         if not referenced_tokens.has(token_value):
             referenced_tokens.append(token_value)
 
-        var weight_value = item.get("weight", 1.0)
+        var weight_value: Variant = item.get("weight", 1.0)
         if typeof(weight_value) != TYPE_FLOAT and typeof(weight_value) != TYPE_INT:
             return _make_error(
                 "invalid_transition_weight_type",
@@ -255,7 +257,7 @@ func _validate_transition_array(array: Array, context: String, referenced_tokens
             )
 
         if item.has("temperature"):
-            var temperature_value = item["temperature"]
+            var temperature_value: Variant = item["temperature"]
             if typeof(temperature_value) != TYPE_FLOAT and typeof(temperature_value) != TYPE_INT:
                 return _make_error(
                     "invalid_transition_temperature_type",
@@ -272,7 +274,7 @@ func _validate_transition_array(array: Array, context: String, referenced_tokens
     return null
 
 func _sample_start_token(model: MarkovModelResource, base_rng: RandomNumberGenerator) -> Variant:
-    var selection := _sample_from_options(model, "__start__", model.start_tokens, base_rng)
+    var selection: Variant = _sample_from_options(model, "__start__", model.start_tokens, base_rng)
     if selection is GeneratorStrategy.GeneratorError:
         return selection
     return selection["token"]
@@ -285,20 +287,20 @@ func _sample_transition(model: MarkovModelResource, from_token: String, base_rng
             {"token": from_token},
         )
 
-    var options = model.transitions[from_token]
-    var selection := _sample_from_options(model, from_token, options, base_rng)
+    var options: Array = model.transitions[from_token]
+    var selection: Variant = _sample_from_options(model, from_token, options, base_rng)
     if selection is GeneratorStrategy.GeneratorError:
         return selection
     return selection["token"]
 
 func _sample_from_options(model: MarkovModelResource, state_id: String, options: Array, base_rng: RandomNumberGenerator) -> Variant:
-    var rng := _get_state_rng(state_id, base_rng)
-    var total_weight := 0.0
+    var rng: RandomNumberGenerator = _get_state_rng(state_id, base_rng)
+    var total_weight: float = 0.0
     var prepared_options: Array[Dictionary] = []
 
     for option in options:
-        var temperature := _resolve_temperature(model, state_id, option)
-        var weight := float(option.get("weight", 1.0))
+        var temperature: float = _resolve_temperature(model, state_id, option)
+        var weight: float = float(option.get("weight", 1.0))
         if temperature != 1.0:
             weight = pow(weight, 1.0 / temperature)
 
@@ -315,8 +317,8 @@ func _sample_from_options(model: MarkovModelResource, state_id: String, options:
             {"state": state_id},
         )
 
-    var pick := rng.randf_range(0.0, total_weight)
-    var accumulator := 0.0
+    var pick: float = rng.randf_range(0.0, total_weight)
+    var accumulator: float = 0.0
     for item in prepared_options:
         accumulator += item["weight"]
         if pick <= accumulator:

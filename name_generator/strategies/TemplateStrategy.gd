@@ -23,11 +23,11 @@ func _get_expected_config_keys() -> Dictionary:
     }
 
 func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
-    var validation_error := _validate_config(config)
+    var validation_error: GeneratorError = _validate_config(config)
     if validation_error:
         return validation_error
 
-    var template_value := config.get("template_string", "")
+    var template_value: Variant = config.get("template_string", "")
     if typeof(template_value) != TYPE_STRING:
         return _make_error(
             "invalid_template_type",
@@ -38,7 +38,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             },
         )
 
-    var template_string := String(template_value)
+    var template_string: String = String(template_value)
     var sub_generators: Dictionary = {}
     if config.has("sub_generators"):
         if typeof(config["sub_generators"]) != TYPE_DICTIONARY:
@@ -52,7 +52,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             )
         sub_generators = (config["sub_generators"] as Dictionary).duplicate(true)
 
-    var max_depth := _resolve_max_depth(config)
+    var max_depth: int = _resolve_max_depth(config)
     if max_depth <= 0:
         return _make_error(
             "invalid_max_depth",
@@ -60,7 +60,7 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             {"max_depth": max_depth},
         )
 
-    var current_depth := int(config.get(INTERNAL_DEPTH_KEY, 0))
+    var current_depth: int = int(config.get(INTERNAL_DEPTH_KEY, 0))
     if current_depth >= max_depth:
         return _make_error(
             "template_recursion_depth_exceeded",
@@ -71,23 +71,23 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             },
         )
 
-    var regex := _get_token_regex()
-    var matches := regex.search_all(template_string)
+    var regex: RegEx = _get_token_regex()
+    var matches: Array = regex.search_all(template_string)
     if matches.is_empty():
         return template_string
 
-    var rng_router := RNGStreamRouter.new(rng)
-    var token_counts := {}
-    var cursor := 0
-    var expanded := ""
-    var parent_seed := String(config.get("seed", ""))
+    var rng_router: RNGStreamRouter = RNGStreamRouter.new(rng)
+    var token_counts: Dictionary = {}
+    var cursor: int = 0
+    var expanded: String = ""
+    var parent_seed: String = String(config.get("seed", ""))
 
     for match in matches:
-        var start_index := match.get_start()
-        var end_index := match.get_end()
+        var start_index: int = match.get_start()
+        var end_index: int = match.get_end()
         expanded += template_string.substr(cursor, start_index - cursor)
 
-        var token := _extract_token(match)
+        var token: String = _extract_token(match)
         token = token.strip_edges()
         if token.is_empty():
             return _make_error(
@@ -96,10 +96,10 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
                 {"start_index": start_index},
             )
 
-        var occurrence := int(token_counts.get(token, 0))
+        var occurrence: int = int(token_counts.get(token, 0))
         token_counts[token] = occurrence + 1
 
-        var replacement := _resolve_token(
+        var replacement: Variant = _resolve_token(
             token,
             occurrence,
             sub_generators,
@@ -152,8 +152,8 @@ func _resolve_token(
             },
         )
 
-    var generator_config_variant := sub_generators[token]
-    var type_error := _ensure_dictionary(generator_config_variant, "sub_generators['%s']" % token)
+    var generator_config_variant: Variant = sub_generators[token]
+    var type_error: GeneratorError = _ensure_dictionary(generator_config_variant, "sub_generators['%s']" % token)
     if type_error:
         return type_error
 
@@ -165,8 +165,8 @@ func _resolve_token(
     if not generator_config.has("seed"):
         generator_config["seed"] = "%s::%s::%d" % [parent_seed, token, occurrence]
 
-    var child_rng := rng_router.derive_rng([token, String(occurrence), String(current_depth + 1)])
-    var result := _generate_via_processor(generator_config, child_rng)
+    var child_rng: RandomNumberGenerator = rng_router.derive_rng([token, str(occurrence), str(current_depth + 1)])
+    var result: Variant = _generate_via_processor(generator_config, child_rng)
     if result is Dictionary and result.has("code"):
         return _make_error(
             String(result.get("code", "template_child_error")),
@@ -179,27 +179,27 @@ func _resolve_token(
 func _get_token_regex() -> RegEx:
     if _token_regex == null:
         _token_regex = RegEx.new()
-        var error := _token_regex.compile(TOKEN_PATTERN)
+        var error: int = _token_regex.compile(TOKEN_PATTERN)
         if error != OK:
             push_error("Failed to compile template token pattern: %s" % TOKEN_PATTERN)
     return _token_regex
 
 func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
     if Engine.has_singleton("RNGProcessor"):
-        var processor := Engine.get_singleton("RNGProcessor")
+        var processor: Object = Engine.get_singleton("RNGProcessor")
         if processor != null and processor.has_method("generate"):
             return processor.call("generate", config, rng)
-    var generator := _resolve_name_generator_singleton()
+    var generator: Object = _resolve_name_generator_singleton()
     if generator != null:
         return generator.call("generate", config, rng)
 
-    var script := _load_name_generator_script()
+    var script: GDScript = _load_name_generator_script()
     if script != null:
-        var fallback := script.new()
+        var fallback: Object = script.new()
         if fallback != null:
             if fallback.has_method("_register_builtin_strategies"):
                 fallback.call("_register_builtin_strategies")
-            var result := fallback.call("generate", config, rng)
+            var result: Variant = fallback.call("generate", config, rng)
             if fallback is Node:
                 fallback.free()
             return result

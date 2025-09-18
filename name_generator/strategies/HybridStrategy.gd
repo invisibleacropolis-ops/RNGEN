@@ -19,11 +19,11 @@ func _get_expected_config_keys() -> Dictionary:
     }
 
 func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
-    var validation_error := _validate_config(config)
+    var validation_error: GeneratorError = _validate_config(config)
     if validation_error:
         return validation_error
 
-    var steps_variant := config.get("steps")
+    var steps_variant: Variant = config.get("steps")
     if not (steps_variant is Array):
         return _make_error(
             "invalid_steps_type",
@@ -41,13 +41,13 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             "HybridStrategy requires at least one step configuration.",
         )
 
-    var rng_router := RNGStreamRouter.new(rng)
+    var rng_router: RNGStreamRouter = RNGStreamRouter.new(rng)
     var results: Array[String] = []
-    var placeholders := {}
-    var parent_seed := String(config.get("seed", ""))
+    var placeholders: Dictionary = {}
+    var parent_seed: String = String(config.get("seed", ""))
 
     for index in range(steps.size()):
-        var entry_variant := steps[index]
+        var entry_variant: Variant = steps[index]
         if typeof(entry_variant) != TYPE_DICTIONARY:
             return _make_error(
                 "invalid_step_entry",
@@ -59,10 +59,10 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             )
 
         var entry: Dictionary = (entry_variant as Dictionary).duplicate(true)
-        var alias := String(entry.get("store_as", String(index))).strip_edges()
+        var alias: String = String(entry.get("store_as", str(index))).strip_edges()
         entry.erase("store_as")
 
-        var step_config := _extract_step_config(entry)
+        var step_config: Variant = _extract_step_config(entry)
         if step_config is GeneratorError:
             return step_config
 
@@ -71,8 +71,8 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
         if not step_config.has("seed"):
             step_config["seed"] = "%s::step_%s" % [parent_seed, alias]
 
-        var child_rng := rng_router.derive_rng([alias, String(index)])
-        var result := _generate_via_processor(step_config, child_rng)
+        var child_rng: RandomNumberGenerator = rng_router.derive_rng([alias, str(index)])
+        var result: Variant = _generate_via_processor(step_config, child_rng)
         if result is Dictionary and result.has("code"):
             return _make_error(
                 String(result.get("code", "hybrid_step_error")),
@@ -85,21 +85,21 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
                 },
             )
 
-        var result_string := String(result)
+        var result_string: String = String(result)
         results.append(result_string)
-        placeholders[String(index)] = result_string
+        placeholders[str(index)] = result_string
         if not alias.is_empty():
             placeholders[alias] = result_string
-    
+
     if config.has("template"):
-        var template_string := String(config["template"])
+        var template_string: String = String(config["template"])
         return _replace_placeholders(template_string, placeholders)
 
     return results.back()
 
 func _extract_step_config(entry: Dictionary) -> Variant:
     if entry.has("config"):
-        var payload := entry["config"]
+        var payload: Variant = entry["config"]
         if typeof(payload) != TYPE_DICTIONARY:
             return _make_error(
                 "invalid_step_config",
@@ -124,20 +124,20 @@ func _substitute_variant(value: Variant, placeholders: Dictionary) -> Variant:
         TYPE_STRING:
             return _replace_placeholders(String(value), placeholders)
         TYPE_DICTIONARY:
-            var clone := {}
+            var clone: Dictionary = {}
             var dictionary: Dictionary = value
             for key in dictionary.keys():
                 clone[key] = _substitute_variant(dictionary[key], placeholders)
             return clone
         TYPE_ARRAY:
             var array_value: Array = value
-            var clone_array := []
+            var clone_array: Array = []
             for element in array_value:
                 clone_array.append(_substitute_variant(element, placeholders))
             return clone_array
         TYPE_PACKED_STRING_ARRAY:
             var packed: PackedStringArray = value
-            var new_array := PackedStringArray()
+            var new_array: PackedStringArray = PackedStringArray()
             for element in packed:
                 new_array.append(_replace_placeholders(element, placeholders))
             return new_array
@@ -145,19 +145,19 @@ func _substitute_variant(value: Variant, placeholders: Dictionary) -> Variant:
             return value
 
 func _replace_placeholders(text: String, placeholders: Dictionary) -> String:
-    var regex := _get_placeholder_regex()
-    var matches := regex.search_all(text)
+    var regex: RegEx = _get_placeholder_regex()
+    var matches: Array = regex.search_all(text)
     if matches.is_empty():
         return text
 
-    var result := ""
-    var cursor := 0
+    var result: String = ""
+    var cursor: int = 0
     for match in matches:
-        var start_index := match.get_start()
-        var end_index := match.get_end()
+        var start_index: int = match.get_start()
+        var end_index: int = match.get_end()
         result += text.substr(cursor, start_index - cursor)
 
-        var key := match.get_string(1)
+        var key: String = match.get_string(1)
         if placeholders.has(key):
             result += String(placeholders[key])
         else:
@@ -171,27 +171,27 @@ func _replace_placeholders(text: String, placeholders: Dictionary) -> String:
 func _get_placeholder_regex() -> RegEx:
     if _placeholder_regex == null:
         _placeholder_regex = RegEx.new()
-        var error := _placeholder_regex.compile(PLACEHOLDER_PATTERN)
+        var error: int = _placeholder_regex.compile(PLACEHOLDER_PATTERN)
         if error != OK:
             push_error("Failed to compile hybrid placeholder regex: %s" % PLACEHOLDER_PATTERN)
     return _placeholder_regex
 
 func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
     if Engine.has_singleton("RNGProcessor"):
-        var processor := Engine.get_singleton("RNGProcessor")
+        var processor: Object = Engine.get_singleton("RNGProcessor")
         if processor != null and processor.has_method("generate"):
             return processor.call("generate", config, rng)
-    var generator := _resolve_name_generator_singleton()
+    var generator: Object = _resolve_name_generator_singleton()
     if generator != null:
         return generator.call("generate", config, rng)
 
-    var script := _load_name_generator_script()
+    var script: GDScript = _load_name_generator_script()
     if script != null:
-        var fallback := script.new()
+        var fallback: Object = script.new()
         if fallback != null:
             if fallback.has_method("_register_builtin_strategies"):
                 fallback.call("_register_builtin_strategies")
-            var result := fallback.call("generate", config, rng)
+            var result: Variant = fallback.call("generate", config, rng)
             if fallback is Node:
                 fallback.free()
             return result
@@ -208,7 +208,7 @@ func _resolve_name_generator_singleton() -> Object:
     ## Mirror TemplateStrategy's singleton resolution so hybrid expansions can
     ## safely delegate to the generator without triggering circular preloads.
     if Engine.has_singleton("NameGenerator"):
-        var singleton := Engine.get_singleton("NameGenerator")
+        var singleton: Object = Engine.get_singleton("NameGenerator")
         if singleton != null and singleton.has_method("generate"):
             return singleton
     return null
@@ -218,7 +218,7 @@ func _load_name_generator_script() -> GDScript:
     ## unavailable. The cached handle prevents redundant disk access if multiple
     ## hybrid steps fall back in succession during diagnostics.
     if _cached_name_generator_script == null:
-        var script := load(NAME_GENERATOR_PATH)
+        var script: Variant = load(NAME_GENERATOR_PATH)
         if script is GDScript:
             _cached_name_generator_script = script
     return _cached_name_generator_script
