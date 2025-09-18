@@ -13,6 +13,8 @@ extends VBoxContainer
 @export var controller_path: NodePath
 @export var metadata_service_path: NodePath
 
+signal configuration_changed
+
 const HYBRID_STRATEGY_ID := "hybrid"
 const _ERROR_TINT := Color(1.0, 0.9, 0.9, 1.0)
 const _HIGHLIGHT_TINT := Color(0.85, 0.93, 1.0, 1.0)
@@ -92,6 +94,73 @@ func _ready() -> void:
     _update_seed_helper()
     _update_preview_state(null)
 
+func apply_config_payload(config: Dictionary) -> void:
+    _clear_all_steps()
+    var steps_variant := config.get("steps", [])
+    if steps_variant is Array:
+        for entry_variant in steps_variant:
+            if typeof(entry_variant) != TYPE_DICTIONARY:
+                continue
+            var entry: Dictionary = entry_variant
+            var step_config_variant := entry.get("config", {})
+            if typeof(step_config_variant) != TYPE_DICTIONARY:
+                continue
+            var step_config: Dictionary = (step_config_variant as Dictionary).duplicate(true)
+            var strategy_id := String(step_config.get("strategy", "")).strip_edges()
+            if strategy_id == "":
+                continue
+            var step := StepConfig.new()
+            step.alias = String(entry.get("store_as", ""))
+            step.strategy_id = strategy_id
+            step.panel = _instantiate_strategy_panel(strategy_id)
+            _steps.append(step)
+            _register_step_panel(step)
+            if step.panel != null and step.panel.has_method("apply_config_payload"):
+                step.panel.call_deferred("apply_config_payload", step_config)
+    _refresh_step_list()
+    _clear_config_host()
+    _template_edit.text = String(config.get("template", ""))
+    _seed_edit.text = String(config.get("seed", ""))
+    _rebuild_pipeline_tree()
+    _update_seed_helper()
+    _notify_configuration_changed()
+
+func describe_seed_propagation() -> Array:
+    var ordered_steps := _get_steps_in_ui_order()
+    var base_seed := _seed_edit.text.strip_edges()
+    var result: Array = []
+    for index in range(ordered_steps.size()):
+        var step := ordered_steps[index]
+        var alias_raw := step.alias.strip_edges()
+        var alias := alias_raw
+        if alias == "":
+            alias = str(index)
+        var derived_seed := base_seed if base_seed != "" else ""
+        if derived_seed != "":
+            derived_seed = "%s::step_%s" % [derived_seed, alias]
+        else:
+            derived_seed = "step_%s" % alias
+        result.append({
+            "index": index,
+            "alias": alias,
+            "strategy": step.strategy_id,
+            "seed": derived_seed,
+            "has_alias": alias_raw != "",
+        })
+    return result
+
+func get_pipeline_seed() -> String:
+    return _seed_edit.text.strip_edges()
+
+func apply_step_config(alias: String, config: Dictionary) -> void:
+    var target := _find_step_by_alias(alias)
+    if target == null:
+        return
+    if target.panel != null and target.panel.has_method("apply_config_payload"):
+        target.panel.call("apply_config_payload", config.duplicate(true))
+    _rebuild_pipeline_tree()
+    _notify_configuration_changed()
+
 func set_controller_override(controller: Object) -> void:
     _controller_override = controller
     _cached_controller = null
@@ -124,6 +193,7 @@ func refresh() -> void:
             step.panel.call("refresh")
     _rebuild_pipeline_tree()
     _update_seed_helper()
+    _notify_configuration_changed()
 
 func build_config_payload() -> Dictionary:
     var steps_payload: Array = []
@@ -176,6 +246,7 @@ func _on_add_step_pressed() -> void:
     _refresh_step_list()
     _select_step(step)
     _rebuild_pipeline_tree()
+    _notify_configuration_changed()
 
 func _on_remove_step_pressed() -> void:
     var selected := _get_selected_step()
@@ -187,6 +258,7 @@ func _on_remove_step_pressed() -> void:
     _clear_config_host()
     _rebuild_pipeline_tree()
     _update_step_details(null)
+    _notify_configuration_changed()
 
 func _on_strategy_option_changed(_index: int) -> void:
     # No-op hook so tests can simulate menu selections before pressing Add.
@@ -214,15 +286,18 @@ func _on_alias_changed(text: String) -> void:
     _refresh_step_list()
     _rebuild_pipeline_tree()
     _update_step_details(step)
+    _notify_configuration_changed()
 
 func _on_template_changed(_text: String) -> void:
     _rebuild_pipeline_tree()
+    _notify_configuration_changed()
 
 func _on_seed_changed(_text: String) -> void:
     _rebuild_pipeline_tree()
     _update_seed_helper()
     var step := _get_selected_step()
     _update_step_details(step)
+    _notify_configuration_changed()
 
 func _on_preview_button_pressed() -> void:
     var controller := _get_controller()
@@ -251,6 +326,7 @@ func _on_preview_button_pressed() -> void:
     })
     _update_seed_helper()
     _rebuild_pipeline_tree()
+    _notify_configuration_changed()
 
 func _collect_step_config(step: StepConfig) -> Dictionary:
     if step == null:
@@ -564,6 +640,19 @@ func _rebuild_pipeline_tree() -> void:
             step_item.set_text(3, "step_%s" % alias)
         if stream_hint != "":
             step_item.set_text(4, "%s::step_%s" % [stream_hint, alias])
+
+func _clear_all_steps() -> void:
+    for step in _steps:
+        _unregister_step_panel(step)
+    _steps.clear()
+    if _step_list != null:
+        _step_list.clear()
+    _clear_config_host()
+
+func _notify_configuration_changed() -> void:
+    if not is_inside_tree():
+        return
+    configuration_changed.emit()
 
 func _update_seed_helper() -> void:
     var controller := _get_controller()

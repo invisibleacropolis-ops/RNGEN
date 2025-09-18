@@ -7,6 +7,8 @@ Designing sentence generators in RNGEN hinges on two composable strategies:
 
 Used together, they let you build deterministic narrative blurbs that weave in multiple datasets.
 
+> **Workspace shortcut** – The Formulas workspace scene (`res://addons/platform_gui/workspaces/formulas/FormulasWorkspace.tscn`) ships with guided blueprints for the examples below. Each blueprint preloads the same hybrid steps, nested templates, and dataset paths documented here so artists can experiment without rebuilding the configuration from scratch.
+
 ## Token naming conventions
 
 Template tokens are wrapped in square brackets. Each token must have an entry with the same name in the `sub_generators` dictionary. Adopt `snake_case` identifiers (e.g. `[skill_summary]`, `[faction_codename]`) so they align with configuration keys and data asset filenames.

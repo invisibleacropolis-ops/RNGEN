@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class_name="WordListResource" load_steps=2]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1_0"]
+
+[resource]
+entries = PackedStringArray("Skyward Accord", "Iron Sigil", "Verdant Shroud", "Obsidian Reliquary", "Aurora Choir")
+weighted_entries = []

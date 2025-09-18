@@ -90,6 +90,32 @@ func build_config_payload() -> Dictionary:
         config["seed"] = seed_value
     return config
 
+func apply_config_payload(config: Dictionary) -> void:
+    var delimiter := String(config.get("delimiter", ""))
+    if _delimiter_edit.text != delimiter:
+        _delimiter_edit.text = delimiter
+    var use_weights := bool(config.get("use_weights", false))
+    if _weight_toggle.button_pressed != use_weights:
+        _weight_toggle.button_pressed = use_weights
+    var seed_value := String(config.get("seed", ""))
+    if _seed_edit.text != seed_value:
+        _seed_edit.text = seed_value
+    var target_paths: Array[String] = []
+    var paths_variant := config.get("wordlist_paths", [])
+    if paths_variant is Array:
+        for entry in paths_variant:
+            target_paths.append(String(entry))
+    _resource_list.deselect_all()
+    if not target_paths.is_empty():
+        for index in range(_resource_list.item_count):
+            var metadata: Dictionary = _resource_list.get_item_metadata(index)
+            if not (metadata is Dictionary):
+                continue
+            var path := String(metadata.get("path", ""))
+            if target_paths.has(path):
+                _resource_list.select(index)
+    _update_preview_state(null)
+
 func _on_refresh_pressed() -> void:
     refresh()
 
