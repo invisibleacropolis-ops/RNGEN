@@ -1,0 +1,135 @@
+[gd_scene load_steps=17 format=3]
+
+[ext_resource type="PackedScene" path="res://addons/platform_gui/event_bus/PlatformGUIEventBus.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/controllers/RNGProcessorController.tscn" id="2"]
+[ext_resource type="Script" path="res://addons/platform_gui/services/strategy_metadata.gd" id="3"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/components/DebugToolbar.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/seeds/SeedsDashboardPanel.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/logs/DebugLogPanel.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/datasets/DatasetInspectorPanel.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/qa/QAPanel.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/workspaces/formulas/FormulasWorkspace.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/wordlist/WordlistPanel.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/syllable_chain/SyllableChainPanel.tscn" id="11"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/template/TemplatePanel.tscn" id="12"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/markov/MarkovPanel.tscn" id="13"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/hybrid/HybridPipelinePanel.tscn" id="14"]
+[ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="15"]
+[ext_resource type="Script" path="res://Main_Interface.gd" id="16"]
+
+[node name="Main_Interface" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/focus = ExtResource("15")
+script = ExtResource("16")
+
+[node name="EventBus" parent="." instance=ExtResource("1")]
+
+[node name="ProcessorController" parent="." instance=ExtResource("2")]
+
+[node name="StrategyMetadataService" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DebugToolbar" parent="MainLayout" instance=ExtResource("4")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MainTabs" type="TabContainer" parent="MainLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Generators" type="VBoxContainer" parent="MainLayout/MainTabs"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="GeneratorPanels" type="TabContainer" parent="MainLayout/MainTabs/Generators"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="WordlistPanel" parent="MainLayout/MainTabs/Generators/GeneratorPanels" instance=ExtResource("10")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SyllableChainPanel" parent="MainLayout/MainTabs/Generators/GeneratorPanels" instance=ExtResource("11")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TemplatePanel" parent="MainLayout/MainTabs/Generators/GeneratorPanels" instance=ExtResource("12")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarkovPanel" parent="MainLayout/MainTabs/Generators/GeneratorPanels" instance=ExtResource("13")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HybridPipelinePanel" parent="MainLayout/MainTabs/Generators/GeneratorPanels" instance=ExtResource("14")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SeedsDashboardPanel" parent="MainLayout/MainTabs" instance=ExtResource("5")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DebugLogPanel" parent="MainLayout/MainTabs" instance=ExtResource("6")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DatasetInspectorPanel" parent="MainLayout/MainTabs" instance=ExtResource("7")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="QAPanel" parent="MainLayout/MainTabs" instance=ExtResource("8")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="FormulasWorkspace" parent="MainLayout/MainTabs" instance=ExtResource("9")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HelpersDock" type="VBoxContainer" parent="MainLayout/MainTabs"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+editor_description = "Placeholder dock reserved for future helper widgets. Attach new tools here to inherit middleware overrides automatically."
+
