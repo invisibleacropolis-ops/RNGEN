@@ -104,7 +104,8 @@ After updating datasets or derived resources, run the automated regression
 suite to ensure the content still satisfies the strategy contracts:
 
 ```bash
-godot --headless --script res://tests/run_all_tests.gd
+godot --headless --script res://tests/run_generator_tests.gd
+godot --headless --script res://tests/run_diagnostics_tests.gd
 ```
 
-Include the command and its output in QA notes so reviewers can verify the run.
+Include both command outputs in QA notes so reviewers can verify strategy and diagnostic coverage for the refreshed datasets.

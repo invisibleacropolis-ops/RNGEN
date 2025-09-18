@@ -2,11 +2,13 @@ extends VBoxContainer
 
 ## Panel that orchestrates regression and diagnostic runs directly from the Platform GUI.
 ##
-## The QA panel exposes quick actions for the grouped manifest runner,
+## The QA panel exposes quick actions for the grouped manifest runner
 ## streams log output as each manifest group executes, and caches recent runs so
 ## support engineers can jump to stored summaries or open generated log files.
-## Results are sourced from the RNGProcessor controller to keep middleware
-## wiring consistent with the rest of the editor tooling.
+## Results are sourced from the RNGProcessor controller, mirroring the CLI
+## scripts (`run_generator_tests.gd`, `run_platform_gui_tests.gd`, and
+## `run_diagnostics_tests.gd`), to keep middleware wiring consistent with the
+## rest of the editor tooling.
 
 @export var controller_path: NodePath
 

@@ -10,7 +10,7 @@ Follow these steps whenever you need to work inside the Platform GUI. The conden
 
 1. **Open the Godot project** – Launch Godot 4.4 and open `project.godot` from the repository root. The GUI scene tree expects the `RNGProcessor` autoload to be active, so do not create a blank project or rename the root folder.
 2. **Confirm autoloads** – In the Godot editor, open **Project > Project Settings > Autoload** and verify that `RNGManager`, `NameGenerator`, and `RNGProcessor` are all enabled. These singletons are the bridges between the GUI and the middleware. If any are missing, press the refresh icon to reload project settings or re-add them by pointing to the corresponding `.gd` files in `res://autoloads/`.
-3. **Run the GUI scene** – Press <kbd>F5</kbd> (or click the play icon) to launch the default scene. The Platform GUI window should appear with tabs for *Generators*, *Seeds*, *Debug Logs*, *Exports*, and *Admin Tools*.
+3. **Run the GUI scene** – Press <kbd>F5</kbd> (or click the play icon) to launch `Main_Interface.tscn`, the default scene that wires the Platform GUI shell together. The window should appear with tabs for *Generators*, *Seeds*, *Debug Logs*, *Exports*, and *Admin Tools*.【F:project.godot†L1-L40】【F:Main_Interface.tscn†L1-L53】
 4. **Optional: enable DebugRNG logging** – If you want the GUI to collect detailed telemetry, open the DebugRNG toolbar, capture the session metadata (label, ticket ID, quick notes), press **Start session**, and then click **Attach**. The toolbar wires the helper through `RNGProcessor.set_debug_rng(...)` so the middleware starts writing the session report immediately.
 
 ## Tab overview
@@ -147,7 +147,13 @@ Follow these steps whenever you need to work inside the Platform GUI. The conden
 
 1. Use **Export state** in the Seeds Dashboard to capture the master seed and active stream positions before committing reproductions.
 2. Attach the exported JSON to your test plan (or paste it into a fixture) so anyone can hydrate the same topology via **Import state**.
-3. Re-run the automated suite with `godot --headless --script res://tests/run_all_tests.gd` to confirm the deterministic state survives a clean restart. The command exercises every RNG Processor diagnostic, ensuring both the manager-backed and fallback routers continue to return identical results.
+3. Re-run the automated suites with:
+   ```bash
+   godot --headless --script res://tests/run_generator_tests.gd
+   godot --headless --script res://tests/run_platform_gui_tests.gd
+   godot --headless --script res://tests/run_diagnostics_tests.gd
+   ```
+   The Platform GUI run covers controller integrations and the `Main_Interface` scene test, while the generator and diagnostics runs confirm the middleware still produces deterministic results after the restart.【F:tests/run_generator_tests.gd†L1-L36】【F:tests/run_platform_gui_tests.gd†L1-L36】【F:tests/run_diagnostics_tests.gd†L1-L36】【F:tests/interface/test_main_interface_scene.gd†L1-L170】
 
 ## Accessibility and UX considerations
 

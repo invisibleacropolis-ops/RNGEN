@@ -71,6 +71,7 @@ Adjust templates to fit your game’s tone while keeping placeholders aligned wi
 After updating any dataset in this folder, run the project’s regression tests to catch integration issues early:
 
 - `godot --headless --script res://name_generator/tools/dataset_inspector.gd`
-- `godot --headless --script res://tests/run_all_tests.gd`
+- `godot --headless --script res://tests/run_generator_tests.gd`
+- `godot --headless --script res://tests/run_diagnostics_tests.gd`
 
-The second command executes the full headless test manifest, ensuring hybrid and template compositions still succeed with the refreshed data.
+The latter commands execute the generator suites and curated diagnostics, ensuring hybrid and template compositions still succeed with the refreshed data.

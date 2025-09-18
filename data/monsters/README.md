@@ -71,8 +71,9 @@ Extend the chain with behaviour descriptors or habitat wordlists to produce full
   ```bash
   godot --headless --path . --script res://name_generator/tools/dataset_inspector.gd
   ```
-- Execute the project test suite after adding or updating datasets:
+- Execute the project test suites after adding or updating datasets:
   ```bash
-  godot --headless --script res://tests/run_all_tests.gd
+  godot --headless --script res://tests/run_generator_tests.gd
+  godot --headless --script res://tests/run_diagnostics_tests.gd
   ```
 - Follow the shared dataset workflow procedures outlined in [`devdocs/tooling.md`](../../devdocs/tooling.md) for import automation, naming conventions, and documentation updates.

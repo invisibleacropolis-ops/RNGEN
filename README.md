@@ -26,7 +26,8 @@ triage and analytics.
 | `name_generator/` | The core module containing the generator façade, middleware, strategies, shared utilities, dedicated tests, and supporting tools.【F:name_generator/README.md†L1-L62】 |
 | `data/` | Curated resources (word lists, syllable sets, Markov models, and themed vocabularies) organised by content domain for direct consumption by strategies and hybrid pipelines.【F:data/README.md†L1-L15】 |
 | `devdocs/` | Deep-dive implementation guides that document datasets, strategies, tooling, RNG middleware, sentences, and platform GUI handbooks for every engineering discipline.【F:devdocs/README.md†L1-L16】 |
-| `tests/` | Headless harness that loads `tests_manifest.json`, executes every suite, and then replays diagnostic scenarios with rich summaries suitable for CI logs.【F:tests/run_all_tests.gd†L1-L141】 |
+| `tests/` | Headless harness backed by `tests/test_suite_runner.gd` plus grouped CLI entry points (`run_generator_tests.gd`, `run_platform_gui_tests.gd`, and `run_diagnostics_tests.gd`) that stream manifest runs into structured summaries for CI.【F:tests/test_suite_runner.gd†L1-L160】【F:tests/run_generator_tests.gd†L1-L36】【F:tests/run_platform_gui_tests.gd†L1-L36】 |
+| `Main_Interface.tscn` / `Main_Interface.gd` | Default scene for the Platform GUI shell; bootstraps the editor interface showcased in the handbook and covered by the interface regression suite.【F:Main_Interface.tscn†L1-L53】【F:Main_Interface.gd†L1-L140】 |
 | `tools/` | Workspace-level automation and helper scripts (e.g., regression hooks) complementing the module-level tools shipped with the generator. |
 | `addons/` | Godot editor plugins (such as the Syllable Set Builder) that streamline dataset preparation inside the editor.【F:devdocs/datasets.md†L60-L86】 |
 
@@ -137,7 +138,8 @@ Beyond dataset helpers, several scripts enable rigorous QA and integration:
   directly via `debug_rng.attach_to_processor(...)` to trace complex runs.【F:devdocs/rng_processor_manual.md†L95-L154】
 - **Headless diagnostics** – The test harness can execute targeted diagnostics by
   calling `tests/run_script_diagnostic.gd` with a manifest ID, allowing engineers
-  to replay specific failure scenarios without running the full suite.【F:tests/run_all_tests.gd†L12-L140】
+  to replay specific failure scenarios without rerunning every grouped
+  manifest.【F:tests/run_script_diagnostic.gd†L1-L140】
 - **Command-line tooling** – `devdocs/tooling.md` enumerates CLI utilities for
   dataset verification, manifest maintenance, and regression workflows to support
   both gameplay engineers and content authors.
@@ -196,19 +198,23 @@ should be treated as the canonical reference for engineers joining the project.
 
 ## Testing and quality assurance
 
-Execute the automated suite from the project root:
+Execute grouped manifest runs from the project root to mirror the QA panel:
 
 ```bash
-godot --headless --script res://tests/run_all_tests.gd
+godot --headless --script res://tests/run_generator_tests.gd
+godot --headless --script res://tests/run_platform_gui_tests.gd
+godot --headless --script res://tests/run_diagnostics_tests.gd
 ```
 
-The harness parses `tests/tests_manifest.json`, iterates each declared suite,
-prints per-suite totals, and then runs manifest diagnostics with human-readable
-names and summaries. Failures are collated at the end so CI logs capture exactly
-which tests or diagnostics need attention.【F:tests/run_all_tests.gd†L1-L141】 Use
+The generator suite covers strategy and middleware scenarios, the platform GUI
+suite exercises editor tooling (including the `Main_Interface` shell scene), and
+the diagnostics suite replays curated scenarios listed in
+`tests/tests_manifest.json`. Each script streams results, aggregates failures,
+and exits non-zero when a suite fails so CI logs stay actionable.【F:tests/run_generator_tests.gd†L1-L36】【F:tests/run_platform_gui_tests.gd†L1-L36】【F:tests/run_diagnostics_tests.gd†L1-L36】【F:tests/interface/test_main_interface_scene.gd†L1-L170】 Use
 `--diagnostic-id` with `tests/run_script_diagnostic.gd` to isolate individual
-checks during investigation.【F:tests/run_all_tests.gd†L12-L105】 Attach DebugRNG
-logs to QA reports whenever deterministic reproduction details are required.
+checks during investigation.【F:tests/run_script_diagnostic.gd†L1-L140】 Attach
+DebugRNG logs to QA reports whenever deterministic reproduction details are
+required.
 
 The Platform GUI bundles a dedicated QA panel
 (`res://addons/platform_gui/panels/qa/QAPanel.tscn`) that wraps these headless

@@ -10,5 +10,7 @@ This folder centralises implementation references for engineers working on the r
 After updating configurations, run the regression suite to confirm deterministic guarantees remain intact:
 
 ```bash
-godot --headless --script res://tests/run_all_tests.gd
+godot --headless --script res://tests/run_generator_tests.gd
+godot --headless --script res://tests/run_platform_gui_tests.gd
+godot --headless --script res://tests/run_diagnostics_tests.gd
 ```

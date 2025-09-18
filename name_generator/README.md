@@ -13,7 +13,7 @@ colliding.
 - `utils/` – Shared helper scripts such as deterministic RNG routing and array
   selection helpers.
 - `tools/` – Editor and command-line utilities that support content authoring.
-- `tests/` – Regression suites executed via `tests/run_all_tests.gd`.
+- `tests/` – Regression suites executed via `tests/run_generator_tests.gd` (with additional integration suites referenced from `tests/tests_manifest.json`).
 
 ## Runtime singletons
 
@@ -97,6 +97,6 @@ nested generation without mutating the parent RNG state.
 
 ## Tests
 
-Run `godot --headless --script res://tests/run_all_tests.gd` to execute the
-suite. The manifest currently includes the general `GeneratorStrategy` tests and
-an integration suite that validates the hybrid generation pipeline.
+Run `godot --headless --script res://tests/run_generator_tests.gd` to execute the
+suite. The manifest includes the general `GeneratorStrategy` tests, middleware
+integrations, and headless scenarios that validate the hybrid generation pipeline.【F:tests/run_generator_tests.gd†L1-L36】

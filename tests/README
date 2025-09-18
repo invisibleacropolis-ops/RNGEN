@@ -2,15 +2,17 @@
 
 The project ships standalone headless scenarios alongside the manifest runner.
 
-## Aggregated manifest runner
+## Grouped manifest runners
 
-Execute every suite plus the curated diagnostics from `tests/tests_manifest.json`:
+Execute each manifest group from `tests/tests_manifest.json` as separate commands so CI logs remain focused:
 
 ```
-godot --headless --script res://tests/run_all_tests.gd
+godot --headless --script res://tests/run_generator_tests.gd
+godot --headless --script res://tests/run_platform_gui_tests.gd
+godot --headless --script res://tests/run_diagnostics_tests.gd
 ```
 
-The script prints individual suite results followed by each manifest diagnostic (including the diagnostic summaries now captured in the manifest). After all executions complete, it reports suite totals, diagnostic totals, and an overall aggregate along with a failure digest drawn from every failing test or diagnostic check.
+Each script prints suite-level results for its group, streams log output as scenarios progress, and concludes with an aggregate summary and failure digest. The Platform GUI command covers controller integrations and the `Main_Interface` scene, while the diagnostics command replays curated manifest checks.
 
 ## Focused scenarios
 

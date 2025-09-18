@@ -2,7 +2,8 @@ extends RefCounted
 
 ## Helper that runs the aggregated regression suites and diagnostics used by QA tools.
 ##
-## The runner mirrors the behaviour of `tests/run_all_tests.gd` but exposes the
+## The runner powers the grouped CLI scripts (`run_generator_tests.gd`,
+## `run_platform_gui_tests.gd`, and `run_diagnostics_tests.gd`) and exposes the
 ## flow as an async-friendly API so the Platform GUI can execute automated runs
 ## without spawning an external Godot process. Callers can enable frame yields to
 ## stream log output into the editor UI while long-running suites execute.
