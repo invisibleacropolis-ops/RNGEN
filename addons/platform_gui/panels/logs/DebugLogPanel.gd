@@ -147,7 +147,8 @@ func _render_session_header() -> PackedStringArray:
     var ended := String(_report_cache.get("session_ended_at", "--"))
     var active := bool(_report_cache.get("session_open", false))
     lines.append("[b]Session started:[/b] %s" % started)
-    lines.append("[b]Session ended:[/b] %s" % (active ? "(active)" : ended))
+    var ended_label := "(active)" if active else ended
+    lines.append("[b]Session ended:[/b] %s" % ended_label)
 
     var metadata_variant := _report_cache.get("metadata", {})
     if metadata_variant is Dictionary and not (metadata_variant as Dictionary).is_empty():

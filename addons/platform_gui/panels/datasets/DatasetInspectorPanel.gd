@@ -197,7 +197,7 @@ func _execute_inspector() -> Dictionary:
         var instance := script.new()
         if instance != null:
             instance.free()
-    })
+    )
     return capture
 
 func _capture_messages(callable: Callable) -> Dictionary:
