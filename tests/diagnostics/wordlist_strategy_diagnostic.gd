@@ -143,11 +143,11 @@ func _test_wordlist_load_failed_error() -> Variant:
         return "Expected missing resource to surface a GeneratorError."
 
     var error := result as GeneratorStrategy.GeneratorError
-    if error.code != WordlistStrategy.ERROR_LOAD_FAILED:
+    if error.code != "missing_resource":
         return "Unexpected error code for missing resource: %s" % error.code
 
-    if error.message.find("could not be found") == -1 and error.message.find("Failed to load") == -1:
-        return "Load failure error should mention the missing resource path."
+    if not String(error.message).begins_with("Missing resource"):
+        return "Missing resource error should use the standardised message prefix."
 
     if error.details.get("path", "") == "":
         return "Load failure error should include the missing path in details."

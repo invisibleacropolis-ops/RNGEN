@@ -5,7 +5,7 @@ const WordListResource := preload("res://name_generator/resources/WordListResour
 const ArrayUtils := preload("res://name_generator/utils/ArrayUtils.gd")
 
 const ERROR_NO_PATHS := "wordlists_missing"
-const ERROR_LOAD_FAILED := "wordlist_load_failed"
+const ERROR_LOAD_FAILED := "missing_resource"
 const ERROR_INVALID_RESOURCE := "wordlist_invalid_type"
 const ERROR_EMPTY_RESOURCE := "wordlist_empty"
 const ERROR_NO_SELECTION := "wordlists_no_selection"
@@ -92,19 +92,11 @@ func _collect_resources(sources: Variant) -> Variant:
             continue
 
         if not ResourceLoader.exists(path):
-            return _make_error(
-                ERROR_LOAD_FAILED,
-                "Word list resource could not be found at '%s'." % path,
-                {"path": path},
-            )
+            return _make_missing_resource_error(path, {"resource_type": "WordListResource"})
 
         var resource: Resource = ResourceLoader.load(path)
         if resource == null:
-            return _make_error(
-                ERROR_LOAD_FAILED,
-                "Failed to load word list resource at '%s'." % path,
-                {"path": path},
-            )
+            return _make_missing_resource_error(path, {"resource_type": "WordListResource"})
 
         if not (resource is WordListResource):
             return _make_error(
