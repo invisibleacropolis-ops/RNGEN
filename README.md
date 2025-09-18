@@ -1,40 +1,222 @@
-# RNGEN Documentation Hub
+# RNGEN Deterministic Name Generation Suite
 
-This repository hosts the Godot 4.4 project that powers the deterministic name generation stack. The runtime is organised around three autoloaded singletons:
+RNGEN is a Godot 4.4 project that delivers deterministic, fully-auditable name
+generation for gameplay systems, authoring tools, and forthcoming platform
+interfaces. Three cooperating singletons form the runtime backbone:
 
-- `RNGManager` – Governs the master seed and hands out isolated `RandomNumberGenerator` streams.
-- `NameGenerator` – Provides the extensible strategy façade for gameplay and tools.
-- `RNGProcessor` – Middleware that coordinates requests, surfaces telemetry, and underpins forthcoming platform UI features.
+- **`RNGManager`** – Hands out isolated `RandomNumberGenerator` streams derived
+  from a master seed, supports save/load persistence, and protects against
+  accidental global RNG usage.【F:autoloads/RNGManager.gd†L1-L78】
+- **`NameGenerator`** – Registers and orchestrates the strategy catalogue while
+  sourcing deterministic streams, exposing helpers for common list selection
+  patterns alongside the primary `generate()` façade.【F:name_generator/NameGenerator.gd†L1-L159】
+- **`RNGProcessor`** – Middleware that fronts the generator with telemetry-rich
+  lifecycle signals, seed governance, and DebugRNG integrations that the
+  platform GUI and automation harnesses already consume.【F:name_generator/RNGProcessor.gd†L1-L126】【F:devdocs/rng_processor_manual.md†L1-L75】
 
-## Documentation map
+Together they ensure any configuration, tool, or integration can reproduce the
+same results when given the same seed, while emitting the context needed for QA
+triage and analytics.
 
-| Audience | Start here | Highlights |
-| --- | --- | --- |
-| System designers | `DevDoc.txt` | Architectural rationale, deterministic design patterns, strategy deep dives. |
-| Integrators & tool engineers | `docs/rng_processor_manual.md` | Middleware responsibilities, API/signal reference, DebugRNG log format, Platform GUI context. |
-| Artists & narrative leads | `devdocs/platform_gui_handbook.md` | Platform GUI overview, step-by-step workflows, seed replaying, DebugRNG review tips, accessibility guidance. |
-| Gameplay programmers | `devdocs/rng_processor.md` | Task-focused guide (initialising the processor, registering custom strategies, running tests, capturing logs). |
-| Content authors | `devdocs/strategies.md`, `name_generator/resources/README.md` | Resource authoring workflows and data expectations. |
+## Repository layout
 
-Additional sub-system references:
+| Path | Purpose |
+| --- | --- |
+| `autoloads/` | Root-level autoload scripts, currently limited to `RNGManager`, which the project registers globally for deterministic stream distribution.【F:autoloads/RNGManager.gd†L1-L78】 |
+| `name_generator/` | The core module containing the generator façade, middleware, strategies, shared utilities, dedicated tests, and supporting tools.【F:name_generator/README.md†L1-L62】 |
+| `data/` | Curated resources (word lists, syllable sets, Markov models, and themed vocabularies) organised by content domain for direct consumption by strategies and hybrid pipelines.【F:data/README.md†L1-L15】 |
+| `devdocs/` | Deep-dive implementation guides that document datasets, strategies, tooling, RNG middleware, sentences, and platform GUI handbooks for every engineering discipline.【F:devdocs/README.md†L1-L16】 |
+| `tests/` | Headless harness that loads `tests_manifest.json`, executes every suite, and then replays diagnostic scenarios with rich summaries suitable for CI logs.【F:tests/run_all_tests.gd†L1-L141】 |
+| `tools/` | Workspace-level automation and helper scripts (e.g., regression hooks) complementing the module-level tools shipped with the generator. |
+| `addons/` | Godot editor plugins (such as the Syllable Set Builder) that streamline dataset preparation inside the editor.【F:devdocs/datasets.md†L60-L86】 |
 
-- `name_generator/README.md` – Module layout plus RNGProcessor integration notes.
-- `name_generator/tools/README.md` – CLI/editor tooling, including links back to the middleware manual.
+Refer to the `Python Godot Automation Design Bible.txt` for the original design
+intent; the devdocs bring every subsystem up to date with the current scripts.
 
-## Running the tests
+## Runtime architecture
 
-Execute the automated suite from the repository root to validate gameplay strategies, middleware, and tooling scripts. The harness consumes `tests/tests_manifest.json`, running every declared suite followed by the curated diagnostics collection:
+### RNGManager – deterministic stream router
+
+`autoloads/RNGManager.gd` is responsible for deriving stream-specific seeds from
+the active master seed, caching `RandomNumberGenerator` instances per named
+stream, and serialising all state for persistence.【F:autoloads/RNGManager.gd†L1-L78】
+Key behaviours:
+
+- `set_master_seed()` re-seeds every cached stream so existing handles continue
+  generating deterministic sequences after a master seed swap.【F:autoloads/RNGManager.gd†L17-L23】
+- `randomize_master_seed()` supplies a fresh seed sourced from a temporary RNG
+  so tooling can log reproducible seeds when exploring new content.【F:autoloads/RNGManager.gd†L25-L32】
+- `save_state()` / `load_state()` emit and ingest dictionaries containing each
+  stream’s `seed` and `state`, enabling save games and tests to capture exact RNG
+  positions.【F:autoloads/RNGManager.gd†L34-L72】
+
+### NameGenerator – strategy façade
+
+`name_generator/NameGenerator.gd` registers the built-in strategies on `_ready()`
+and exposes three tiers of functionality: utility selection helpers, strategy
+registry management, and the `generate()` execution path.【F:name_generator/NameGenerator.gd†L1-L110】
+Highlights include:
+
+- Helper methods (`pick_from_list`, `pick_weighted`) route through deterministic
+  RNG streams so even ad hoc selections respect the master seed.【F:name_generator/NameGenerator.gd†L20-L38】
+- Strategy registration validates identifiers, ensures each implementation
+  extends `GeneratorStrategy`, and keeps DebugRNG in sync so telemetry stays
+  comprehensive.【F:name_generator/NameGenerator.gd†L40-L103】【F:name_generator/NameGenerator.gd†L228-L274】
+- `generate(config)` normalises the request, derives or respects explicit
+  `rng_stream` overrides, and returns either the strategy payload or a structured
+  error dictionary for clients to inspect.【F:name_generator/NameGenerator.gd†L105-L204】
+
+### RNGProcessor – middleware and observability layer
+
+`name_generator/RNGProcessor.gd` fronts the generator with a defensive API that
+mirrors strategy metadata, enforces seed handling, and emits lifecycle signals
+for tooling and UI layers.【F:name_generator/RNGProcessor.gd†L1-L134】 The processor:
+
+- Provides `initialize_master_seed`, `randomize_master_seed`, and `get_master_seed`
+  wrappers that proxy to `RNGManager` when available or fall back to hashed local
+  streams inside tests.【F:name_generator/RNGProcessor.gd†L18-L72】
+- Exposes `list_strategies()` / `describe_strategies()` so external clients can
+  stay decoupled from the generator’s internal registry while still receiving
+  expected configuration schemas.【F:name_generator/RNGProcessor.gd†L74-L121】
+- Emits `generation_started`, `generation_completed`, and `generation_failed`
+  with metadata describing the resolved strategy, seed, and RNG stream, creating a
+  stable surface for the Platform GUI’s timelines and QA dashboards.【F:name_generator/RNGProcessor.gd†L5-L63】【F:name_generator/RNGProcessor.gd†L123-L174】
+- Supports opt-in DebugRNG logging, automatically attaching/unattaching helpers
+  and forwarding per-stream usage context so TXT reports capture every
+  derivation.【F:name_generator/RNGProcessor.gd†L176-L246】【F:devdocs/rng_processor_manual.md†L75-L154】
+
+## Strategy catalogue
+
+All strategies extend `GeneratorStrategy` and are registered by default when the
+`NameGenerator` singleton initialises.【F:name_generator/NameGenerator.gd†L112-L146】 Current
+implementations are:
+
+- **WordlistStrategy** – Loads one or more `WordListResource` assets, supports
+  weighted or uniform selection, and validates each entry before emission.【F:name_generator/strategies/WordlistStrategy.gd†L13-L147】
+- **SyllableChainStrategy** – Builds names by chaining prefixes, middles, and
+  suffixes from `SyllableSetResource` assets while honouring optional middle
+  syllables and minimum length requirements.【F:name_generator/strategies/SyllableChainStrategy.gd†L1-L150】
+- **TemplateStrategy** – Expands bracketed tokens (e.g. `[title]`) by dispatching
+  nested generator configurations, enabling recursive grammar-like workflows.【F:name_generator/strategies/TemplateStrategy.gd†L1-L210】
+- **MarkovChainStrategy** – Walks trained transition tables from
+  `MarkovModelResource` assets to recreate statistical patterns from source
+  corpora.【F:name_generator/strategies/MarkovChainStrategy.gd†L4-L200】
+- **HybridStrategy** – Executes ordered sub-steps, exposing intermediate results
+  via `$alias` placeholders so complex pipelines can combine every other
+  strategy.【F:name_generator/strategies/HybridStrategy.gd†L1-L210】
+
+See `devdocs/strategies.md` for configuration recipes, schema expectations, and
+error-handling guidelines across the catalogue.
+
+## Data resources and authoring pipeline
+
+The `data/` tree stores the resources consumed by strategies in production and
+during tests. Each subfolder captures a content domain (people, places, factions,
+monsters, etc.) so authors can iterate on focussed vocabularies.【F:data/README.md†L3-L15】
+
+`devdocs/datasets.md` documents the full lifecycle for sourcing, normalising,
+and importing lists into custom Godot resources. It details how `WordListResource`
+records locale/domain metadata and weighting, how `SyllableSetResource` encodes
+prefix/middle/suffix fragments, and when to regenerate `MarkovModelResource`
+artifacts.【F:devdocs/datasets.md†L1-L73】 The guide also covers QA tooling:
+
+- **Dataset inspector** (`name_generator/tools/dataset_inspector.gd`) walks the
+  `res://data` tree and flags empty or missing directories so dataset bundles are
+  review-ready.【F:devdocs/datasets.md†L60-L73】
+- **Syllable Set Builder** editor plugin deduplicates source words, extracts
+  syllables, and saves new `SyllableSetResource` assets directly into the data
+  tree with status feedback for every stage.【F:devdocs/datasets.md†L75-L108】
+
+## Tooling and automation support
+
+Beyond dataset helpers, several scripts enable rigorous QA and integration:
+
+- **DebugRNG** (`name_generator/tools/DebugRNG.gd`) captures structured TXT
+  reports, including session metadata, per-request timelines, warnings, and RNG
+  stream usage summaries. Attach it through `RNGProcessor.set_debug_rng(...)` or
+  directly via `debug_rng.attach_to_processor(...)` to trace complex runs.【F:devdocs/rng_processor_manual.md†L95-L154】
+- **Headless diagnostics** – The test harness can execute targeted diagnostics by
+  calling `tests/run_script_diagnostic.gd` with a manifest ID, allowing engineers
+  to replay specific failure scenarios without running the full suite.【F:tests/run_all_tests.gd†L12-L140】
+- **Command-line tooling** – `devdocs/tooling.md` enumerates CLI utilities for
+  dataset verification, manifest maintenance, and regression workflows to support
+  both gameplay engineers and content authors.
+
+## Developer workflows
+
+### Integrating in gameplay or tools
+
+Follow the `RNGProcessor Field Guide` when wiring the middleware into runtime
+scenes or external automation. Seed the processor once during bootstrap via
+`RNGProcessor.randomize_master_seed()` (or restore a saved seed) and then call
+`RNGProcessor.generate(config)` for every name request. The middleware mirrors the
+strategy registry, so dropdowns can be populated with `list_strategies()` /
+`describe_strategies()` without reaching into `NameGenerator` internals.【F:devdocs/rng_processor.md†L1-L55】
+
+### Extending the strategy catalogue
+
+To introduce a new generator:
+
+1. Implement a `GeneratorStrategy` subclass following the scaffolding described
+   in `devdocs/strategies.md`.
+2. Register it during startup via `NameGenerator.register_strategy(...)` so both
+   the generator and middleware expose it immediately.【F:name_generator/NameGenerator.gd†L40-L112】
+3. Add focused tests and, if needed, DebugRNG hooks to document new error modes
+   in shared logs.【F:name_generator/NameGenerator.gd†L228-L274】【F:devdocs/rng_processor_manual.md†L95-L154】
+
+### Maintaining datasets
+
+When adding or updating resources:
+
+1. Source and clean entries as described in the dataset guide, preserving weights
+   and metadata for downstream filtering.【F:devdocs/datasets.md†L1-L43】
+2. Save resources into the appropriate domain folder under `data/`.
+3. Run the dataset inspector and regression suite to confirm deterministic
+   guarantees remain intact before shipping.【F:devdocs/datasets.md†L60-L108】【F:devdocs/datasets.md†L116-L119】
+
+## Documentation index
+
+Start with the developer documentation map for discipline-specific guidance:
+
+- `devdocs/datasets.md` – Dataset sourcing, normalisation, and QA scripts.
+- `devdocs/strategies.md` – Strategy configuration keys, validation behaviour,
+  and implementation recipes.
+- `devdocs/tooling.md` – CLI usage notes and automation workflows.
+- `devdocs/sentences.md` – Template and hybrid sentence builders, including
+  seeding tips.
+- `devdocs/rng_processor.md` & `devdocs/rng_processor_manual.md` – Middleware API,
+  DebugRNG logging, and platform integration reference.
+- `devdocs/platform_gui_handbook.md` – Platform GUI workflows, replay tooling,
+  and accessibility considerations for the forthcoming interface.
+
+These documents expand on every script and workflow mentioned in this README and
+should be treated as the canonical reference for engineers joining the project.
+
+## Testing and quality assurance
+
+Execute the automated suite from the project root:
 
 ```bash
 godot --headless --script res://tests/run_all_tests.gd
 ```
 
-Each manifest diagnostic now carries a human-readable name and summary, allowing the runner to surface the same per-check context as the suites. At the end of the run, the script prints discrete suite and diagnostic totals plus a combined overall summary and enumerated failure details so engineers can immediately review the concrete issues that need attention.
+The harness parses `tests/tests_manifest.json`, iterates each declared suite,
+prints per-suite totals, and then runs manifest diagnostics with human-readable
+names and summaries. Failures are collated at the end so CI logs capture exactly
+which tests or diagnostics need attention.【F:tests/run_all_tests.gd†L1-L141】 Use
+`--diagnostic-id` with `tests/run_script_diagnostic.gd` to isolate individual
+checks during investigation.【F:tests/run_all_tests.gd†L12-L105】 Attach DebugRNG
+logs to QA reports whenever deterministic reproduction details are required.
 
-For targeted debugging, the diagnostics runner executes an individual scenario declared in the diagnostics manifest. Pass the desired ID after a double dash so Godot forwards it to the script unchanged:
+## Platform GUI readiness
 
-```bash
-godot --headless --script res://tests/run_script_diagnostic.gd --diagnostic-id wordlist_strategy
-```
+The forthcoming Platform GUI consumes the middleware APIs outlined here:
 
-The example above isolates the word list strategy diagnostic without replaying every manifest suite. Refer to `devdocs/tooling.md` for additional QA workflows and manifest management tips.
+- Strategy metadata flows from `RNGProcessor.describe_strategies()`.
+- Execution timelines bind to the lifecycle signals emitted during each
+  generation request.
+- DebugRNG session metadata and stream usage power troubleshooting panels.
+
+By keeping integrations pointed at the processor and DebugRNG, new UI features or
+external automation can evolve without taking direct dependencies on strategy
+internals, preserving the deterministic contract across the project.【F:devdocs/rng_processor_manual.md†L155-L181】
