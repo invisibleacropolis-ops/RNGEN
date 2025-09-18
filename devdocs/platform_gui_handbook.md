@@ -47,6 +47,17 @@ Follow these steps whenever you need to work inside the Platform GUI:
 9. Supply an optional seed, then click **Preview**. Successful runs render seeded output inline. Middleware validation errors are echoed in red along with human-friendly hints from the metadata service (e.g., missing resources or invalid middle ranges) so you can course-correct immediately.
 10. Use **Refresh** whenever you add new syllable sets or need the latest schema hints; the button re-queries both the metadata service and the on-disk resource catalogue.
 
+### Configuring template strategies
+
+1. Choose **Template** from the strategy dropdown to load the dedicated panel.
+2. Scan the metadata banner and helper notes sourced from `describe_strategies()`. They recap the required keys (`template_string`, `sub_generators`) and optional settings (`max_depth`, `seed`) so you can line up the config with middleware expectations.
+3. Enter your template in the **Template string** field. Tokens wrapped in brackets (e.g. `[material]`) immediately appear in the token tree below so you can confirm the parser understands the structure.
+4. Define child generators in the **Child generator definitions** JSON editor. Each entry should mirror a `NameGenerator.generate` payload. The panel validates the JSON as you type and highlights any tokens that do not have a matching sub-generator configuration.
+5. Adjust **Max depth** when you need deeper recursion than the default `8`. The live validator mirrors TemplateStrategy's `template_recursion_depth_exceeded` guard, tinting the control red and surfacing the middleware's fix-it hint when the tree would breach the limit.
+6. Supply an optional seed label; the **Seed helper** banner illustrates the derived seed path (`parent::token::occurrence`) and pulls the latest middleware seed/stream from `RNGProcessorController.get_latest_generation_metadata()` for extra context.
+7. Review the **Token expansion preview** tree. Each row lists the recursion depth, resolved strategy display name, and the seed that TemplateStrategy will pass to the child generator. Nested template configs expand inline so you can verify cascaded definitions without leaving the panel.
+8. Press **Preview** to request a deterministic sample. Middleware validation errors reuse the metadata service's guidance (for example, empty tokens or missing strategy keys) so the fix is always spelled out next to the relevant control.
+
 ### Reviewing DebugRNG logs
 
 1. Switch to the **Debug Logs** tab. When DebugRNG is active, the middleware writes to `user://debug_rng_report.txt` (or a custom path you configured earlier).
