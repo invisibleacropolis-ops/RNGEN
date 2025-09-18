@@ -1,4 +1,4 @@
-extends GeneratorStrategy
+extends "res://name_generator/strategies/GeneratorStrategy.gd"
 class_name WordlistStrategy
 
 const WordListResource := preload("res://name_generator/resources/WordListResource.gd")

@@ -1,4 +1,4 @@
-extends GeneratorStrategy
+extends "res://name_generator/strategies/GeneratorStrategy.gd"
 class_name TemplateStrategy
 
 const RNGStreamRouter := preload("res://name_generator/utils/RNGManager.gd")
