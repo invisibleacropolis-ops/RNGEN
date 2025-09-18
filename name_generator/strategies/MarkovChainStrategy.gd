@@ -97,19 +97,11 @@ func _get_expected_config_keys() -> Dictionary:
 
 func _load_model(path: String) -> Variant:
     if not ResourceLoader.exists(path):
-        return _make_error(
-            "missing_resource",
-            "Markov model resource could not be found at '%s'." % path,
-            {"path": path},
-        )
+        return _make_missing_resource_error(path, {"resource_type": "MarkovModelResource"})
 
     var resource: Resource = ResourceLoader.load(path)
     if resource == null:
-        return _make_error(
-            "resource_load_failed",
-            "Failed to load Markov model resource at '%s'." % path,
-            {"path": path},
-        )
+        return _make_missing_resource_error(path, {"resource_type": "MarkovModelResource"})
 
     if resource is MarkovModelResource:
         return resource

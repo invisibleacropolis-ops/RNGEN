@@ -4,6 +4,8 @@ const GeneratorStrategy := preload("res://name_generator/strategies/GeneratorStr
 const MarkovChainStrategy := preload("res://name_generator/strategies/MarkovChainStrategy.gd")
 const MarkovModelResource := preload("res://name_generator/resources/MarkovModelResource.gd")
 
+const MISSING_MARKOV_MODEL_PATH := "res://tests/test_assets/missing_markov_model.tres"
+
 var _total := 0
 var _passed := 0
 var _failed := 0
@@ -19,6 +21,7 @@ func run() -> Dictionary:
     _run_test("max_length_guard_rail", func(): return _test_max_length_guard())
     _run_test("validate_missing_start_tokens", func(): return _test_missing_start_tokens())
     _run_test("validate_invalid_transition_entries", func(): return _test_invalid_transition_entries())
+    _run_test("missing_markov_model_resource", func(): return _test_missing_markov_model_resource())
 
     return {
         "suite": "MarkovChainStrategyDiagnostic",
@@ -144,6 +147,32 @@ func _test_invalid_transition_entries() -> Variant:
 
     if error.code != "missing_transition_token":
         return "Unexpected error code for invalid transitions: %s" % error.to_dict()
+
+    return null
+
+func _test_missing_markov_model_resource() -> Variant:
+    var strategy := MarkovChainStrategy.new()
+    var config := {
+        "markov_model_path": MISSING_MARKOV_MODEL_PATH,
+        "max_length": 4,
+    }
+
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 88
+
+    var result := strategy.generate(config, rng)
+    if not (result is GeneratorStrategy.GeneratorError):
+        return "Expected missing Markov model to return a GeneratorError."
+
+    var error := result as GeneratorStrategy.GeneratorError
+    if error.code != "missing_resource":
+        return "Missing Markov model should report missing_resource, received %s" % error.code
+
+    if not String(error.message).begins_with("Missing resource"):
+        return "Missing Markov model error should use the standard prefix."
+
+    if String(error.details.get("path", "")) != MISSING_MARKOV_MODEL_PATH:
+        return "Missing Markov model error should reference the failing path."
 
     return null
 

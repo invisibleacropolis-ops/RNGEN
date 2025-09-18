@@ -4,6 +4,8 @@ const TemplateStrategy := preload("res://name_generator/strategies/TemplateStrat
 const GeneratorStrategy := preload("res://name_generator/strategies/GeneratorStrategy.gd")
 const RNGStreamRouter := preload("res://name_generator/utils/RNGManager.gd")
 
+const MISSING_NAME_GENERATOR_PATH := "res://tests/test_assets/missing_name_generator.gd"
+
 class StubRNGProcessor:
     var responses: Dictionary = {}
     var invocations: Array[Dictionary] = []
@@ -43,6 +45,15 @@ class StubRNGProcessor:
                 matches.append(record)
         return matches
 
+class MissingNameGeneratorTemplateStrategy:
+    extends TemplateStrategy
+
+    func _get_name_generator_script_path() -> String:
+        return MISSING_NAME_GENERATOR_PATH
+
+    func _resolve_name_generator_singleton() -> Object:
+        return null
+
 var _strategy: TemplateStrategy
 var _stub_processor: StubRNGProcessor
 var _checks: Array[Dictionary] = []
@@ -58,6 +69,7 @@ func run() -> Dictionary:
     _record("error_invalid_template_type", func(): return _test_invalid_template_type())
     _record("error_invalid_sub_generators_type", func(): return _test_invalid_sub_generators_type())
     _record("error_missing_template_token", func(): return _test_missing_template_token())
+    _record("error_missing_name_generator_resource", func(): return _test_missing_name_generator_resource())
 
     var failures: Array[Dictionary] = []
     for entry in _checks:
@@ -96,6 +108,23 @@ func _with_stubbed_processor(callable: Callable) -> Variant:
         if name == "RNGProcessor":
             return _stub_processor
         return original_get.call(name)
+
+    var result = callable.call()
+
+    Engine.has_singleton = original_has
+    Engine.get_singleton = original_get
+
+    return result
+
+func _without_autoloads(callable: Callable) -> Variant:
+    var original_has := Engine.has_singleton
+    var original_get := Engine.get_singleton
+
+    Engine.has_singleton = func(name: String) -> bool:
+        return false
+
+    Engine.get_singleton = func(name: String) -> Variant:
+        return null
 
     var result = callable.call()
 
@@ -290,6 +319,33 @@ func _test_missing_template_token() -> Variant:
     var details := result.details
     if String(details.get("token", "")) != "unknown":
         return "Missing token details should include the offending token."
+
+    return null
+
+func _test_missing_name_generator_resource() -> Variant:
+    var strategy := MissingNameGeneratorTemplateStrategy.new()
+    var rng := _make_rng(555)
+    var config := {
+        "template_string": "[stub]",
+        "sub_generators": {"stub": {}},
+    }
+
+    var result := _without_autoloads(func():
+        return strategy.generate(config, rng)
+    )
+
+    if not (result is GeneratorStrategy.GeneratorError):
+        return "Expected missing NameGenerator script to return a GeneratorError."
+
+    var error := result as GeneratorStrategy.GeneratorError
+    if error.code != "missing_resource":
+        return "Missing NameGenerator script should surface missing_resource, received %s" % error.code
+
+    if not String(error.message).begins_with("Missing resource"):
+        return "Missing NameGenerator script should use the standard prefix."
+
+    if String(error.details.get("path", "")) != MISSING_NAME_GENERATOR_PATH:
+        return "Missing NameGenerator script error should identify the failing path."
 
     return null
 

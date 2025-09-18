@@ -6,6 +6,16 @@ const GeneratorStrategy := preload("res://name_generator/strategies/GeneratorStr
 const WORDLIST_PATH := "res://tests/test_assets/wordlist_basic.tres"
 const SYLLABLE_PATH := "res://tests/test_assets/syllable_basic.tres"
 const MARKOV_PATH := "res://tests/test_assets/markov_basic.tres"
+const MISSING_NAME_GENERATOR_PATH := "res://tests/test_assets/missing_name_generator.gd"
+
+class MissingNameGeneratorHybridStrategy:
+    extends HybridStrategy
+
+    func _get_name_generator_script_path() -> String:
+        return MISSING_NAME_GENERATOR_PATH
+
+    func _resolve_name_generator_singleton() -> Object:
+        return null
 
 var _total := 0
 var _passed := 0
@@ -20,6 +30,7 @@ func run() -> Dictionary:
 
     _run_test("hybrid_generates_expected_structure", func(): _test_hybrid_structure())
     _run_test("hybrid_generation_is_deterministic", func(): _test_determinism())
+    _run_test("missing_name_generator_resource_surfaces_error", func(): _test_missing_name_generator_resource())
 
     return {
         "suite": "HybridStrategy",
@@ -41,6 +52,23 @@ func _run_test(name: String, callable: Callable) -> void:
         "name": name,
         "message": String(message),
     })
+
+func _with_autoloads_disabled(callable: Callable) -> Variant:
+    var original_has := Engine.has_singleton
+    var original_get := Engine.get_singleton
+
+    Engine.has_singleton = func(_name: String) -> bool:
+        return false
+
+    Engine.get_singleton = func(_name: String) -> Variant:
+        return null
+
+    var result = callable.call()
+
+    Engine.has_singleton = original_has
+    Engine.get_singleton = original_get
+
+    return result
 
 func _test_hybrid_structure() -> Variant:
     var strategy := HybridStrategy.new()
@@ -102,6 +130,39 @@ func _test_determinism() -> Variant:
 
     if String(alternate) == String(first):
         return "Different seeds should yield different hybrid names."
+
+    return null
+
+func _test_missing_name_generator_resource() -> Variant:
+    var strategy := MissingNameGeneratorHybridStrategy.new()
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 321
+
+    var config := {
+        "steps": [
+            {
+                "strategy": "wordlist",
+                "wordlist_paths": [WORDLIST_PATH],
+            },
+        ],
+    }
+
+    var result := _with_autoloads_disabled(func():
+        return strategy.generate(config, rng)
+    )
+
+    if not (result is GeneratorStrategy.GeneratorError):
+        return "Expected missing NameGenerator script to return a GeneratorError."
+
+    var error := result as GeneratorStrategy.GeneratorError
+    if error.code != "missing_resource":
+        return "Missing NameGenerator script should report missing_resource, received %s" % error.code
+
+    if not String(error.message).begins_with("Missing resource"):
+        return "Missing NameGenerator script error should use the standard prefix."
+
+    if String(error.details.get("path", "")) != MISSING_NAME_GENERATOR_PATH:
+        return "Missing NameGenerator script error should surface the failing path."
 
     return null
 

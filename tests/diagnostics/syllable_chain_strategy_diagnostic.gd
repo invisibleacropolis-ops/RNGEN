@@ -5,6 +5,7 @@ const SyllableChainStrategy := preload("res://name_generator/strategies/Syllable
 
 const SYLLABLE_SET_PATH := "res://tests/test_assets/syllable_basic.tres"
 const NO_MIDDLE_SET_PATH := "res://tests/test_assets/syllable_no_middle.tres"
+const MISSING_SYLLABLE_SET_PATH := "res://tests/test_assets/missing_syllable_set.tres"
 
 var _checks: Array[Dictionary] = []
 
@@ -13,6 +14,7 @@ func run() -> Dictionary:
 
     _record("deterministic_sequences_across_configurations", func(): return _test_deterministic_generation())
     _record("error_invalid_syllable_set_path", func(): return _test_invalid_syllable_set_path())
+    _record("error_missing_syllable_resource", func(): return _test_missing_syllable_resource())
     _record("error_missing_required_middles", func(): return _test_missing_required_middles())
     _record("error_unable_to_satisfy_min_length", func(): return _test_unable_to_satisfy_min_length())
     _record("post_processing_rules_transform_output", func(): return _test_post_processing_rules())
@@ -146,6 +148,28 @@ func _test_invalid_syllable_set_path() -> Variant:
 
     if result.code != "invalid_syllable_set_path":
         return "Expected invalid_syllable_set_path code, received %s" % result.code
+
+    return null
+
+func _test_missing_syllable_resource() -> Variant:
+    var strategy := SyllableChainStrategy.new()
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 101
+
+    var config := {"syllable_set_path": MISSING_SYLLABLE_SET_PATH}
+    var result := strategy.generate(config, rng)
+    if not (result is GeneratorStrategy.GeneratorError):
+        return "Expected missing resource error but generation succeeded."
+
+    var error := result as GeneratorStrategy.GeneratorError
+    if error.code != "missing_resource":
+        return "Missing syllable set should return missing_resource, received %s" % error.code
+
+    if not String(error.message).begins_with("Missing resource"):
+        return "Missing syllable resource error should use the standard prefix."
+
+    if String(error.details.get("path", "")) != MISSING_SYLLABLE_SET_PATH:
+        return "Missing syllable resource error should include the failing path."
 
     return null
 

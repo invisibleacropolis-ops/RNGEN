@@ -73,6 +73,8 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
 
         var child_rng: RandomNumberGenerator = rng_router.derive_rng([alias, str(index)])
         var result: Variant = _generate_via_processor(step_config, child_rng)
+        if result is GeneratorStrategy.GeneratorError:
+            return result
         if result is Dictionary and result.has("code"):
             return _make_error(
                 String(result.get("code", "hybrid_step_error")),
@@ -185,7 +187,11 @@ func _generate_via_processor(config: Dictionary, rng: RandomNumberGenerator) -> 
     if generator != null:
         return generator.call("generate", config, rng)
 
-    var script: GDScript = _load_name_generator_script()
+    var script_result: Variant = _load_name_generator_script()
+    if script_result is GeneratorStrategy.GeneratorError:
+        return script_result
+
+    var script: GDScript = script_result
     if script != null:
         var fallback: Object = script.new()
         if fallback != null:
@@ -213,15 +219,36 @@ func _resolve_name_generator_singleton() -> Object:
             return singleton
     return null
 
-func _load_name_generator_script() -> GDScript:
+func _get_name_generator_script_path() -> String:
+    return NAME_GENERATOR_PATH
+
+func _load_name_generator_script() -> Variant:
     ## Lazily load the NameGenerator script as a last resort when the autoload is
     ## unavailable. The cached handle prevents redundant disk access if multiple
     ## hybrid steps fall back in succession during diagnostics.
-    if _cached_name_generator_script == null:
-        var script: Variant = load(NAME_GENERATOR_PATH)
-        if script is GDScript:
-            _cached_name_generator_script = script
-    return _cached_name_generator_script
+    if _cached_name_generator_script != null:
+        return _cached_name_generator_script
+
+    var path: String = _get_name_generator_script_path()
+    if not ResourceLoader.exists(path):
+        return _make_missing_resource_error(path, {"resource_type": "GDScript"})
+
+    var resource: Resource = ResourceLoader.load(path)
+    if resource == null:
+        return _make_missing_resource_error(path, {"resource_type": "GDScript"})
+
+    if resource is GDScript:
+        _cached_name_generator_script = resource
+        return _cached_name_generator_script
+
+    return _make_error(
+        "invalid_name_generator_resource",
+        "Resource at '%s' must be a GDScript." % path,
+        {
+            "path": path,
+            "received_type": resource.get_class(),
+        },
+    )
 
 func describe() -> Dictionary:
     var notes := PackedStringArray([

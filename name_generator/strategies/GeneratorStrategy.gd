@@ -31,6 +31,18 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
 func _make_error(code: String, message: String, details: Dictionary = {}) -> GeneratorError:
     return GeneratorError.new(code, message, details)
 
+func _make_missing_resource_error(path: String, context: Dictionary = {}) -> GeneratorError:
+    ## Helper that standardises missing resource errors so tooling can rely on the
+    ## same code/message pair across strategies.
+    var details: Dictionary = {"path": path}
+    for key in context.keys():
+        details[key] = context[key]
+    return _make_error(
+        "missing_resource",
+        "Missing resource at '%s'." % path,
+        details,
+    )
+
 func _ensure_dictionary(value: Variant, context: String = "config") -> GeneratorError:
     if typeof(value) != TYPE_DICTIONARY:
         return _make_error(

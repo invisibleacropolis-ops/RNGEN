@@ -54,26 +54,26 @@ func generate(config: Dictionary, rng: RandomNumberGenerator) -> Variant:
             {"syllable_set_path": path_variant},
         )
 
-    var syllable_resource: Resource = ResourceLoader.load(path_variant)
+    var syllable_path: String = String(path_variant)
+    if not ResourceLoader.exists(syllable_path):
+        return _make_missing_resource_error(syllable_path, {"resource_type": "SyllableSetResource"})
+
+    var syllable_resource: Resource = ResourceLoader.load(syllable_path)
     if syllable_resource == null:
-        return _make_error(
-            "missing_syllable_set",
-            "Unable to load syllable set at '%s'." % path_variant,
-            {"syllable_set_path": path_variant},
-        )
+        return _make_missing_resource_error(syllable_path, {"resource_type": "SyllableSetResource"})
 
     if not (syllable_resource is SyllableSetResource):
         return _make_error(
             "invalid_syllable_set_type",
-            "Resource at '%s' is not a SyllableSetResource." % path_variant,
+            "Resource at '%s' is not a SyllableSetResource." % syllable_path,
             {
-                "syllable_set_path": path_variant,
+                "syllable_set_path": syllable_path,
                 "received_type": syllable_resource.get_class(),
             },
         )
 
     var syllable_set: SyllableSetResource = syllable_resource
-    var validation_error: GeneratorError = _validate_syllable_set(syllable_set, config, String(path_variant))
+    var validation_error: GeneratorError = _validate_syllable_set(syllable_set, config, syllable_path)
     if validation_error:
         return validation_error
 
