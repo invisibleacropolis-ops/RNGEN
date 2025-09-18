@@ -83,12 +83,22 @@ Follow these steps whenever you need to work inside the Platform GUI:
 3. Use the sidebar filters to jump to specific sections (Generation Timeline, Stream Usage, Warnings). These anchors mirror the log layout described in the middleware manual, helping you confirm whether unexpected results came from seeds, strategy choices, or warnings recorded by `record_warning(...)`.
 4. Press **Download Log** to save a copy. The GUI calls `DebugRNG.close()` through the middleware so the file flushes to disk before presenting the system file picker.
 
-### Replaying a seed
+### Replaying and exporting seeds
 
-1. Navigate to the **Seeds** tab. The current master seed is displayed by calling `RNGProcessor.get_master_seed()`.
-2. To replay a past result, paste the saved seed into the input box and click **Apply Seed**. The GUI forwards the value to `RNGProcessor.set_master_seed(seed_value)`, ensuring every subsequent generator run reuses that exact seed.
-3. Need a fresh deterministic run? Click **Randomize Seed**. This invokes `RNGProcessor.reset_master_seed()`, updates the display, and copies the new value to your clipboard so you can store it alongside exported art.
-4. For context on derived streams (e.g., when multiple generators run concurrently), open the Debug Logs tab and examine the Stream Usage section. The entries are sourced from middleware calls to `record_stream_usage(stream_name, context)` and make it easy to see which GUI actions spawned specific RNG streams.
+1. Navigate to the **Seeds** tab to load the Seeds Dashboard panel. The header calls `RNGProcessorController.get_master_seed()` so the displayed value always mirrors the middleware, even when the window has been idle.
+2. To replay a previous session, paste the recorded seed into **Enter master seed** and press **Apply**. The dashboard forwards the value to `RNGProcessor.initialize_master_seed(...)`, emitting a confirmation banner and refreshing the derived stream list.
+3. Need a brand-new deterministic branch? Click **Randomize**. The panel calls `RNGProcessor.randomize_master_seed()` and drops the result into the input field so you can store it alongside captured screenshots or logs.
+4. Review the **Derived RNG streams** table. Rows are populated from `RNGProcessor.describe_rng_streams()` and show both the seed/state tuple and whether the data originated from the live `RNGManager` singleton or the middleware's fallback cache.
+5. Inspect the **Stream routing preview** when you need to explain how branches are derived. The panel renders `RNGProcessor.describe_stream_routing()` output so support engineers can point to the `rng_processor::stream_name` path used by `RNGStreamRouter` whenever `RNGManager` is offline.
+6. Use **Export state** to copy the current topology to the clipboard. The control proxies `RNGProcessor.export_rng_state()`, pretty-prints the JSON in the text area, and keeps the payload ready for version control or bug reports.
+7. When recreating an issue, paste a previously exported payload and press **Import state**. The panel validates the JSON before calling `RNGProcessor.import_rng_state(...)`, restoring the master seed plus every captured stream position.
+8. For cross-checks while debugging, jump to the Debug Logs tab and read the Stream Usage section written by `record_stream_usage(stream_name, context)`. Entries mirror the same stream identifiers listed in the dashboard so analysts can trace GUI actions back to RNG derivations.
+
+### Deterministic QA workflow
+
+1. Use **Export state** in the Seeds Dashboard to capture the master seed and active stream positions before committing reproductions.
+2. Attach the exported JSON to your test plan (or paste it into a fixture) so anyone can hydrate the same topology via **Import state**.
+3. Re-run the automated suite with `godot --headless --script res://tests/run_all_tests.gd` to confirm the deterministic state survives a clean restart. The command exercises every RNG Processor diagnostic, ensuring both the manager-backed and fallback routers continue to return identical results.
 
 ## Accessibility and UX considerations
 

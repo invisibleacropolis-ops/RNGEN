@@ -1,0 +1,88 @@
+[gd_scene load_steps=2 format=3 uid="uid://seeds_dashboard_panel"]
+
+[ext_resource type="Script" path="res://addons/platform_gui/panels/seeds/SeedsDashboardPanel.gd" id="1"]
+
+[node name="SeedsDashboardPanel" type="VBoxContainer"]
+script = ExtResource("1")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(640, 480)
+
+[node name="SeedHeader" type="HBoxContainer" parent="."]
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="HeaderLabel" type="Label" parent="SeedHeader"]
+text = "Master seed"
+size_flags_horizontal = 1
+
+[node name="MasterSeedLabel" type="Label" parent="SeedHeader"]
+unique_name_in_owner = true
+text = "--"
+size_flags_horizontal = 1
+
+[node name="SeedInput" type="LineEdit" parent="SeedHeader"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+placeholder_text = "Enter master seed"
+
+[node name="ApplySeedButton" type="Button" parent="SeedHeader"]
+unique_name_in_owner = true
+text = "Apply"
+
+[node name="RandomizeButton" type="Button" parent="SeedHeader"]
+unique_name_in_owner = true
+text = "Randomize"
+
+[node name="RefreshButton" type="Button" parent="SeedHeader"]
+unique_name_in_owner = true
+text = "Refresh"
+
+[node name="StatusLabel" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
+bbcode_enabled = true
+text = "Awaiting seed data..."
+fit_content = true
+scroll_active = false
+size_flags_vertical = 1
+
+[node name="ImportStatus" type="Label" parent="."]
+unique_name_in_owner = true
+text = "RNG status"
+
+[node name="StreamsSection" type="Label" parent="."]
+text = "Derived RNG streams"
+size_flags_vertical = 1
+
+[node name="StreamsTree" type="Tree" parent="."]
+unique_name_in_owner = true
+size_flags_vertical = 3
+allow_reselect = true
+columns = 4
+hide_root = true
+
+[node name="RoutingLabel" type="Label" parent="."]
+text = "Stream routing preview"
+size_flags_vertical = 1
+
+[node name="RoutingTree" type="Tree" parent="."]
+unique_name_in_owner = true
+size_flags_vertical = 3
+columns = 4
+hide_root = true
+
+[node name="ExportControls" type="HBoxContainer" parent="."]
+size_flags_horizontal = 3
+
+[node name="ExportButton" type="Button" parent="ExportControls"]
+unique_name_in_owner = true
+text = "Export state"
+
+[node name="ImportButton" type="Button" parent="ExportControls"]
+unique_name_in_owner = true
+text = "Import state"
+
+[node name="ExportText" type="TextEdit" parent="."]
+unique_name_in_owner = true
+size_flags_vertical = 3
+placeholder_text = "Seed export will appear here. Paste a saved JSON payload to import."

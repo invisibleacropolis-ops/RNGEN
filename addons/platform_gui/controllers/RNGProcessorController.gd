@@ -37,6 +37,21 @@ func reset_master_seed() -> int:
     var result: Variant = processor.call("reset_master_seed")
     return int(result)
 
+func get_master_seed() -> int:
+    var processor := _get_rng_processor()
+    if processor == null or not processor.has_method("get_master_seed"):
+        push_warning("RNGProcessor singleton unavailable; returning default master seed value.")
+        return 0
+    return int(processor.call("get_master_seed"))
+
+func randomize_master_seed() -> int:
+    var processor := _get_rng_processor()
+    if processor == null or not processor.has_method("randomize_master_seed"):
+        push_warning("RNGProcessor singleton unavailable; returning default master seed value.")
+        return 0
+    var result: Variant = processor.call("randomize_master_seed")
+    return int(result)
+
 func list_strategies() -> PackedStringArray:
     var processor := _get_rng_processor()
     if processor == null or not processor.has_method("list_strategies"):
@@ -58,6 +73,40 @@ func describe_strategies() -> Dictionary:
     if payload is Dictionary:
         return (payload as Dictionary).duplicate(true)
     return {}
+
+func describe_rng_streams() -> Dictionary:
+    var processor := _get_rng_processor()
+    if processor == null or not processor.has_method("describe_rng_streams"):
+        return {}
+    var payload: Variant = processor.call("describe_rng_streams")
+    if payload is Dictionary:
+        return (payload as Dictionary).duplicate(true)
+    return {}
+
+func describe_stream_routing(stream_names: PackedStringArray = PackedStringArray()) -> Dictionary:
+    var processor := _get_rng_processor()
+    if processor == null or not processor.has_method("describe_stream_routing"):
+        return {}
+    var payload: Variant = processor.call("describe_stream_routing", stream_names)
+    if payload is Dictionary:
+        return (payload as Dictionary).duplicate(true)
+    return {}
+
+func export_seed_state() -> Dictionary:
+    var processor := _get_rng_processor()
+    if processor == null or not processor.has_method("export_rng_state"):
+        return {}
+    var payload: Variant = processor.call("export_rng_state")
+    if payload is Dictionary:
+        return (payload as Dictionary).duplicate(true)
+    return {}
+
+func import_seed_state(payload: Variant) -> void:
+    var processor := _get_rng_processor()
+    if processor == null or not processor.has_method("import_rng_state"):
+        push_warning("RNGProcessor singleton unavailable; import_seed_state skipped.")
+        return
+    processor.call("import_rng_state", payload)
 
 func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Variant:
     var processor := _get_rng_processor()
