@@ -21,6 +21,10 @@
       "path": "res://tests/test_rng_processor_headless.gd"
     },
     {
+      "name": "RNG Manager Seed Reset Suite",
+      "path": "res://tests/test_rng_manager_seed_reset.gd"
+    },
+    {
       "name": "Platform GUI RNG Processor Controller Suite",
       "path": "res://tests/platform_gui/test_rng_processor_controller.gd"
     },
