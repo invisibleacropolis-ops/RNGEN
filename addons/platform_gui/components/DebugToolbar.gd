@@ -22,20 +22,40 @@ const _STATUS_ICONS := {
     "error": "❌",
 }
 
-@onready var _session_label_edit: LineEdit = %SessionLabel
-@onready var _ticket_edit: LineEdit = %TicketInput
-@onready var _notes_edit: LineEdit = %NotesInput
-@onready var _start_button: Button = %StartSessionButton
-@onready var _attach_button: Button = %AttachButton
-@onready var _detach_button: Button = %DetachButton
-@onready var _stop_button: Button = %StopSessionButton
-@onready var _status_label: RichTextLabel = %StatusLabel
+var _session_label_edit: LineEdit = null
+var _ticket_edit: LineEdit = null
+var _notes_edit: LineEdit = null
+var _start_button: Button = null
+var _attach_button: Button = null
+var _detach_button: Button = null
+var _stop_button: Button = null
+var _status_label: RichTextLabel = null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
 var _debug_rng: DebugRNG = null
 
+
+func _ensure_nodes_ready() -> void:
+    if _session_label_edit == null:
+        _session_label_edit = get_node("SessionLabel") as LineEdit
+    if _ticket_edit == null:
+        _ticket_edit = get_node("TicketInput") as LineEdit
+    if _notes_edit == null:
+        _notes_edit = get_node("NotesInput") as LineEdit
+    if _start_button == null:
+        _start_button = get_node("StartSessionButton") as Button
+    if _attach_button == null:
+        _attach_button = get_node("AttachButton") as Button
+    if _detach_button == null:
+        _detach_button = get_node("DetachButton") as Button
+    if _stop_button == null:
+        _stop_button = get_node("StopSessionButton") as Button
+    if _status_label == null:
+        _status_label = get_node("StatusLabel") as RichTextLabel
+
 func _ready() -> void:
+    _ensure_nodes_ready()
     _status_label.bbcode_enabled = true
     _start_button.pressed.connect(_on_start_pressed)
     _attach_button.pressed.connect(_on_attach_pressed)
@@ -44,31 +64,37 @@ func _ready() -> void:
     _update_button_states()
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     ## Inject a deterministic controller override for tests and tooling.
     _controller_override = controller
     _cached_controller = null
     _update_button_states()
 
 func clear_controller_override() -> void:
+    _ensure_nodes_ready()
     ## Clear the controller override and fall back to exported lookups.
     _controller_override = null
     _cached_controller = null
     _update_button_states()
 
 func get_active_debug_rng() -> DebugRNG:
+    _ensure_nodes_ready()
     ## Return the DebugRNG instance managed by the toolbar, if any.
     return _debug_rng
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     ## External hook to refresh controller lookups and button states.
     _cached_controller = null
     _update_button_states()
 
 func _on_start_pressed() -> void:
+    _ensure_nodes_ready()
     _start_new_session()
     _update_button_states()
 
 func _on_attach_pressed() -> void:
+    _ensure_nodes_ready()
     if _debug_rng == null:
         _set_status("Start a DebugRNG session before attaching.", "error")
         return
@@ -80,12 +106,14 @@ func _on_attach_pressed() -> void:
     _set_status("Attached DebugRNG helper to middleware.")
 
 func _on_detach_pressed() -> void:
+    _ensure_nodes_ready()
     var detached := _detach_helper()
     if detached:
         _set_status("Detached DebugRNG helper.")
     _update_button_states()
 
 func _on_stop_pressed() -> void:
+    _ensure_nodes_ready()
     _detach_helper(false)
     if _debug_rng != null:
         _debug_rng.close()
@@ -94,6 +122,7 @@ func _on_stop_pressed() -> void:
     _update_button_states()
 
 func _start_new_session() -> void:
+    _ensure_nodes_ready()
     if _debug_rng != null:
         _debug_rng.close()
     _debug_rng = DebugRNG.new()
@@ -103,6 +132,7 @@ func _start_new_session() -> void:
     _set_status("DebugRNG session started.")
 
 func _collect_metadata() -> Dictionary:
+    _ensure_nodes_ready()
     var metadata := {}
     var label := _session_label_edit.text.strip_edges()
     if label != "":
@@ -116,6 +146,7 @@ func _collect_metadata() -> Dictionary:
     return metadata
 
 func _detach_helper(update_status: bool = true) -> bool:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null or not controller.has_method("set_debug_rng"):
         if update_status:
@@ -125,18 +156,22 @@ func _detach_helper(update_status: bool = true) -> bool:
     return true
 
 func _update_button_states() -> void:
+    _ensure_nodes_ready()
     var has_debug := _debug_rng != null
     _attach_button.disabled = not has_debug or _get_controller() == null
     _detach_button.disabled = _get_controller() == null
     _stop_button.disabled = not has_debug
 
 func _set_status(message: String, severity: String = "info") -> void:
+    _ensure_nodes_ready()
     _status_label.bbcode_text = _format_status(message, severity)
 
 func _format_error(message: String) -> String:
+    _ensure_nodes_ready()
     return _format_status(message, "error")
 
 func _format_status(message: String, severity: String) -> String:
+    _ensure_nodes_ready()
     var color := _INFO_COLOR
     var icon := _STATUS_ICONS.get(severity, _STATUS_ICONS["info"])
     match severity:
@@ -147,6 +182,7 @@ func _format_status(message: String, severity: String) -> String:
     return "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null:
         return _controller_override
     if _cached_controller != null and is_instance_valid(_cached_controller):

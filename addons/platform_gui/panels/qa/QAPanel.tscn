@@ -1,6 +1,7 @@
 [gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/qa/QAPanel.gd" id="1_o4vml"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="2_compat"]
 
 [node name="QAPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(0, 320)
@@ -10,15 +11,19 @@ script = ExtResource("1_o4vml")
 [node name="RunControls" type="HBoxContainer" parent="."]
 
 [node name="RunSuiteButton" type="Button" parent="RunControls"]
+unique_name_in_owner = true
 text = "Run full suite"
 
 [node name="DiagnosticSelector" type="OptionButton" parent="RunControls"]
+unique_name_in_owner = true
 size_flags_horizontal = 3
 
 [node name="RunDiagnosticButton" type="Button" parent="RunControls"]
+unique_name_in_owner = true
 text = "Run diagnostic"
 
 [node name="RefreshDiagnosticsButton" type="Button" parent="RunControls"]
+unique_name_in_owner = true
 text = "Refresh list"
 
 [node name="LogPanel" type="PanelContainer" parent="."]
@@ -32,29 +37,34 @@ anchor_bottom = 1.0
 size_flags_vertical = 3
 
 [node name="LogView" type="RichTextLabel" parent="LogPanel/LogScroll"]
+script = ExtResource("2_compat")
+unique_name_in_owner = true
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 size_flags_vertical = 3
 scroll_active = true
-
 [node name="LogActions" type="HBoxContainer" parent="."]
 
 [node name="ClearLogButton" type="Button" parent="LogActions"]
+unique_name_in_owner = true
 text = "Clear"
 
 [node name="OpenLogButton" type="Button" parent="LogActions"]
+unique_name_in_owner = true
 text = "Open log"
 
 [node name="LogPathField" type="LineEdit" parent="LogActions"]
+unique_name_in_owner = true
 size_flags_horizontal = 3
 placeholder_text = "Log path (saved after run completes)"
 
 [node name="StatusLabel" type="RichTextLabel" parent="."]
+script = ExtResource("2_compat")
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 40)
 size_flags_vertical = 1
 scroll_active = false
-
 [node name="HistoryPanel" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(0, 180)
 size_flags_vertical = 3
@@ -68,9 +78,12 @@ anchor_bottom = 1.0
 text = "Recent runs"
 
 [node name="HistoryList" type="ItemList" parent="HistoryPanel/HistoryVBox"]
+unique_name_in_owner = true
 size_flags_vertical = 3
 
 [node name="GuidanceLabel" type="RichTextLabel" parent="."]
+script = ExtResource("2_compat")
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 size_flags_vertical = 1
 scroll_active = false

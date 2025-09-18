@@ -40,13 +40,13 @@ func _test_caches_strategy_metadata() -> Variant:
     controller.metadata = _make_metadata_payload()
     var service := _make_service(controller)
 
-    var first := service.get_strategy_metadata("wordlist")
-    var second := service.get_strategy_metadata("wordlist")
+    var first: Dictionary = service.get_strategy_metadata("wordlist")
+    var second: Dictionary = service.get_strategy_metadata("wordlist")
     if controller.describe_calls != 1:
         return "Service should cache controller responses between lookups."
 
     first["display_name"] = "mutated"
-    var third := service.get_strategy_metadata("wordlist")
+    var third: Dictionary = service.get_strategy_metadata("wordlist")
     if third.get("display_name", "") == "mutated":
         return "Strategy metadata accessors must provide defensive copies."
 
@@ -60,21 +60,21 @@ func _test_exposes_lookup_helpers() -> Variant:
     controller.metadata = _make_metadata_payload()
     var service := _make_service(controller)
 
-    var required := service.get_required_keys("wordlist")
+    var required: PackedStringArray = service.get_required_keys("wordlist")
     if required.size() != 1 or required[0] != "wordlist_paths":
         return "Required keys helper should normalise the schema payload."
 
-    var optional := service.get_optional_key_types("wordlist")
+    var optional: Dictionary = service.get_optional_key_types("wordlist")
     if optional.size() != 2:
         return "Optional key helper should surface the expected type map."
     if int(optional.get("delimiter", -1)) != TYPE_STRING:
         return "Optional key helper should preserve variant type constants."
 
-    var notes := service.get_default_notes("template")
+    var notes: PackedStringArray = service.get_default_notes("template")
     if notes.size() != 1 or not notes[0].begins_with("Template note"):
         return "Default notes helper should normalise PackedStringArray payloads."
 
-    var unknown_required := service.get_required_keys("missing")
+    var unknown_required: PackedStringArray = service.get_required_keys("missing")
     if not unknown_required.is_empty():
         return "Unknown strategy lookups should return empty required key sets."
 
@@ -85,10 +85,10 @@ func _test_provides_plain_language_error_hints() -> Variant:
     controller.metadata = _make_metadata_payload()
     var service := _make_service(controller)
 
-    var hints := service.get_generator_error_hints("wordlist")
+    var hints: Dictionary = service.get_generator_error_hints("wordlist")
     if not hints.has("missing_required_keys"):
         return "Error hints should include schema-derived missing key guidance."
-    var missing_required := hints["missing_required_keys"]
+    var missing_required: Dictionary = hints["missing_required_keys"]
     if typeof(missing_required) != TYPE_DICTIONARY:
         return "Missing key hint should be normalised into a dictionary payload."
     if String(missing_required.get("message", "")).find("wordlist_paths") == -1:
@@ -98,7 +98,7 @@ func _test_provides_plain_language_error_hints() -> Variant:
 
     if not hints.has("invalid_key_type"):
         return "Error hints should include optional key type guidance."
-    var optional_hint := hints["invalid_key_type"]
+    var optional_hint: Dictionary = hints["invalid_key_type"]
     if typeof(optional_hint) != TYPE_DICTIONARY:
         return "Optional key hint should be normalised into a dictionary payload."
     if String(optional_hint.get("message", "")).find("delimiter") == -1:
@@ -108,21 +108,21 @@ func _test_provides_plain_language_error_hints() -> Variant:
     if String(optional_hint.get("handbook_label", "")).find("Optional") == -1:
         return "Optional key hint should expose the handbook label for quick reference."
 
-    var base_guidance := service.get_generator_error_guidance("wordlist", "invalid_config_type")
+    var base_guidance: Dictionary = service.get_generator_error_guidance("wordlist", "invalid_config_type")
     if String(base_guidance.get("message", "")).find("Dictionary") == -1:
         return "Shared schema guidance should surface descriptive default messages."
     if String(base_guidance.get("remediation", "")).find("Regenerate") == -1:
         return "Shared schema guidance should include remediation instructions."
 
-    var base_hint := service.get_generator_error_hint("wordlist", "invalid_config_type")
+    var base_hint: String = service.get_generator_error_hint("wordlist", "invalid_config_type")
     if base_hint.find("Dictionary") == -1:
         return "Hint formatter should still expose descriptive text for UI fallbacks."
 
-    var unknown_guidance := service.get_generator_error_guidance("missing", "invalid_config_type")
+    var unknown_guidance: Dictionary = service.get_generator_error_guidance("missing", "invalid_config_type")
     if unknown_guidance.is_empty():
         return "Unknown strategies should still expose shared schema guidance."
 
-    var unknown_hint := service.get_generator_error_hint("missing", "invalid_config_type")
+    var unknown_hint: String = service.get_generator_error_hint("missing", "invalid_config_type")
     if unknown_hint == "":
         return "Unknown strategies should still expose shared schema hints."
 
@@ -147,7 +147,7 @@ func _test_refreshes_metadata_on_demand() -> Variant:
 
     service.refresh_metadata()
 
-    var refreshed := service.get_required_keys("template")
+    var refreshed: PackedStringArray = service.get_required_keys("template")
     if refreshed.size() != 2 or refreshed[1] != "template_string":
         return "Refresh should replace the cached metadata payload."
     if controller.describe_calls != 2:

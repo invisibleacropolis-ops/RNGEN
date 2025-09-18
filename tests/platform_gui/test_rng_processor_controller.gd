@@ -355,6 +355,7 @@ class StubQARunner:
 
     signal log_emitted(line: String)
 
+    var forward_to_console: bool = false
     var group_payloads := {
         "generator_core": {
             "logs": PackedStringArray([
@@ -448,7 +449,7 @@ class StubQARunner:
             "failure_summaries": [],
         }
         for payload in group_payloads.values():
-            var logs_variant := payload.get("logs", PackedStringArray())
+            var logs_variant: Variant = payload.get("logs", PackedStringArray())
             if logs_variant is PackedStringArray:
                 combined_logs.append_array(logs_variant)
             elif logs_variant is Array:

@@ -23,23 +23,50 @@ const _Preferences := preload("res://addons/platform_gui/services/platform_prefe
 const _PREFERENCES_SECTION := "seeds_dashboard"
 const _PREFERENCE_KEY_LAST_SEED := "last_manual_seed"
 
-@onready var _master_seed_label: Label = %MasterSeedLabel
-@onready var _seed_input: LineEdit = %SeedInput
-@onready var _apply_button: Button = %ApplySeedButton
-@onready var _randomize_button: Button = %RandomizeButton
-@onready var _refresh_button: Button = %RefreshButton
-@onready var _status_label: RichTextLabel = %StatusLabel
-@onready var _streams_tree: Tree = %StreamsTree
-@onready var _routing_tree: Tree = %RoutingTree
-@onready var _export_text: TextEdit = %ExportText
-@onready var _export_button: Button = %ExportButton
-@onready var _import_button: Button = %ImportButton
-@onready var _import_status: Label = %ImportStatus
+var _master_seed_label: Label= null
+var _seed_input: LineEdit= null
+var _apply_button: Button= null
+var _randomize_button: Button= null
+var _refresh_button: Button= null
+var _status_label: RichTextLabel= null
+var _streams_tree: Tree= null
+var _routing_tree: Tree= null
+var _export_text: TextEdit= null
+var _export_button: Button= null
+var _import_button: Button= null
+var _import_status: Label= null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
 
+
+func _ensure_nodes_ready() -> void:
+    if _master_seed_label == null:
+        _master_seed_label = get_node("%MasterSeedLabel") as Label
+    if _seed_input == null:
+        _seed_input = get_node("%SeedInput") as LineEdit
+    if _apply_button == null:
+        _apply_button = get_node("%ApplySeedButton") as Button
+    if _randomize_button == null:
+        _randomize_button = get_node("%RandomizeButton") as Button
+    if _refresh_button == null:
+        _refresh_button = get_node("%RefreshButton") as Button
+    if _status_label == null:
+        _status_label = get_node("%StatusLabel") as RichTextLabel
+    if _streams_tree == null:
+        _streams_tree = get_node("%StreamsTree") as Tree
+    if _routing_tree == null:
+        _routing_tree = get_node("%RoutingTree") as Tree
+    if _export_text == null:
+        _export_text = get_node("%ExportText") as TextEdit
+    if _export_button == null:
+        _export_button = get_node("%ExportButton") as Button
+    if _import_button == null:
+        _import_button = get_node("%ImportButton") as Button
+    if _import_status == null:
+        _import_status = get_node("%ImportStatus") as Label
 func _ready() -> void:
+    _ensure_nodes_ready()
     _status_label.bbcode_enabled = true
     _apply_button.pressed.connect(_on_apply_pressed)
     _randomize_button.pressed.connect(_on_randomize_pressed)
@@ -61,24 +88,29 @@ func _ready() -> void:
     _refresh_dashboard()
 
 func _load_preferences() -> void:
+    _ensure_nodes_ready()
     var stored_seed := String(_Preferences.load_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_SEED, ""))
     if stored_seed != "":
         _seed_input.text = stored_seed
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     _refresh_dashboard()
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     _controller_override = controller
     _cached_controller = null
     _refresh_dashboard()
 
 func clear_controller_override() -> void:
+    _ensure_nodes_ready()
     _controller_override = null
     _cached_controller = null
     _refresh_dashboard()
 
 func _refresh_dashboard() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null:
         _update_status("RNGProcessor controller unavailable.", "error")
@@ -92,6 +124,7 @@ func _refresh_dashboard() -> void:
     _refresh_routing(controller)
 
 func _refresh_master_seed(controller: Object) -> void:
+    _ensure_nodes_ready()
     if controller.has_method("get_master_seed"):
         var master_seed := int(controller.call("get_master_seed"))
         _master_seed_label.text = str(master_seed)
@@ -103,6 +136,7 @@ func _refresh_master_seed(controller: Object) -> void:
         _update_status("Controller missing get_master_seed().", "error")
 
 func _refresh_streams(controller: Object) -> void:
+    _ensure_nodes_ready()
     _streams_tree.clear()
     var root := _streams_tree.create_item()
     var topology: Dictionary = {}
@@ -136,6 +170,7 @@ func _refresh_streams(controller: Object) -> void:
     _import_status.text = status_text
 
 func _refresh_routing(controller: Object) -> void:
+    _ensure_nodes_ready()
     _routing_tree.clear()
     var root := _routing_tree.create_item()
     var routing: Dictionary = {}
@@ -163,6 +198,7 @@ func _refresh_routing(controller: Object) -> void:
             _status_label.bbcode_text = _format_status(String(notes[0]))
 
 func _on_apply_pressed() -> void:
+    _ensure_nodes_ready()
     var seed_text := _seed_input.text.strip_edges()
     if not seed_text.is_valid_int():
         _update_status("Seed must be an integer.", "error")
@@ -179,6 +215,7 @@ func _on_apply_pressed() -> void:
     _refresh_dashboard()
 
 func _on_randomize_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null:
         _update_status("Controller unavailable; cannot randomize.", "error")
@@ -195,10 +232,12 @@ func _on_randomize_pressed() -> void:
     _refresh_dashboard()
 
 func _on_seed_submitted(text: String) -> void:
+    _ensure_nodes_ready()
     _seed_input.text = text
     _on_apply_pressed()
 
 func _on_export_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null or not controller.has_method("export_seed_state"):
         _update_status("Controller unavailable; export skipped.", "error")
@@ -212,6 +251,7 @@ func _on_export_pressed() -> void:
     _update_status("Exported current seed topology.")
 
 func _on_import_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null or not controller.has_method("import_seed_state"):
         _update_status("Controller unavailable; import skipped.", "error")
@@ -230,6 +270,7 @@ func _on_import_pressed() -> void:
     _refresh_dashboard()
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null and is_instance_valid(_controller_override):
         return _controller_override
     if _cached_controller != null and is_instance_valid(_cached_controller):
@@ -247,12 +288,15 @@ func _get_controller() -> Object:
     return null
 
 func _update_status(message: String, severity: String = "info") -> void:
+    _ensure_nodes_ready()
     _status_label.bbcode_text = _format_status(message, severity)
 
 func _format_error(message: String) -> String:
+    _ensure_nodes_ready()
     return _format_status(message, "error")
 
 func _format_status(message: String, severity: String = "info") -> String:
+    _ensure_nodes_ready()
     var color := _INFO_COLOR
     var icon := _STATUS_ICONS.get(severity, _STATUS_ICONS["info"])
     match severity:
@@ -263,6 +307,7 @@ func _format_status(message: String, severity: String = "info") -> String:
     return "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]
 
 func _join_strings(values: PackedStringArray, separator: String) -> String:
+    _ensure_nodes_ready()
     var combined := ""
     for index in range(values.size()):
         var segment := String(values[index])

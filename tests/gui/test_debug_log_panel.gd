@@ -39,7 +39,7 @@ func _test_renders_highlighted_sections() -> Variant:
     panel._ready()
     panel._on_refresh_pressed()
 
-    var text := (panel.get_node("LogDisplay") as RichTextLabel).bbcode_text
+    var text: String = (panel.get_node("LogDisplay") as RichTextLabel).bbcode_text
     if text.find("⚠️") == -1:
         return "Warnings should be highlighted with the ⚠️ glyph."
     if text.find("‼") == -1:

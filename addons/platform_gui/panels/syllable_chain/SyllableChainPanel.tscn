@@ -2,11 +2,12 @@
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/syllable_chain/SyllableChainPanel.gd" id="1_w9vaf"]
 [ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_d2y25"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="3_compat"]
 
 [node name="SyllableChainPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 script = ExtResource("1_w9vaf")
 
@@ -18,21 +19,23 @@ theme_override_font_sizes/font_size = 18
 text = "Syllable Chain Strategy"
 
 [node name="HeaderSpacer" type="Control" parent="Header"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="RefreshButton" type="Button" parent="Header"]
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata and the resource catalogue."
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MetadataSummary" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="NotesLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="ResourceSection" type="VBoxContainer" parent="."]
@@ -42,25 +45,28 @@ theme_override_constants/separation = 4
 text = "Available syllable sets"
 
 [node name="ResourceList" type="ItemList" parent="ResourceSection"]
+unique_name_in_owner = true
 allow_reselect = true
 allow_rmb_select = true
 custom_minimum_size = Vector2(0, 220)
-select_mode = ItemList.SELECT_SINGLE
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+select_mode = 0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="ResourceSummary" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = "Select a syllable set to review its details."
 
 [node name="OptionsSection" type="VBoxContainer" parent="."]
 theme_override_constants/separation = 8
 
 [node name="RequireMiddle" type="CheckButton" parent="OptionsSection"]
+unique_name_in_owner = true
 text = "Require at least one middle syllable"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MiddleRangeRow" type="HBoxContainer" parent="OptionsSection"]
@@ -70,12 +76,13 @@ theme_override_constants/separation = 6
 text = "Middle syllable range"
 
 [node name="MiddleRangeSpacer" type="Control" parent="OptionsSection/MiddleRangeRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="MiddleMinLabel" type="Label" parent="OptionsSection/MiddleRangeRow"]
 text = "Min"
 
 [node name="MiddleMinSpin" type="SpinBox" parent="OptionsSection/MiddleRangeRow"]
+unique_name_in_owner = true
 allow_lesser = true
 allow_greater = true
 custom_minimum_size = Vector2(80, 0)
@@ -83,13 +90,14 @@ max_value = 32.0
 min_value = 0.0
 step = 1.0
 value = 0.0
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MiddleMaxLabel" type="Label" parent="OptionsSection/MiddleRangeRow"]
 text = "Max"
 
 [node name="MiddleMaxSpin" type="SpinBox" parent="OptionsSection/MiddleRangeRow"]
+unique_name_in_owner = true
 allow_lesser = true
 allow_greater = true
 custom_minimum_size = Vector2(80, 0)
@@ -97,7 +105,7 @@ max_value = 32.0
 min_value = 0.0
 step = 1.0
 value = 1.0
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="MinLengthRow" type="HBoxContainer" parent="OptionsSection"]
@@ -107,9 +115,10 @@ theme_override_constants/separation = 6
 text = "Minimum length"
 
 [node name="MinLengthSpacer" type="Control" parent="OptionsSection/MinLengthRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="MinLengthSpin" type="SpinBox" parent="OptionsSection/MinLengthRow"]
+unique_name_in_owner = true
 allow_lesser = true
 allow_greater = true
 custom_minimum_size = Vector2(120, 0)
@@ -117,7 +126,7 @@ max_value = 64.0
 min_value = 0.0
 step = 1.0
 value = 0.0
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="RegexSection" type="VBoxContainer" parent="OptionsSection"]
@@ -128,6 +137,7 @@ text = "Regex cleanup presets"
 tooltip_text = "Select presets to post-process generated names before display."
 
 [node name="RegexPresetContainer" type="VBoxContainer" parent="OptionsSection/RegexSection"]
+unique_name_in_owner = true
 theme_override_constants/separation = 2
 
 [node name="PreviewRow" type="HBoxContainer" parent="."]
@@ -137,23 +147,28 @@ theme_override_constants/separation = 12
 text = "Seed"
 
 [node name="SeedInput" type="LineEdit" parent="PreviewRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+unique_name_in_owner = true
+size_flags_horizontal = 3
 placeholder_text = "Optional seed label"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
+unique_name_in_owner = true
 text = "Preview"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_d2y25")
 
 [node name="ValidationLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
 visible = false
 
 [node name="PreviewOutput" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_compat")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false

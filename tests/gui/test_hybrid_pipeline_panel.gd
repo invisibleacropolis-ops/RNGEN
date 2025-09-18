@@ -1,6 +1,7 @@
 extends RefCounted
 
 const PANEL_SCENE := preload("res://addons/platform_gui/panels/hybrid/HybridPipelinePanel.tscn")
+const HYBRID_PANEL_SCRIPT := preload("res://addons/platform_gui/panels/hybrid/HybridPipelinePanel.gd")
 const PANEL_STUB_SCENE := preload("res://tests/test_assets/StrategyPanelStub.tscn")
 
 var _total := 0
@@ -87,8 +88,10 @@ func _test_builds_config_with_order() -> Variant:
     if steps.size() != 2:
         return "Hybrid panel should track both configured steps."
 
-    var first_panel := steps[0].panel
-    var second_panel := steps[1].panel
+    var first_step: HYBRID_PANEL_SCRIPT.StepConfig = steps[0]
+    var second_step: HYBRID_PANEL_SCRIPT.StepConfig = steps[1]
+    var first_panel: Control = first_step.panel
+    var second_panel: Control = second_step.panel
     first_panel.config_payload = {"strategy": "wordlist", "wordlist_paths": ["res://demo.tres"]}
     second_panel.config_payload = {"strategy": "template", "template_string": "[$phase_one]"}
 
@@ -103,7 +106,7 @@ func _test_builds_config_with_order() -> Variant:
     panel.get_node("PipelineControls/TemplateSection/TemplateInput").text = "$phase_one $phase_two"
     panel._on_template_changed("$phase_one $phase_two")
 
-    var payload := panel.build_config_payload()
+    var payload: Dictionary = panel.build_config_payload()
     var steps_payload: Array = payload.get("steps", [])
     if steps_payload.size() != 2:
         return "Payload should include all configured steps."
@@ -275,7 +278,7 @@ class MetadataStub:
         var strategy_guidance: Dictionary = guidance_map[strategy_id]
         if not strategy_guidance.has(code):
             return {}
-        var entry := strategy_guidance[code]
+        var entry: Variant = strategy_guidance[code]
         if entry is Dictionary:
             return (entry as Dictionary).duplicate(true)
         return {}

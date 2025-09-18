@@ -68,26 +68,26 @@ func _test_registers_middleware_singletons() -> Variant:
 
 func _test_propagates_controller_and_metadata_overrides() -> Variant:
     return _with_interface(func(interface: Control):
-        var controller := interface._controller
-        var metadata_service := interface._metadata_service
+        var controller: Node = interface._controller
+        var metadata_service: Node = interface._metadata_service
         for consumer in interface._middleware_consumers:
             if consumer == null:
                 continue
             if consumer.has_method("_get_controller"):
-                var resolved_controller := consumer.call("_get_controller")
+                var resolved_controller: Variant = consumer.call("_get_controller")
                 if resolved_controller != controller:
                     return "%s should resolve the shared RNGProcessorController instance." % consumer.name
             elif consumer.has_method("get_controller_override"):
-                var resolved_override := consumer.call("get_controller_override")
+                var resolved_override: Variant = consumer.call("get_controller_override")
                 if resolved_override != controller:
                     return "%s should expose the shared RNGProcessorController override." % consumer.name
 
             if consumer.has_method("_get_metadata_service"):
-                var resolved_service := consumer.call("_get_metadata_service")
+                var resolved_service: Variant = consumer.call("_get_metadata_service")
                 if resolved_service != metadata_service:
                     return "%s should resolve the shared StrategyMetadataService instance." % consumer.name
             elif consumer.has_method("get_metadata_service_override"):
-                var resolved_metadata_override := consumer.call("get_metadata_service_override")
+                var resolved_metadata_override: Variant = consumer.call("get_metadata_service_override")
                 if resolved_metadata_override != metadata_service:
                     return "%s should expose the shared StrategyMetadataService override." % consumer.name
         return null
@@ -95,7 +95,7 @@ func _test_propagates_controller_and_metadata_overrides() -> Variant:
 
 func _test_exposes_expected_tabs() -> Variant:
     return _with_interface(func(interface: Control):
-        var main_tabs := interface.get_node("MainLayout/MainTabs") as TabContainer
+        var main_tabs: TabContainer = interface.get_node("MainLayout/MainTabs") as TabContainer
         if main_tabs == null:
             return "MainTabs TabContainer should exist under the main layout."
         var visible_titles: Array[String] = []
@@ -107,18 +107,18 @@ func _test_exposes_expected_tabs() -> Variant:
         if visible_titles.size() < EXPECTED_TAB_TITLES.size():
             return "MainTabs should expose at least %d tabs." % EXPECTED_TAB_TITLES.size()
         for index in range(EXPECTED_TAB_TITLES.size()):
-            var expected := EXPECTED_TAB_TITLES[index]
-            var actual := visible_titles[index]
+            var expected: String = EXPECTED_TAB_TITLES[index]
+            var actual: String = visible_titles[index]
             if actual != expected:
                 return "Tab title mismatch at index %d. Expected \"%s\" but found \"%s\"." % [index, expected, actual]
         return null
     )
 
 func _with_interface(callable: Callable) -> Variant:
-    var preserved := _unregister_conflicting_singletons()
-    var interface := INTERFACE_SCENE.instantiate() as Control
+    var preserved: Dictionary = _unregister_conflicting_singletons()
+    var interface: Control = INTERFACE_SCENE.instantiate() as Control
     interface._ready()
-    var message := callable.call(interface)
+    var message: Variant = callable.call(interface)
     _cleanup_interface(interface)
     _restore_singletons(preserved)
     return message
@@ -143,7 +143,7 @@ func _cleanup_interface(interface: Control) -> void:
 func _restore_singletons(preserved: Dictionary) -> void:
     for name in _SINGLETON_NAMES:
         if preserved.has(name):
-            var node := preserved[name]
+            var node: Variant = preserved[name]
             if node != null and not Engine.has_singleton(name):
                 Engine.register_singleton(name, node)
 

@@ -22,7 +22,7 @@ func run() -> Dictionary:
 
 func _run_test(name: String, callable: Callable) -> void:
     _total += 1
-    var message := callable.call()
+    var message: Variant = callable.call()
     if message == null:
         _passed += 1
     else:
@@ -30,16 +30,16 @@ func _run_test(name: String, callable: Callable) -> void:
         _failures.append({"name": name, "message": String(message)})
 
 func _test_loads_blueprint_and_panels() -> Variant:
-    var context := _make_workspace()
-    var workspace := context["workspace"]
+    var context: Dictionary = _make_workspace()
+    var workspace: Variant = context["workspace"]
     workspace._ready()
     workspace.set_controller_override(context["controller"])
-    var hybrid_panel: VBoxContainer = workspace.get_node("Main/EditorSplit/HybridColumn/HybridPanelContainer/HybridPanel")
-    var template_panel: VBoxContainer = workspace.get_node("Main/EditorSplit/TemplateColumn/TemplatePanelContainer/TemplatePanel")
-    var hybrid_payload := hybrid_panel.build_config_payload()
+    var hybrid_panel: Variant = workspace.get_node("Main/EditorSplit/HybridColumn/HybridPanelContainer/HybridPanel")
+    var template_panel: Variant = workspace.get_node("Main/EditorSplit/TemplateColumn/TemplatePanelContainer/TemplatePanel")
+    var hybrid_payload: Dictionary = hybrid_panel.build_config_payload()
     if hybrid_payload.get("steps", []).size() == 0:
-        return "Hybrid panel should load blueprint steps during _ready." 
-    var template_payload := template_panel.build_config_payload()
+        return "Hybrid panel should load blueprint steps during _ready."
+    var template_payload: Dictionary = template_panel.build_config_payload()
     if template_payload.get("template_string", "") == "":
         return "Template panel should preload the blueprint template string."
     workspace.free()
@@ -47,18 +47,18 @@ func _test_loads_blueprint_and_panels() -> Variant:
     return null
 
 func _test_renders_seed_propagation() -> Variant:
-    var context := _make_workspace()
-    var workspace := context["workspace"]
+    var context: Dictionary = _make_workspace()
+    var workspace: Variant = context["workspace"]
     workspace._ready()
     workspace.set_controller_override(context["controller"])
     var tree: Tree = workspace.get_node("Main/PropagationPanel/PropagationVBox/PropagationTree")
-    var root := tree.get_root()
+    var root: TreeItem = tree.get_root()
     if root == null:
         return "Propagation tree should create a root item."
-    var pipeline_item := root.get_first_child()
+    var pipeline_item: TreeItem = root.get_first_child()
     if pipeline_item == null:
         return "Propagation tree should include pipeline seed row."
-    var step_item := pipeline_item.get_first_child()
+    var step_item: TreeItem = pipeline_item.get_first_child()
     if step_item == null:
         return "Propagation tree should list hybrid steps."
     if not step_item.get_text(1).begins_with("$"):
@@ -68,13 +68,13 @@ func _test_renders_seed_propagation() -> Variant:
     return null
 
 func _test_injects_template_during_preview() -> Variant:
-    var context := _make_workspace()
-    var workspace := context["workspace"]
+    var context: Dictionary = _make_workspace()
+    var workspace: Variant = context["workspace"]
     workspace._ready()
-    var controller := context["controller"] as ControllerStub
+    var controller: ControllerStub = context["controller"] as ControllerStub
     workspace.set_controller_override(controller)
-    var template_panel: VBoxContainer = workspace.get_node("Main/EditorSplit/TemplateColumn/TemplatePanelContainer/TemplatePanel")
-    var custom_template := {
+    var template_panel: Variant = workspace.get_node("Main/EditorSplit/TemplateColumn/TemplatePanelContainer/TemplatePanel")
+    var custom_template: Dictionary = {
         "strategy": "template",
         "template_string": "[custom_node]",
         "sub_generators": {
@@ -98,7 +98,7 @@ func _test_injects_template_during_preview() -> Variant:
             continue
         var entry: Dictionary = entry_variant
         if String(entry.get("store_as", "")) == "skill_sentence" or String(entry.get("store_as", "")) == "mission_body":
-            var config := entry.get("config", {})
+            var config: Variant = entry.get("config", {})
             if typeof(config) == TYPE_DICTIONARY and String(config.get("template_string", "")) == "[custom_node]":
                 template_found = true
     if not template_found:
@@ -108,8 +108,8 @@ func _test_injects_template_during_preview() -> Variant:
     return null
 
 func _make_workspace() -> Dictionary:
-    var workspace := WORKSPACE_SCENE.instantiate()
-    var controller := ControllerStub.new()
+    var workspace: Variant = WORKSPACE_SCENE.instantiate()
+    var controller: ControllerStub = ControllerStub.new()
     return {"workspace": workspace, "controller": controller}
 
 func _reset() -> void:

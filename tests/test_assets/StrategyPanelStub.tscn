@@ -1,12 +1,13 @@
 [gd_scene load_steps=2 format=3 uid="uid://strategy_panel_stub"]
 
 [ext_resource type="Script" path="res://tests/test_assets/StrategyPanelStub.gd" id="1_6e6sf"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="2_compat"]
 
 [node name="StrategyPanelStub" type="VBoxContainer"]
 script = ExtResource("1_6e6sf")
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Description" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+autowrap_mode = 3
 text = "Stub strategy panel"

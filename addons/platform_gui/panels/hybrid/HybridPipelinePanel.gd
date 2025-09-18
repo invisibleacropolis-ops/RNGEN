@@ -54,30 +54,71 @@ const _PREFERENCES_SECTION := "hybrid_pipeline"
 const _PREFERENCE_KEY_LAST_STRATEGY := "last_strategy"
 const _PREFERENCE_KEY_PIPELINE_SEED := "pipeline_seed"
 
-@onready var _metadata_summary: Label = %MetadataSummary
-@onready var _notes_label: Label = %NotesLabel
-@onready var _strategy_selector: OptionButton = %StrategySelector
-@onready var _add_step_button: Button = %AddStepButton
-@onready var _remove_step_button: Button = %RemoveStepButton
-@onready var _step_list: ItemList = %StepList
-@onready var _alias_edit: LineEdit = %AliasEdit
-@onready var _template_edit: TextEdit = %TemplateInput
-@onready var _seed_edit: LineEdit = %SeedInput
-@onready var _seed_helper: Label = %SeedHelper
-@onready var _step_metadata_label: RichTextLabel = %StepMetadataLabel
-@onready var _pipeline_tree: Tree = %PipelineTree
-@onready var _panel_cache: Node = %StepPanelCache
-@onready var _config_host: VBoxContainer = %StrategyConfigHost
-@onready var _preview_button: Button = %PreviewButton
-@onready var _preview_label: RichTextLabel = %PreviewOutput
-@onready var _error_label: Label = %ErrorLabel
-@onready var _hint_label: Label = %HintLabel
-@onready var _details_label: RichTextLabel = %DetailLabel
+var _metadata_summary: Label = null
+var _notes_label: Label = null
+var _strategy_selector: OptionButton = null
+var _add_step_button: Button = null
+var _remove_step_button: Button = null
+var _step_list: ItemList = null
+var _alias_edit: LineEdit = null
+var _template_edit: TextEdit = null
+var _seed_edit: LineEdit = null
+var _seed_helper: Label = null
+var _step_metadata_label: RichTextLabel = null
+var _pipeline_tree: Tree = null
+var _panel_cache: Node = null
+var _config_host: VBoxContainer = null
+var _preview_button: Button = null
+var _preview_label: RichTextLabel = null
+var _error_label: Label = null
+var _hint_label: Label = null
+var _details_label: RichTextLabel = null
+
+
+func _ensure_nodes_ready() -> void:
+    if _metadata_summary == null:
+        _metadata_summary = get_node("MetadataSummary") as Label
+    if _notes_label == null:
+        _notes_label = get_node("NotesLabel") as Label
+    if _strategy_selector == null:
+        _strategy_selector = get_node("EditorSection/StepSidebar/StepControls/StrategySelector") as OptionButton
+    if _add_step_button == null:
+        _add_step_button = get_node("EditorSection/StepSidebar/StepControls/AddStepButton") as Button
+    if _remove_step_button == null:
+        _remove_step_button = get_node("EditorSection/StepSidebar/StepControls/RemoveStepButton") as Button
+    if _step_list == null:
+        _step_list = get_node("EditorSection/StepSidebar/StepList") as ItemList
+    if _alias_edit == null:
+        _alias_edit = get_node("EditorSection/StepDetails/AliasRow/AliasEdit") as LineEdit
+    if _template_edit == null:
+        _template_edit = get_node("PipelineControls/TemplateSection/TemplateInput") as TextEdit
+    if _seed_edit == null:
+        _seed_edit = get_node("PipelineControls/SeedRow/SeedInput") as LineEdit
+    if _seed_helper == null:
+        _seed_helper = get_node("PipelineControls/SeedHelper") as Label
+    if _step_metadata_label == null:
+        _step_metadata_label = get_node("EditorSection/StepDetails/StepMetadataLabel") as RichTextLabel
+    if _pipeline_tree == null:
+        _pipeline_tree = get_node("PipelineTree") as Tree
+    if _panel_cache == null:
+        _panel_cache = get_node("StepPanelCache")
+    if _config_host == null:
+        _config_host = get_node("EditorSection/StepDetails/StrategyConfigHost") as VBoxContainer
+    if _preview_button == null:
+        _preview_button = get_node("PreviewRow/PreviewButton") as Button
+    if _preview_label == null:
+        _preview_label = get_node("PreviewOutput") as RichTextLabel
+    if _error_label == null:
+        _error_label = get_node("FeedbackSection/ErrorLabel") as Label
+    if _hint_label == null:
+        _hint_label = get_node("FeedbackSection/HintLabel") as Label
+    if _details_label == null:
+        _details_label = get_node("FeedbackSection/DetailLabel") as RichTextLabel
 
 func _ready() -> void:
-    _step_list.allow_rearrange = true
+    _ensure_nodes_ready()
     _step_list.item_selected.connect(_on_step_selected)
-    _step_list.nothing_selected.connect(_on_step_deselected)
+    _step_list.empty_clicked.connect(_on_step_deselected)
     _step_list.gui_input.connect(_on_step_list_gui_input)
     _add_step_button.pressed.connect(_on_add_step_pressed)
     _remove_step_button.pressed.connect(_on_remove_step_pressed)
@@ -87,7 +128,7 @@ func _ready() -> void:
     _seed_edit.text_changed.connect(_on_seed_changed)
     _seed_edit.text_submitted.connect(_on_seed_submitted)
     _preview_button.pressed.connect(_on_preview_button_pressed)
-    %RefreshButton.pressed.connect(_on_refresh_pressed)
+    $Header/RefreshButton.pressed.connect(_on_refresh_pressed)
     _pipeline_tree.columns = 5
     _pipeline_tree.set_column_title(0, "Step")
     _pipeline_tree.set_column_title(1, "Alias")
@@ -103,12 +144,14 @@ func _ready() -> void:
     _update_preview_state(null)
 
 func _load_preferences() -> void:
+    _ensure_nodes_ready()
     _preferred_strategy_id = String(_Preferences.load_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_STRATEGY, ""))
     var stored_seed := String(_Preferences.load_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_PIPELINE_SEED, ""))
     if stored_seed != "":
         _seed_edit.text = stored_seed
 
 func apply_config_payload(config: Dictionary) -> void:
+    _ensure_nodes_ready()
     _clear_all_steps()
     var steps_variant := config.get("steps", [])
     if steps_variant is Array:
@@ -140,6 +183,7 @@ func apply_config_payload(config: Dictionary) -> void:
     _notify_configuration_changed()
 
 func describe_seed_propagation() -> Array:
+    _ensure_nodes_ready()
     var ordered_steps := _get_steps_in_ui_order()
     var base_seed := _seed_edit.text.strip_edges()
     var result: Array = []
@@ -164,9 +208,11 @@ func describe_seed_propagation() -> Array:
     return result
 
 func get_pipeline_seed() -> String:
+    _ensure_nodes_ready()
     return _seed_edit.text.strip_edges()
 
 func apply_step_config(alias: String, config: Dictionary) -> void:
+    _ensure_nodes_ready()
     var target := _find_step_by_alias(alias)
     if target == null:
         return
@@ -176,6 +222,7 @@ func apply_step_config(alias: String, config: Dictionary) -> void:
     _notify_configuration_changed()
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     _controller_override = controller
     _cached_controller = null
     for step in _steps:
@@ -184,6 +231,7 @@ func set_controller_override(controller: Object) -> void:
     _update_seed_helper()
 
 func set_metadata_service_override(service: Object) -> void:
+    _ensure_nodes_ready()
     _metadata_service_override = service
     _cached_metadata_service = null
     for step in _steps:
@@ -192,6 +240,7 @@ func set_metadata_service_override(service: Object) -> void:
     _refresh_metadata()
 
 func set_strategy_panel_override(strategy_id: String, scene: PackedScene) -> void:
+    _ensure_nodes_ready()
     if strategy_id == "":
         return
     if scene == null:
@@ -200,6 +249,7 @@ func set_strategy_panel_override(strategy_id: String, scene: PackedScene) -> voi
     _strategy_panel_overrides[strategy_id] = scene
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     _refresh_metadata()
     _refresh_strategy_selector()
     for step in _steps:
@@ -210,6 +260,7 @@ func refresh() -> void:
     _notify_configuration_changed()
 
 func build_config_payload() -> Dictionary:
+    _ensure_nodes_ready()
     var steps_payload: Array = []
     for step in _get_steps_in_ui_order():
         var entry: Dictionary = {}
@@ -234,6 +285,7 @@ func build_config_payload() -> Dictionary:
     return payload
 
 func get_child_generator_definitions() -> Dictionary:
+    _ensure_nodes_ready()
     var definitions: Dictionary = {}
     for step in _steps:
         var config := _collect_step_config(step)
@@ -246,9 +298,11 @@ func get_child_generator_definitions() -> Dictionary:
     return definitions
 
 func _on_refresh_pressed() -> void:
+    _ensure_nodes_ready()
     refresh()
 
 func _on_add_step_pressed() -> void:
+    _ensure_nodes_ready()
     var strategy_id := _get_selected_strategy_id()
     if strategy_id == "":
         return
@@ -263,6 +317,7 @@ func _on_add_step_pressed() -> void:
     _notify_configuration_changed()
 
 func _on_remove_step_pressed() -> void:
+    _ensure_nodes_ready()
     var selected := _get_selected_step()
     if selected == null:
         return
@@ -275,6 +330,7 @@ func _on_remove_step_pressed() -> void:
     _notify_configuration_changed()
 
 func _on_strategy_option_changed(_index: int) -> void:
+    _ensure_nodes_ready()
     var strategy_id := _get_selected_strategy_id()
     if strategy_id == "":
         return
@@ -282,20 +338,24 @@ func _on_strategy_option_changed(_index: int) -> void:
     _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_LAST_STRATEGY, strategy_id)
 
 func _on_step_selected(index: int) -> void:
+    _ensure_nodes_ready()
     var step := _get_step_by_index(index)
     _mount_step_panel(step)
     _update_step_details(step)
     _highlight_active_step(step)
 
 func _on_step_deselected() -> void:
+    _ensure_nodes_ready()
     _update_step_details(null)
     _highlight_active_step(null)
 
 func _on_step_list_gui_input(event: InputEvent) -> void:
+    _ensure_nodes_ready()
     if event is InputEventMouseButton and not event.pressed:
         _rebuild_pipeline_tree()
 
 func _on_alias_changed(text: String) -> void:
+    _ensure_nodes_ready()
     var step := _get_selected_step()
     if step == null:
         return
@@ -306,10 +366,12 @@ func _on_alias_changed(text: String) -> void:
     _notify_configuration_changed()
 
 func _on_template_changed(_text: String) -> void:
+    _ensure_nodes_ready()
     _rebuild_pipeline_tree()
     _notify_configuration_changed()
 
 func _on_seed_changed(_text: String) -> void:
+    _ensure_nodes_ready()
     _rebuild_pipeline_tree()
     _update_seed_helper()
     var step := _get_selected_step()
@@ -318,11 +380,13 @@ func _on_seed_changed(_text: String) -> void:
     _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_PIPELINE_SEED, _seed_edit.text.strip_edges())
 
 func _on_seed_submitted(text: String) -> void:
+    _ensure_nodes_ready()
     _seed_edit.text = text
     _Preferences.save_value(_PREFERENCES_SECTION, _PREFERENCE_KEY_PIPELINE_SEED, _seed_edit.text.strip_edges())
     _on_preview_button_pressed()
 
 func _on_preview_button_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null:
         _update_preview_state({
@@ -352,6 +416,7 @@ func _on_preview_button_pressed() -> void:
     _notify_configuration_changed()
 
 func _collect_step_config(step: StepConfig) -> Dictionary:
+    _ensure_nodes_ready()
     if step == null:
         return {}
     if step.panel == null:
@@ -365,6 +430,7 @@ func _collect_step_config(step: StepConfig) -> Dictionary:
     return {}
 
 func _instantiate_strategy_panel(strategy_id: String) -> Control:
+    _ensure_nodes_ready()
     var scene: PackedScene = _strategy_panel_overrides.get(strategy_id, null)
     if scene == null:
         if not STRATEGY_PANEL_SCENES.has(strategy_id):
@@ -380,12 +446,14 @@ func _instantiate_strategy_panel(strategy_id: String) -> Control:
     return panel
 
 func _register_step_panel(step: StepConfig) -> void:
+    _ensure_nodes_ready()
     if step.panel == null:
         return
     _panel_cache.add_child(step.panel)
     step.panel.hide()
 
 func _unregister_step_panel(step: StepConfig) -> void:
+    _ensure_nodes_ready()
     if step.panel == null:
         return
     if step.panel.get_parent() != null:
@@ -394,6 +462,7 @@ func _unregister_step_panel(step: StepConfig) -> void:
     step.panel = null
 
 func _mount_step_panel(step: StepConfig) -> void:
+    _ensure_nodes_ready()
     _clear_config_host()
     if step == null or step.panel == null:
         return
@@ -403,6 +472,7 @@ func _mount_step_panel(step: StepConfig) -> void:
     step.panel.show()
 
 func _clear_config_host() -> void:
+    _ensure_nodes_ready()
     for child in _config_host.get_children():
         _config_host.remove_child(child)
         if child is Control:
@@ -410,6 +480,7 @@ func _clear_config_host() -> void:
             _panel_cache.add_child(child)
 
 func _get_steps_in_ui_order() -> Array[StepConfig]:
+    _ensure_nodes_ready()
     var ordered: Array[StepConfig] = []
     for index in range(_step_list.item_count):
         var step: StepConfig = _step_list.get_item_metadata(index)
@@ -420,18 +491,21 @@ func _get_steps_in_ui_order() -> Array[StepConfig]:
     return ordered
 
 func _get_step_by_index(index: int) -> StepConfig:
+    _ensure_nodes_ready()
     if index < 0 or index >= _step_list.item_count:
         return null
     var step: StepConfig = _step_list.get_item_metadata(index)
     return step
 
 func _get_selected_step() -> StepConfig:
+    _ensure_nodes_ready()
     var selected := _step_list.get_selected_items()
     if selected.is_empty():
         return null
     return _get_step_by_index(selected[0])
 
 func _get_selected_strategy_id() -> String:
+    _ensure_nodes_ready()
     if _strategy_selector.item_count == 0:
         return ""
     var index := _strategy_selector.get_selected_id()
@@ -442,6 +516,7 @@ func _get_selected_strategy_id() -> String:
     return String(_strategy_selector.get_item_metadata(index))
 
 func _refresh_step_list() -> void:
+    _ensure_nodes_ready()
     _step_list.clear()
     for index in range(_steps.size()):
         var step := _steps[index]
@@ -457,6 +532,7 @@ func _refresh_step_list() -> void:
             _step_list.select(new_index)
 
 func _update_step_details(step: StepConfig) -> void:
+    _ensure_nodes_ready()
     if step == null:
         _alias_edit.editable = false
         _alias_edit.text = ""
@@ -467,6 +543,7 @@ func _update_step_details(step: StepConfig) -> void:
     _step_metadata_label.bbcode_text = _format_step_metadata(step)
 
 func _highlight_active_step(step: StepConfig) -> void:
+    _ensure_nodes_ready()
     for index in range(_step_list.item_count):
         var metadata: StepConfig = _step_list.get_item_metadata(index)
         if metadata == null:
@@ -479,6 +556,7 @@ func _highlight_active_step(step: StepConfig) -> void:
             _step_list.set_item_custom_bg_color(index, Color.WHITE)
 
 func _clear_step_error_states() -> void:
+    _ensure_nodes_ready()
     for step in _steps:
         step.error_code = ""
     _refresh_step_list()
@@ -489,6 +567,7 @@ func _clear_step_error_states() -> void:
     _hint_label.tooltip_text = ""
 
 func _apply_error_state(error_dict: Dictionary) -> void:
+    _ensure_nodes_ready()
     var code := String(error_dict.get("code", "hybrid_error"))
     var message := String(error_dict.get("message", "Generation failed."))
     var details: Dictionary = error_dict.get("details", {})
@@ -504,7 +583,7 @@ func _apply_error_state(error_dict: Dictionary) -> void:
         targeted_step.error_code = code
     _refresh_step_list()
     _highlight_active_step(targeted_step)
-    var detail_lines := []
+    var detail_lines: Array[String] = []
     for key in details.keys():
         detail_lines.append("[b]%s[/b]: %s" % [String(key), _stringify_value(details[key])])
     _error_label.visible = true
@@ -519,7 +598,7 @@ func _apply_error_state(error_dict: Dictionary) -> void:
         _hint_label.tooltip_text = ""
     if not detail_lines.is_empty():
         _details_label.visible = true
-        _details_label.bbcode_text = "\n".join(detail_lines)
+        _details_label.bbcode_text = _join_strings(detail_lines, "\n")
     else:
         _details_label.visible = false
         _details_label.bbcode_text = ""
@@ -530,6 +609,7 @@ func _apply_error_state(error_dict: Dictionary) -> void:
     })
 
 func _find_step_by_alias(alias: String) -> StepConfig:
+    _ensure_nodes_ready()
     var trimmed := alias.strip_edges()
     if trimmed == "":
         return null
@@ -539,12 +619,14 @@ func _find_step_by_alias(alias: String) -> StepConfig:
     return null
 
 func _get_step_by_runtime_index(index_value: Variant) -> StepConfig:
+    _ensure_nodes_ready()
     var index := int(index_value)
     if index < 0 or index >= _steps.size():
         return null
     return _steps[index]
 
 func _lookup_error_guidance(code: String, targeted_step: StepConfig) -> Dictionary:
+    _ensure_nodes_ready()
     var service := _get_metadata_service()
     if service == null:
         return {}
@@ -565,6 +647,7 @@ func _lookup_error_guidance(code: String, targeted_step: StepConfig) -> Dictiona
     return guidance
 
 func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
+    _ensure_nodes_ready()
     if guidance.is_empty():
         return {"text": "", "tooltip": ""}
     var text_segments: Array[String] = []
@@ -589,23 +672,25 @@ func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
             tooltip_segments.append("Platform GUI Handbook › %s" % handbook_label)
         text_segments.append(handbook_line)
     return {
-        "text": "\n".join(text_segments),
-        "tooltip": "\n".join(tooltip_segments),
+        "text": _join_strings(text_segments, "\n"),
+        "tooltip": _join_strings(tooltip_segments, "\n"),
     }
 
 func _format_step_metadata(step: StepConfig) -> String:
+    _ensure_nodes_ready()
     var base_seed := _seed_edit.text.strip_edges()
     var alias := step.alias.strip_edges()
     if alias == "":
         alias = str(_steps.find(step))
     var derived_seed := "%s::step_%s" % [base_seed, alias] if base_seed != "" else "step_%s" % alias
     var stream := _derive_stream_hint(alias)
-    var lines := ["[b]Seed[/b]: %s" % derived_seed]
+    var lines: Array[String] = ["[b]Seed[/b]: %s" % derived_seed]
     if stream != "":
         lines.append("[b]Stream[/b]: %s" % stream)
-    return "\n".join(lines)
+    return _join_strings(lines, "\n")
 
 func _derive_stream_hint(alias: String) -> String:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null:
         return ""
@@ -617,13 +702,29 @@ func _derive_stream_hint(alias: String) -> String:
         return ""
     return "%s::step_%s" % [stream, alias]
 
-func _update_preview_state(state: Dictionary) -> void:
-    if state == null:
+func _join_strings(values: Variant, delimiter: String) -> String:
+    _ensure_nodes_ready()
+    if values == null:
+        return ""
+    if values is PackedStringArray:
+        return delimiter.join(values)
+    if values is Array:
+        var packed := PackedStringArray()
+        for value in values:
+            packed.append(String(value))
+        return delimiter.join(packed)
+    return String(values)
+
+func _update_preview_state(state: Variant) -> void:
+    _ensure_nodes_ready()
+    if state == null or not (state is Dictionary):
         _preview_label.visible = false
+        _preview_label.tooltip_text = ""
         return
-    var status := String(state.get("status", ""))
-    var message := String(state.get("message", ""))
-    var tooltip := String(state.get("tooltip", message))
+    var dictionary: Dictionary = state
+    var status := String(dictionary.get("status", ""))
+    var message := String(dictionary.get("message", ""))
+    var tooltip := String(dictionary.get("tooltip", message))
     if tooltip == "":
         tooltip = message
     if status == "success":
@@ -641,6 +742,7 @@ func _update_preview_state(state: Dictionary) -> void:
         _preview_label.tooltip_text = ""
 
 func _refresh_metadata() -> void:
+    _ensure_nodes_ready()
     var service := _get_metadata_service()
     if service == null:
         _metadata_summary.text = "Hybrid strategy metadata unavailable."
@@ -655,22 +757,23 @@ func _refresh_metadata() -> void:
     var notes := PackedStringArray()
     if service.has_method("get_default_notes"):
         notes = service.call("get_default_notes", HYBRID_STRATEGY_ID)
-    var parts := []
+    var parts: Array[String] = []
     if required.size() > 0:
-        parts.append("Required: %s" % ", ".join(required))
+        parts.append("Required: %s" % _join_strings(required, ", "))
     if not optional.is_empty():
         var keys := PackedStringArray()
         for key in optional.keys():
             keys.append(String(key))
         keys.sort()
-        parts.append("Optional: %s" % ", ".join(keys))
-    _metadata_summary.text = " | ".join(parts)
+        parts.append("Optional: %s" % _join_strings(keys, ", "))
+    _metadata_summary.text = _join_strings(parts, " | ")
     if notes.size() > 0:
-        _notes_label.text = "\n".join(notes)
+        _notes_label.text = _join_strings(notes, "\n")
     else:
         _notes_label.text = ""
 
 func _refresh_strategy_selector() -> void:
+    _ensure_nodes_ready()
     _strategy_selector.clear()
     var index := 0
     var preferred_index := -1
@@ -688,6 +791,7 @@ func _refresh_strategy_selector() -> void:
             _preferred_strategy_id = String(metadata)
 
 func _rebuild_pipeline_tree() -> void:
+    _ensure_nodes_ready()
     _pipeline_tree.clear()
     var root := _pipeline_tree.create_item()
     var base_seed := _seed_edit.text.strip_edges()
@@ -721,6 +825,7 @@ func _rebuild_pipeline_tree() -> void:
             step_item.set_text(4, "%s::step_%s" % [stream_hint, alias])
 
 func _clear_all_steps() -> void:
+    _ensure_nodes_ready()
     for step in _steps:
         _unregister_step_panel(step)
     _steps.clear()
@@ -729,24 +834,27 @@ func _clear_all_steps() -> void:
     _clear_config_host()
 
 func _notify_configuration_changed() -> void:
+    _ensure_nodes_ready()
     if not is_inside_tree():
         return
     configuration_changed.emit()
 
 func _update_seed_helper() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     var metadata := {}
     if controller != null and controller.has_method("get_latest_generation_metadata"):
         metadata = controller.call("get_latest_generation_metadata")
-    var lines := ["Hybrid steps derive seeds as pipeline_seed::step_$alias."]
+    var lines: Array[String] = ["Hybrid steps derive seeds as pipeline_seed::step_$alias."]
     var last_seed := String(metadata.get("seed", ""))
     var stream := String(metadata.get("rng_stream", ""))
     if last_seed != "" or stream != "":
         lines.append("Latest middleware seed: %s" % (last_seed if last_seed != "" else "—"))
         lines.append("Latest middleware stream: %s" % (stream if stream != "" else "—"))
-    _seed_helper.text = "\n".join(lines)
+    _seed_helper.text = _join_strings(lines, "\n")
 
 func _select_step(step: StepConfig) -> void:
+    _ensure_nodes_ready()
     var index := _steps.find(step)
     if index == -1:
         return
@@ -756,6 +864,7 @@ func _select_step(step: StepConfig) -> void:
     _highlight_active_step(step)
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null and _is_object_valid(_controller_override):
         return _controller_override
     if _cached_controller != null and _is_object_valid(_cached_controller):
@@ -773,6 +882,7 @@ func _get_controller() -> Object:
     return null
 
 func _get_metadata_service() -> Object:
+    _ensure_nodes_ready()
     if _metadata_service_override != null and _is_object_valid(_metadata_service_override):
         return _metadata_service_override
     if _cached_metadata_service != null and _is_object_valid(_cached_metadata_service):
@@ -790,11 +900,13 @@ func _get_metadata_service() -> Object:
     return null
 
 func _is_object_valid(candidate: Object) -> bool:
+    _ensure_nodes_ready()
     return candidate != null and is_instance_valid(candidate)
 
 func _stringify_value(value: Variant) -> String:
+    _ensure_nodes_ready()
     match typeof(value):
         TYPE_DICTIONARY, TYPE_ARRAY:
             return JSON.stringify(value, "  ")
         _:
-            return String(value)
+            return str(value)

@@ -33,10 +33,10 @@ func _run_test(name: String, callable: Callable) -> void:
 
 func _test_renders_directory_listing() -> Variant:
     var context := _make_panel()
-    var panel := context["panel"]
+    var panel: Control = context["panel"]
     panel.set_dataset_inspector_script_path(STUB_SCRIPT_PATH)
     panel.run_inspection()
-    var results := panel.get_results_bbcode()
+    var results: String = panel.get_results_bbcode()
     if results.find("res://tests/tmp_data/alpha") == -1:
         return "Directory heading should be rendered in the results block."
     if results.find("creatures.txt") == -1 or results.find("items.csv") == -1:
@@ -46,10 +46,10 @@ func _test_renders_directory_listing() -> Variant:
 
 func _test_reports_warnings() -> Variant:
     var context := _make_panel()
-    var panel := context["panel"]
+    var panel: Control = context["panel"]
     panel.set_dataset_inspector_script_path(STUB_SCRIPT_PATH)
     panel.run_inspection()
-    var warnings := panel.get_warnings_bbcode()
+    var warnings: String = panel.get_warnings_bbcode()
     if warnings.find("⚠️") == -1:
         return "Warnings block should include an inline warning glyph."
     if warnings.find("beta is empty") == -1:
@@ -59,7 +59,7 @@ func _test_reports_warnings() -> Variant:
 
 func _test_opens_docs_via_external_override() -> Variant:
     var context := _make_panel()
-    var panel := context["panel"]
+    var panel: Control = context["panel"]
     var recorded: Array[String] = []
     panel.set_external_open_override(func(path: String): recorded.append(path))
     panel._on_docs_pressed()
@@ -72,7 +72,7 @@ func _test_opens_docs_via_external_override() -> Variant:
 
 func _test_activates_syllable_builder() -> Variant:
     var context := _make_panel()
-    var panel := context["panel"]
+    var panel: Control = context["panel"]
     var editor := EditorInterfaceStub.new()
     panel.set_editor_interface_override(editor)
     panel._on_builder_pressed()

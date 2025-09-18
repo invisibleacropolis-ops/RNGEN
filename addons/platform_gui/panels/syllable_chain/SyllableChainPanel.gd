@@ -15,19 +15,19 @@ extends VBoxContainer
 const SyllableSetResource := preload("res://name_generator/resources/SyllableSetResource.gd")
 const FOCUS_STYLE := preload("res://addons/platform_gui/themes/focus_highlight.tres")
 
-@onready var _resource_list: ItemList = %ResourceList
-@onready var _resource_summary_label: Label = %ResourceSummary
-@onready var _require_middle_toggle: CheckButton = %RequireMiddle
-@onready var _middle_min_spin: SpinBox = %MiddleMinSpin
-@onready var _middle_max_spin: SpinBox = %MiddleMaxSpin
-@onready var _min_length_spin: SpinBox = %MinLengthSpin
-@onready var _regex_preset_container: VBoxContainer = %RegexPresetContainer
-@onready var _seed_edit: LineEdit = %SeedInput
-@onready var _preview_button: Button = %PreviewButton
-@onready var _preview_label: RichTextLabel = %PreviewOutput
-@onready var _validation_label: Label = %ValidationLabel
-@onready var _metadata_summary: Label = %MetadataSummary
-@onready var _notes_label: Label = %NotesLabel
+var _resource_list: ItemList= null
+var _resource_summary_label: Label= null
+var _require_middle_toggle: CheckButton= null
+var _middle_min_spin: SpinBox= null
+var _middle_max_spin: SpinBox= null
+var _min_length_spin: SpinBox= null
+var _regex_preset_container: VBoxContainer= null
+var _seed_edit: LineEdit= null
+var _preview_button: Button= null
+var _preview_label: RichTextLabel= null
+var _validation_label: Label= null
+var _metadata_summary: Label= null
+var _notes_label: Label= null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
@@ -70,7 +70,36 @@ const REGEX_PRESETS := [
     },
 ]
 
+
+func _ensure_nodes_ready() -> void:
+    if _resource_list == null:
+        _resource_list = get_node("%ResourceList") as ItemList
+    if _resource_summary_label == null:
+        _resource_summary_label = get_node("%ResourceSummary") as Label
+    if _require_middle_toggle == null:
+        _require_middle_toggle = get_node("%RequireMiddle") as CheckButton
+    if _middle_min_spin == null:
+        _middle_min_spin = get_node("%MiddleMinSpin") as SpinBox
+    if _middle_max_spin == null:
+        _middle_max_spin = get_node("%MiddleMaxSpin") as SpinBox
+    if _min_length_spin == null:
+        _min_length_spin = get_node("%MinLengthSpin") as SpinBox
+    if _regex_preset_container == null:
+        _regex_preset_container = get_node("%RegexPresetContainer") as VBoxContainer
+    if _seed_edit == null:
+        _seed_edit = get_node("%SeedInput") as LineEdit
+    if _preview_button == null:
+        _preview_button = get_node("%PreviewButton") as Button
+    if _preview_label == null:
+        _preview_label = get_node("%PreviewOutput") as RichTextLabel
+    if _validation_label == null:
+        _validation_label = get_node("%ValidationLabel") as Label
+    if _metadata_summary == null:
+        _metadata_summary = get_node("%MetadataSummary") as Label
+    if _notes_label == null:
+        _notes_label = get_node("%NotesLabel") as Label
 func _ready() -> void:
+    _ensure_nodes_ready()
     _preview_button.pressed.connect(_on_preview_button_pressed)
     %RefreshButton.pressed.connect(_on_refresh_pressed)
     _resource_list.item_selected.connect(_on_resource_selected)
@@ -85,22 +114,27 @@ func _ready() -> void:
     _update_preview_state(null)
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     _controller_override = controller
     _cached_controller = null
 
 func set_metadata_service_override(service: Object) -> void:
+    _ensure_nodes_ready()
     _metadata_service_override = service
     _cached_metadata_service = null
 
 func set_resource_catalog_override(entries: Array) -> void:
+    _ensure_nodes_ready()
     _resource_catalog_override = entries.duplicate(true)
     _refresh_resource_catalog()
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     _refresh_metadata()
     _refresh_resource_catalog()
 
 func build_config_payload() -> Dictionary:
+    _ensure_nodes_ready()
     var config: Dictionary = {
         "strategy": "syllable",
     }
@@ -128,25 +162,31 @@ func build_config_payload() -> Dictionary:
     return config
 
 func get_selected_resource_path() -> String:
+    _ensure_nodes_ready()
     return _get_selected_resource_path()
 
 func _on_refresh_pressed() -> void:
+    _ensure_nodes_ready()
     refresh()
 
 func _on_resource_selected(_index: int) -> void:
+    _ensure_nodes_ready()
     _update_selected_resource_summary()
 
 func _on_require_middle_toggled(pressed: bool) -> void:
+    _ensure_nodes_ready()
     if pressed and _middle_min_spin.value < 1:
         _middle_min_spin.value = 1
     if pressed and _middle_max_spin.value < 1:
         _middle_max_spin.value = 1
 
 func _on_seed_submitted(text: String) -> void:
+    _ensure_nodes_ready()
     _seed_edit.text = text
     _on_preview_button_pressed()
 
 func _build_regex_preset_controls() -> void:
+    _ensure_nodes_ready()
     for child in _regex_preset_container.get_children():
         child.queue_free()
     _regex_presets.clear()
@@ -169,54 +209,58 @@ func _build_regex_preset_controls() -> void:
         }
 
 func _refresh_metadata() -> void:
+    _ensure_nodes_ready()
     var service := _get_metadata_service()
     if service == null:
         _metadata_summary.text = "Syllable strategy metadata unavailable."
         _notes_label.text = ""
         return
 
-    var required_variant := []
+    var required_variant: Variant = PackedStringArray()
     if service.has_method("get_required_keys"):
         required_variant = service.call("get_required_keys", "syllable")
     var optional: Dictionary = {}
     if service.has_method("get_optional_key_types"):
         optional = service.call("get_optional_key_types", "syllable")
-    var notes_variant := []
+    var notes_variant: Variant = PackedStringArray()
     if service.has_method("get_default_notes"):
         notes_variant = service.call("get_default_notes", "syllable")
 
     var required_list: Array[String] = []
     if required_variant is PackedStringArray:
-        required_list.assign(required_variant)
+        for value in required_variant:
+            required_list.append(String(value))
     elif required_variant is Array:
         for value in required_variant:
             required_list.append(String(value))
 
-    var summary := []
+    var summary: Array[String] = []
     if not required_list.is_empty():
-        summary.append("Requires: %s" % ", ".join(required_list))
+        summary.append("Requires: %s" % _join_strings(required_list, ", "))
     if optional is Dictionary and not optional.is_empty():
         var optional_strings: Array[String] = []
         for key in optional.keys():
             var variant_type := int(optional[key])
-            optional_strings.append("%s (%s)" % [key, Variant.get_type_name(variant_type)])
+            optional_strings.append("%s (%s)" % [key, type_string(variant_type)])
         optional_strings.sort()
-        summary.append("Optional: %s" % ", ".join(optional_strings))
-    _metadata_summary.text = " | ".join(summary)
+        summary.append("Optional: %s" % _join_strings(optional_strings, ", "))
+    _metadata_summary.text = _join_strings(summary, " | ")
 
     var notes: Array[String] = []
     if notes_variant is PackedStringArray:
-        notes.assign(notes_variant)
+        for value in notes_variant:
+            notes.append(String(value))
     elif notes_variant is Array:
         for value in notes_variant:
             notes.append(String(value))
 
     if not notes.is_empty():
-        _notes_label.text = "\n".join(notes)
+        _notes_label.text = _join_strings(notes, "\n")
     else:
         _notes_label.text = ""
 
 func _refresh_resource_catalog() -> void:
+    _ensure_nodes_ready()
     _resource_list.clear()
     _resource_cache.clear()
     _resource_summary_label.text = "Select a syllable set to review its details."
@@ -256,7 +300,7 @@ func _refresh_resource_catalog() -> void:
             detail_parts.append(metadata["locale"])
         if metadata["domain"] != "":
             detail_parts.append(metadata["domain"])
-        var detail_suffix := detail_parts.join(" · ")
+        var detail_suffix := _join_strings(detail_parts, " · ")
         var counts := "P:%d | M:%d | S:%d" % [metadata["prefix_count"], metadata["middle_count"], metadata["suffix_count"]]
 
         var line := display_name
@@ -266,7 +310,7 @@ func _refresh_resource_catalog() -> void:
 
         var item_index := _resource_list.add_item(line)
         _resource_list.set_item_metadata(item_index, metadata)
-        var tooltip_lines := [
+        var tooltip_lines: Array[String] = [
             "Path: %s" % path,
             "Locale: %s" % (metadata["locale"] if metadata["locale"] != "" else "—"),
             "Domain: %s" % (metadata["domain"] if metadata["domain"] != "" else "—"),
@@ -276,7 +320,7 @@ func _refresh_resource_catalog() -> void:
         ]
         if not metadata["allow_empty_middle"] and metadata["middle_count"] > 0:
             tooltip_lines.append("Requires at least one middle syllable.")
-        _resource_list.set_item_tooltip(item_index, "\n".join(tooltip_lines))
+        _resource_list.set_item_tooltip(item_index, _join_strings(tooltip_lines, "\n"))
         _resource_cache.append(metadata)
 
     if _resource_list.item_count == 0:
@@ -284,6 +328,7 @@ func _refresh_resource_catalog() -> void:
         _resource_list.set_item_disabled(0, true)
 
 func _discover_syllable_resources() -> Array:
+    _ensure_nodes_ready()
     var results: Array = []
     var stack: Array[String] = ["res://data"]
     while not stack.is_empty():
@@ -303,7 +348,7 @@ func _discover_syllable_resources() -> Array:
                 if not (entry.ends_with(".tres") or entry.ends_with(".res")):
                     entry = dir.get_next()
                     continue
-                var resource_path := path.path_join(entry)
+                var resource_path: String = path.path_join(entry)
                 if not ResourceLoader.exists(resource_path):
                     entry = dir.get_next()
                     continue
@@ -327,14 +372,16 @@ func _discover_syllable_resources() -> Array:
     return results
 
 func _derive_display_name(path: String) -> String:
-    var segments := path.split("/")
-    if segments.is_empty():
-        return path
-    var filename := segments.back()
+    _ensure_nodes_ready()
+    var segments: PackedStringArray = path.split("/")
+    var filename := String(path)
+    if segments.size() > 0:
+        filename = segments[segments.size() - 1]
     var trimmed := filename.replace(".tres", "").replace(".res", "")
     return trimmed.capitalize()
 
 func _on_preview_button_pressed() -> void:
+    _ensure_nodes_ready()
     var path := _get_selected_resource_path()
     if path == "":
         _update_preview_state({
@@ -388,6 +435,7 @@ func _on_preview_button_pressed() -> void:
     })
 
 func _lookup_error_guidance(code: String) -> Dictionary:
+    _ensure_nodes_ready()
     if code == "":
         return {}
     var service := _get_metadata_service()
@@ -404,6 +452,7 @@ func _lookup_error_guidance(code: String) -> Dictionary:
     return {}
 
 func _should_highlight_range(code: String) -> bool:
+    _ensure_nodes_ready()
     match code:
         "invalid_middle_range":
             return true
@@ -414,7 +463,8 @@ func _should_highlight_range(code: String) -> bool:
         _:
             return false
 
-func _update_preview_state(payload: Dictionary) -> void:
+func _update_preview_state(payload: Variant) -> void:
+    _ensure_nodes_ready()
     _preview_label.visible = false
     _preview_label.text = ""
     _preview_label.tooltip_text = ""
@@ -425,11 +475,12 @@ func _update_preview_state(payload: Dictionary) -> void:
     _set_control_highlight(_middle_min_spin, false)
     _set_control_highlight(_middle_max_spin, false)
 
-    if payload == null:
+    if payload == null or not (payload is Dictionary):
         return
 
-    var status := String(payload.get("status", ""))
-    var message := String(payload.get("message", ""))
+    var dictionary: Dictionary = payload
+    var status := String(dictionary.get("status", ""))
+    var message := String(dictionary.get("message", ""))
     if status == "success":
         _preview_label.visible = true
         _preview_label.text = "[b]Preview:[/b]\n%s" % message
@@ -437,17 +488,18 @@ func _update_preview_state(payload: Dictionary) -> void:
     else:
         _validation_label.visible = true
         _validation_label.text = message
-        var tooltip := String(payload.get("tooltip", message))
+        var tooltip := String(dictionary.get("tooltip", message))
         if tooltip == "":
             tooltip = message
         _validation_label.tooltip_text = tooltip
-        if bool(payload.get("highlight_resource", false)):
+        if bool(dictionary.get("highlight_resource", false)):
             _set_control_highlight(_resource_list, true)
-        if bool(payload.get("highlight_range", false)):
+        if bool(dictionary.get("highlight_range", false)):
             _set_control_highlight(_middle_min_spin, true)
             _set_control_highlight(_middle_max_spin, true)
 
 func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
+    _ensure_nodes_ready()
     if guidance.is_empty():
         return {"text": "", "tooltip": ""}
     var text_segments: Array[String] = []
@@ -472,17 +524,18 @@ func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
             tooltip_segments.append("Platform GUI Handbook › %s" % handbook_label)
         text_segments.append(handbook_line)
     return {
-        "text": "\n".join(text_segments),
-        "tooltip": "\n".join(tooltip_segments),
+        "text": _join_strings(text_segments, "\n"),
+        "tooltip": _join_strings(tooltip_segments, "\n"),
     }
 
 func _update_selected_resource_summary() -> void:
+    _ensure_nodes_ready()
     var metadata := _get_selected_resource_metadata()
     if metadata.is_empty():
         _resource_summary_label.text = "Select a syllable set to review its details."
         return
 
-    var lines := [
+    var lines: Array[String] = [
         "Path: %s" % metadata["path"],
         "Locale: %s" % (metadata["locale"] if metadata["locale"] != "" else "—"),
         "Domain: %s" % (metadata["domain"] if metadata["domain"] != "" else "—"),
@@ -492,7 +545,7 @@ func _update_selected_resource_summary() -> void:
     ]
     if not metadata["allow_empty_middle"] and metadata["middle_count"] > 0:
         lines.append("Requires at least one middle syllable.")
-    _resource_summary_label.text = "\n".join(lines)
+    _resource_summary_label.text = _join_strings(lines, "\n")
 
     var available_middles := int(metadata["middle_count"])
     if available_middles > _middle_max_spin.max_value:
@@ -505,6 +558,7 @@ func _update_selected_resource_summary() -> void:
         _middle_max_spin.value = _middle_min_spin.value
 
 func _collect_selected_regex_rules() -> Array:
+    _ensure_nodes_ready()
     var rules: Array = []
     for identifier in _regex_presets.keys():
         var entry: Dictionary = _regex_presets[identifier]
@@ -520,12 +574,14 @@ func _collect_selected_regex_rules() -> Array:
     return rules
 
 func _get_selected_resource_path() -> String:
+    _ensure_nodes_ready()
     var metadata := _get_selected_resource_metadata()
     if metadata.is_empty():
         return ""
     return String(metadata.get("path", ""))
 
 func _get_selected_resource_metadata() -> Dictionary:
+    _ensure_nodes_ready()
     var indices := _resource_list.get_selected_items()
     if indices.is_empty():
         return {}
@@ -535,11 +591,13 @@ func _get_selected_resource_metadata() -> Dictionary:
     return metadata.duplicate(true)
 
 func _track_default_modulate(control: CanvasItem) -> void:
+    _ensure_nodes_ready()
     if control == null:
         return
     _control_default_modulates[control] = control.modulate
 
 func _set_control_highlight(control: CanvasItem, enabled: bool) -> void:
+    _ensure_nodes_ready()
     if control == null:
         return
     if enabled:
@@ -549,6 +607,7 @@ func _set_control_highlight(control: CanvasItem, enabled: bool) -> void:
         control.modulate = original
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null and _is_object_valid(_controller_override):
         return _controller_override
     if _cached_controller != null and _is_object_valid(_cached_controller):
@@ -566,6 +625,7 @@ func _get_controller() -> Object:
     return null
 
 func _get_metadata_service() -> Object:
+    _ensure_nodes_ready()
     if _metadata_service_override != null and _is_object_valid(_metadata_service_override):
         return _metadata_service_override
     if _cached_metadata_service != null and _is_object_valid(_cached_metadata_service):
@@ -583,8 +643,18 @@ func _get_metadata_service() -> Object:
     return null
 
 func _is_object_valid(candidate: Object) -> bool:
+    _ensure_nodes_ready()
     if candidate == null:
         return false
     if candidate is Node:
         return is_instance_valid(candidate)
     return true
+
+func _join_strings(strings: Array[String], delimiter: String) -> String:
+    _ensure_nodes_ready()
+    if strings.is_empty():
+        return ""
+    var packed := PackedStringArray()
+    for value in strings:
+        packed.append(value)
+    return delimiter.join(packed)

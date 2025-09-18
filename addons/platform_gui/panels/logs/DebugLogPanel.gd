@@ -27,18 +27,34 @@ const _STATUS_ICONS := {
     "error": "❌",
 }
 
-@onready var _refresh_button: Button = %RefreshButton
-@onready var _section_selector: OptionButton = %SectionSelector
-@onready var _log_display: RichTextLabel = %LogDisplay
-@onready var _download_path: LineEdit = %DownloadPath
-@onready var _download_button: Button = %DownloadButton
-@onready var _status_label: RichTextLabel = %StatusLabel
+var _refresh_button: Button = null
+var _section_selector: OptionButton = null
+var _log_display: RichTextLabel = null
+var _download_path: LineEdit = null
+var _download_button: Button = null
+var _status_label: RichTextLabel = null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
 var _report_cache: Dictionary = {}
 
+
+func _ensure_nodes_ready() -> void:
+    if _refresh_button == null:
+        _refresh_button = get_node("Header/RefreshButton") as Button
+    if _section_selector == null:
+        _section_selector = get_node("Header/SectionSelector") as OptionButton
+    if _log_display == null:
+        _log_display = get_node("LogDisplay") as RichTextLabel
+    if _download_path == null:
+        _download_path = get_node("Header/DownloadPath") as LineEdit
+    if _download_button == null:
+        _download_button = get_node("Header/DownloadButton") as Button
+    if _status_label == null:
+        _status_label = get_node("StatusLabel") as RichTextLabel
+
 func _ready() -> void:
+    _ensure_nodes_ready()
     _log_display.bbcode_enabled = true
     _status_label.bbcode_enabled = true
     _refresh_button.pressed.connect(_on_refresh_pressed)
@@ -49,19 +65,23 @@ func _ready() -> void:
     _update_display()
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     _controller_override = controller
     _cached_controller = null
     _update_button_states()
 
 func clear_controller_override() -> void:
+    _ensure_nodes_ready()
     _controller_override = null
     _cached_controller = null
     _update_button_states()
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     _load_report()
 
 func _populate_sections() -> void:
+    _ensure_nodes_ready()
     _section_selector.clear()
     _section_selector.add_item("All sections", SECTION_ALL)
     _section_selector.add_item("Generation timeline", SECTION_TIMELINE)
@@ -71,9 +91,11 @@ func _populate_sections() -> void:
     _section_selector.selected = SECTION_ALL
 
 func _on_refresh_pressed() -> void:
+    _ensure_nodes_ready()
     _load_report()
 
 func _on_download_pressed() -> void:
+    _ensure_nodes_ready()
     if _report_cache.is_empty():
         _set_status("Attach DebugRNG before downloading.", "error")
         return
@@ -97,14 +119,17 @@ func _on_download_pressed() -> void:
     _set_status("Saved DebugRNG report to %s." % target_path)
 
 func _on_download_path_submitted(text: String) -> void:
+    _ensure_nodes_ready()
     _download_path.text = text
     _on_download_pressed()
 
 func _on_section_selected(index: int) -> void:
+    _ensure_nodes_ready()
     _section_selector.selected = index
     _update_display()
 
 func _load_report() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null or not controller.has_method("get_debug_rng"):
         _report_cache = {}
@@ -134,6 +159,7 @@ func _load_report() -> void:
     _update_display()
 
 func _update_display() -> void:
+    _ensure_nodes_ready()
     var lines := PackedStringArray()
     if _report_cache.is_empty():
         lines.append("DebugRNG helper inactive.")
@@ -148,6 +174,7 @@ func _update_display() -> void:
     _update_button_states()
 
 func _render_session_header() -> PackedStringArray:
+    _ensure_nodes_ready()
     var lines := PackedStringArray()
     var started := String(_report_cache.get("session_started_at", "--"))
     var ended := String(_report_cache.get("session_ended_at", "--"))
@@ -177,6 +204,7 @@ func _render_session_header() -> PackedStringArray:
     return lines
 
 func _render_section_entries(section: int) -> PackedStringArray:
+    _ensure_nodes_ready()
     var lines := PackedStringArray()
     var entries_variant := _report_cache.get("entries", [])
     if not (entries_variant is Array):
@@ -210,6 +238,7 @@ func _render_section_entries(section: int) -> PackedStringArray:
     return lines
 
 func _entry_matches_section(entry: Dictionary, section: int) -> bool:
+    _ensure_nodes_ready()
     var type_name := String(entry.get("type", ""))
     match section:
         SECTION_WARNINGS:
@@ -224,6 +253,7 @@ func _entry_matches_section(entry: Dictionary, section: int) -> bool:
             return true
 
 func _format_entry(entry: Dictionary) -> String:
+    _ensure_nodes_ready()
     var type_name := String(entry.get("type", ""))
     var timestamp := String(entry.get("timestamp", ""))
     match type_name:
@@ -268,16 +298,20 @@ func _format_entry(entry: Dictionary) -> String:
             return "%s %s" % [timestamp, _stringify_value(entry)]
 
 func _update_button_states() -> void:
+    _ensure_nodes_ready()
     var has_report := not _report_cache.is_empty()
     _download_button.disabled = not has_report
 
 func _set_status(message: String, severity: String = "info") -> void:
+    _ensure_nodes_ready()
     _status_label.bbcode_text = _format_status(message, severity)
 
 func _format_error(message: String) -> String:
+    _ensure_nodes_ready()
     return _format_status(message, "error")
 
 func _format_status(message: String, severity: String = "info") -> String:
+    _ensure_nodes_ready()
     var color := _INFO_COLOR
     var icon := _STATUS_ICONS.get(severity, _STATUS_ICONS["info"])
     match severity:
@@ -288,12 +322,14 @@ func _format_status(message: String, severity: String = "info") -> String:
     return "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]
 
 func _stringify_value(value: Variant) -> String:
+    _ensure_nodes_ready()
     if value is String:
         return value
     var json := JSON.new()
     return json.stringify(value)
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null:
         return _controller_override
     if _cached_controller != null and is_instance_valid(_cached_controller):

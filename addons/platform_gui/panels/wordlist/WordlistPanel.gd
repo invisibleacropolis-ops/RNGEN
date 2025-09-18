@@ -14,15 +14,15 @@ extends VBoxContainer
 
 const WordListResource := preload("res://name_generator/resources/WordListResource.gd")
 
-@onready var _resource_list: ItemList = %ResourceList
-@onready var _weight_toggle: CheckButton = %UseWeights
-@onready var _delimiter_edit: LineEdit = %DelimiterInput
-@onready var _seed_edit: LineEdit = %SeedInput
-@onready var _preview_button: Button = %PreviewButton
-@onready var _preview_label: RichTextLabel = %PreviewOutput
-@onready var _validation_label: Label = %ValidationLabel
-@onready var _metadata_summary: Label = %MetadataSummary
-@onready var _notes_label: Label = %NotesLabel
+var _resource_list: ItemList= null
+var _weight_toggle: CheckButton= null
+var _delimiter_edit: LineEdit= null
+var _seed_edit: LineEdit= null
+var _preview_button: Button= null
+var _preview_label: RichTextLabel= null
+var _validation_label: Label= null
+var _metadata_summary: Label= null
+var _notes_label: Label= null
 
 var _controller_override: Object = null
 var _cached_controller: Object = null
@@ -31,7 +31,28 @@ var _cached_metadata_service: Object = null
 var _resource_catalog_override: Array = []
 var _resource_cache: Array = []
 
+
+func _ensure_nodes_ready() -> void:
+    if _resource_list == null:
+        _resource_list = get_node("%ResourceList") as ItemList
+    if _weight_toggle == null:
+        _weight_toggle = get_node("%UseWeights") as CheckButton
+    if _delimiter_edit == null:
+        _delimiter_edit = get_node("%DelimiterInput") as LineEdit
+    if _seed_edit == null:
+        _seed_edit = get_node("%SeedInput") as LineEdit
+    if _preview_button == null:
+        _preview_button = get_node("%PreviewButton") as Button
+    if _preview_label == null:
+        _preview_label = get_node("%PreviewOutput") as RichTextLabel
+    if _validation_label == null:
+        _validation_label = get_node("%ValidationLabel") as Label
+    if _metadata_summary == null:
+        _metadata_summary = get_node("%MetadataSummary") as Label
+    if _notes_label == null:
+        _notes_label = get_node("%NotesLabel") as Label
 func _ready() -> void:
+    _ensure_nodes_ready()
     _preview_button.pressed.connect(_on_preview_button_pressed)
     %RefreshButton.pressed.connect(_on_refresh_pressed)
     _seed_edit.text_submitted.connect(_on_seed_submitted)
@@ -40,6 +61,7 @@ func _ready() -> void:
     _update_preview_state(null)
 
 func set_controller_override(controller: Object) -> void:
+    _ensure_nodes_ready()
     ## Inject a controller for tests or editor tooling. When provided, the
     ## panel skips all Engine singleton lookups and directs preview requests
     ## to this override instead.
@@ -47,12 +69,14 @@ func set_controller_override(controller: Object) -> void:
     _cached_controller = null
 
 func set_metadata_service_override(service: Object) -> void:
+    _ensure_nodes_ready()
     ## Inject a metadata service for deterministic testing. The override takes
     ## precedence over the exported NodePath and Engine singleton lookups.
     _metadata_service_override = service
     _cached_metadata_service = null
 
 func set_resource_catalog_override(entries: Array) -> void:
+    _ensure_nodes_ready()
     ## Provide a deterministic catalogue of WordListResource descriptors. This
     ## is primarily used by automated tests so resource discovery does not walk
     ## the on-disk project layout.
@@ -60,11 +84,13 @@ func set_resource_catalog_override(entries: Array) -> void:
     _refresh_resource_catalog()
 
 func refresh() -> void:
+    _ensure_nodes_ready()
     ## Public helper that refreshes both strategy metadata and resource listings.
     _refresh_metadata()
     _refresh_resource_catalog()
 
 func get_selected_resource_paths() -> Array:
+    _ensure_nodes_ready()
     ## Return the resource paths for every selected entry in the resource list.
     var paths: Array = []
     for index in _resource_list.get_selected_items():
@@ -75,6 +101,7 @@ func get_selected_resource_paths() -> Array:
     return paths
 
 func build_config_payload() -> Dictionary:
+    _ensure_nodes_ready()
     ## Construct the middleware configuration dictionary based on the current
     ## form values. Optional fields are omitted when blank to keep the payload
     ## faithful to user intent.
@@ -92,6 +119,7 @@ func build_config_payload() -> Dictionary:
     return config
 
 func apply_config_payload(config: Dictionary) -> void:
+    _ensure_nodes_ready()
     var delimiter := String(config.get("delimiter", ""))
     if _delimiter_edit.text != delimiter:
         _delimiter_edit.text = delimiter
@@ -118,13 +146,16 @@ func apply_config_payload(config: Dictionary) -> void:
     _update_preview_state(null)
 
 func _on_refresh_pressed() -> void:
+    _ensure_nodes_ready()
     refresh()
 
 func _on_seed_submitted(text: String) -> void:
+    _ensure_nodes_ready()
     _seed_edit.text = text
     _on_preview_button_pressed()
 
 func _refresh_metadata() -> void:
+    _ensure_nodes_ready()
     var service := _get_metadata_service()
     if service == null:
         _metadata_summary.text = "Wordlist metadata unavailable."
@@ -175,6 +206,7 @@ func _refresh_metadata() -> void:
         _notes_label.text = ""
 
 func _refresh_resource_catalog() -> void:
+    _ensure_nodes_ready()
     _resource_list.clear()
     _resource_cache.clear()
 
@@ -226,6 +258,7 @@ func _refresh_resource_catalog() -> void:
         _resource_list.set_item_disabled(0, true)
 
 func _discover_wordlist_resources() -> Array:
+    _ensure_nodes_ready()
     ## Recursively scan the data directory for WordListResource assets and
     ## build descriptive entries for the resource browser. The method favours
     ## readability over micro-optimisations because the catalogue is refreshed
@@ -270,6 +303,7 @@ func _discover_wordlist_resources() -> Array:
     return results
 
 func _derive_display_name(path: String) -> String:
+    _ensure_nodes_ready()
     var segments: PackedStringArray = path.split("/")
     if segments.is_empty():
         return path
@@ -278,6 +312,7 @@ func _derive_display_name(path: String) -> String:
     return trimmed.capitalize()
 
 func _on_preview_button_pressed() -> void:
+    _ensure_nodes_ready()
     var controller := _get_controller()
     if controller == null:
         _update_preview_state({
@@ -312,6 +347,7 @@ func _on_preview_button_pressed() -> void:
     })
 
 func _update_preview_state(payload: Variant = null) -> void:
+    _ensure_nodes_ready()
     if not (payload is Dictionary):
         _preview_label.visible = false
         _preview_label.text = ""
@@ -333,6 +369,7 @@ func _update_preview_state(payload: Variant = null) -> void:
         _validation_label.text = message
 
 func _get_controller() -> Object:
+    _ensure_nodes_ready()
     if _controller_override != null and _is_object_valid(_controller_override):
         return _controller_override
     if _cached_controller != null and _is_object_valid(_cached_controller):
@@ -350,6 +387,7 @@ func _get_controller() -> Object:
     return null
 
 func _get_metadata_service() -> Object:
+    _ensure_nodes_ready()
     if _metadata_service_override != null and _is_object_valid(_metadata_service_override):
         return _metadata_service_override
     if _cached_metadata_service != null and _is_object_valid(_cached_metadata_service):
@@ -367,6 +405,7 @@ func _get_metadata_service() -> Object:
     return null
 
 func _is_object_valid(candidate: Object) -> bool:
+    _ensure_nodes_ready()
     if candidate == null:
         return false
     if candidate is Node:
@@ -374,6 +413,7 @@ func _is_object_valid(candidate: Object) -> bool:
     return true
 
 func _join_strings(parts: Array, separator: String) -> String:
+    _ensure_nodes_ready()
     if parts.is_empty():
         return ""
     var pieces: Array = []

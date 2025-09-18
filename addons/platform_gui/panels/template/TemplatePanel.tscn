@@ -2,11 +2,12 @@
 
 [ext_resource type="Script" path="res://addons/platform_gui/panels/template/TemplatePanel.gd" id="1_zl6r1"]
 [ext_resource type="StyleBox" path="res://addons/platform_gui/themes/focus_highlight.tres" id="2_l5smr"]
+[ext_resource type="Script" path="res://addons/platform_gui/components/CompatRichTextLabel.gd" id="3_compat"]
 
 [node name="TemplatePanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(520, 0)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 script = ExtResource("1_zl6r1")
 
@@ -18,21 +19,24 @@ theme_override_font_sizes/font_size = 18
 text = "Template Strategy"
 
 [node name="HeaderSpacer" type="Control" parent="Header"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="RefreshButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata."
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="MetadataSummary" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="NotesLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="TemplateSection" type="VBoxContainer" parent="."]
@@ -42,11 +46,12 @@ theme_override_constants/separation = 4
 text = "Template string"
 
 [node name="TemplateInput" type="TextEdit" parent="TemplateSection"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 80)
 placeholder_text = "Forge a [material] blade for the [title]."
 scroll_fit_content_height = true
-wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-focus_mode = Control.FOCUS_ALL
+wrap_mode = 1
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="MaxDepthRow" type="HBoxContainer" parent="."]
@@ -56,12 +61,13 @@ theme_override_constants/separation = 8
 text = "Max depth"
 
 [node name="MaxDepthSpin" type="SpinBox" parent="MaxDepthRow"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 max_value = 64.0
 min_value = 1.0
 step = 1.0
 value = 8.0
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="SeedRow" type="HBoxContainer" parent="."]
@@ -71,13 +77,15 @@ theme_override_constants/separation = 8
 text = "Seed"
 
 [node name="SeedInput" type="LineEdit" parent="SeedRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+unique_name_in_owner = true
+size_flags_horizontal = 3
 placeholder_text = "Optional seed label"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="SeedHelper" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = "Child seeds derive automatically as parent::token::occurrence."
 
 [node name="SubGeneratorSection" type="VBoxContainer" parent="."]
@@ -87,47 +95,54 @@ theme_override_constants/separation = 4
 text = "Child generator definitions (JSON)"
 
 [node name="SubGeneratorInput" type="TextEdit" parent="SubGeneratorSection"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 140)
 placeholder_text = "{\n    \"material\": {\"strategy\": \"wordlist\", \"wordlist_paths\": []},\n    \"title\": {\"strategy\": \"template\", \"template_string\": \"[rank] of [order]\"}\n}"
 scroll_fit_content_height = true
-wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-focus_mode = Control.FOCUS_ALL
+wrap_mode = 1
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="TokenTreeLabel" type="Label" parent="."]
 text = "Token expansion preview"
 
 [node name="TokenTree" type="Tree" parent="."]
+unique_name_in_owner = true
 columns = 4
 custom_minimum_size = Vector2(0, 220)
-select_mode = Tree.SELECT_ROW
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+select_mode = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="ValidationLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
 visible = false
 
 [node name="FixItLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 visible = false
 
 [node name="PreviewRow" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 12
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
+unique_name_in_owner = true
 text = "Preview"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_l5smr")
 
 [node name="PreviewSpacer" type="Control" parent="PreviewRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="PreviewOutput" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
+script = ExtResource("3_compat")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
