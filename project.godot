@@ -20,15 +20,15 @@ RNGManager="*res://name_generator/RNGManager.gd"
 NameGenerator="*res://name_generator/NameGenerator.gd"
 RNGProcessor="*res://name_generator/RNGProcessor.gd"
 
-[filesystem]
-
-imported_folders=PackedStringArray("res://data", "res://data/markov_models", "res://data/syllable_sets", "res://data/wordlists", "res://data/objects", "res://data/people", "res://name_generator/resources", "res://name_generator/strategies", "res://name_generator/utils", "res://name_generator/tools", "res://name_generator/tests", "res://tests", "res://tests/test_assets")
-
 [debug]
 
 gdscript/warnings/enable=false
 gdscript/warnings/minimum_severity=0
 gdscript/warnings/treat_warnings_as_errors=false
+
+[filesystem]
+
+imported_folders=PackedStringArray("res://data", "res://data/markov_models", "res://data/syllable_sets", "res://data/wordlists", "res://data/objects", "res://data/people", "res://name_generator/resources", "res://name_generator/strategies", "res://name_generator/utils", "res://name_generator/tools", "res://name_generator/tests", "res://tests", "res://tests/test_assets")
 
 [global_script_class_icons]
 
