@@ -23,6 +23,17 @@ Follow these steps whenever you need to work inside the Platform GUI:
 4. Press **Generate**. The GUI calls `RNGProcessor.generate(config)` behind the scenes. While the middleware processes the request, the interface shows a status spinner driven by the `generation_started` signal.
 5. Review the result. Successful runs display the returned payload alongside the resolved seed and RNG stream name reported by `generation_completed`. If the middleware emits `generation_failed`, the GUI surfaces the human-readable error message plus suggested fixes.
 
+### Configuring word list strategies
+
+1. Choose **Word List** from the strategy dropdown to load the dedicated panel.
+2. Review the metadata banner above the form: the required and optional keys are sourced from the cached middleware schema so you know which fields must be filled before generating.
+3. Use the resource browser to select one or more `WordListResource` assets. Each entry shows locale, domain, and whether weighting data is available so you can mix compatible lists at a glance.
+4. Toggle **Use weights when available** if you want the middleware to respect weighted entries for every selected resource.
+5. Adjust the delimiter field to control how sampled values are joined. Leaving the input blank defaults to a single space.
+6. Provide an optional seed label in the preview row. The panel passes it straight to `RNGProcessor.generate(...)` so repeat previews with the same seed remain deterministic.
+7. Press **Preview** to request a seeded sample from the middleware. Successful runs render the preview inline, while validation errors appear in red beneath the controls so you can correct the form without leaving the panel.
+8. Click **Refresh** if you add new word lists to the project mid-session. The button reloads both the metadata schema and the resource catalogue.
+
 ### Reviewing DebugRNG logs
 
 1. Switch to the **Debug Logs** tab. When DebugRNG is active, the middleware writes to `user://debug_rng_report.txt` (or a custom path you configured earlier).

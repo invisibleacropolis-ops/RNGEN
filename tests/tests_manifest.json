@@ -29,6 +29,10 @@
       "path": "res://tests/gui/test_strategy_metadata_service.gd"
     },
     {
+      "name": "Platform GUI Wordlist Panel Suite",
+      "path": "res://tests/gui/test_wordlist_panel.gd"
+    },
+    {
       "name": "Name Generator Diagnostic",
       "path": "res://tests/diagnostics/name_generator_diagnostic.gd",
       "id": "name_generator"
