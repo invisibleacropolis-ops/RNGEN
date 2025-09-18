@@ -432,7 +432,7 @@ func _inject_template_payload(steps: Array) -> void:
         return
     var template_config: Dictionary = template_variant
     for index in range(steps.size()):
-        var entry_variant := steps[index]
+        var entry_variant: Variant = steps[index]
         if typeof(entry_variant) != TYPE_DICTIONARY:
             continue
         var entry: Dictionary = entry_variant

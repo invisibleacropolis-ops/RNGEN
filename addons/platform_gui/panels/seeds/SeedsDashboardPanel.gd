@@ -125,7 +125,8 @@ func _refresh_streams(controller: Object) -> void:
         var source := mode if mode != "" else "unknown"
         stream_item.set_text(3, source)
         if data.has("path"):
-            stream_item.set_tooltip_text(0, "Router path: %s" % "::".join(data["path"]))
+            var path_segments := PackedStringArray(data.get("path", PackedStringArray()))
+            stream_item.set_tooltip_text(0, "Router path: %s" % _join_strings(path_segments, "::"))
             stream_item.set_tooltip_text(1, stream_item.get_tooltip_text(0))
             stream_item.set_tooltip_text(2, stream_item.get_tooltip_text(0))
         else:
@@ -149,14 +150,14 @@ func _refresh_routing(controller: Object) -> void:
         var stream := String(route.get("stream", ""))
         item.set_text(0, stream)
         var path: PackedStringArray = PackedStringArray(route.get("path", PackedStringArray()))
-        item.set_text(1, "::".join(path))
+        item.set_text(1, _join_strings(path, "::"))
         item.set_text(2, str(route.get("derived_seed", "")))
         item.set_text(3, str(route.get("resolved_seed", route.get("derived_seed", ""))))
         if route.has("notes"):
             item.set_tooltip_text(0, String(route["notes"]))
     var notes: Array = routing.get("notes", [])
     if notes.size() > 0:
-        var current := _status_label.bbcode_text
+        var current: String = _status_label.bbcode_text
         var error_tag := _ERROR_COLOR.to_html()
         if current == "" or current.find(error_tag) == -1:
             _status_label.bbcode_text = _format_status(String(notes[0]))
@@ -260,3 +261,13 @@ func _format_status(message: String, severity: String = "info") -> String:
         "error":
             color = _ERROR_COLOR
     return "[color=%s]%s %s[/color]" % [color.to_html(), icon, message]
+
+func _join_strings(values: PackedStringArray, separator: String) -> String:
+    var combined := ""
+    for index in range(values.size()):
+        var segment := String(values[index])
+        if index == 0:
+            combined = segment
+        else:
+            combined += "%s%s" % [separator, segment]
+    return combined
