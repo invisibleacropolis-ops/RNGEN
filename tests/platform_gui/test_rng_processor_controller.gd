@@ -1,0 +1,221 @@
+extends RefCounted
+
+const CONTROLLER_SCENE := preload("res://addons/platform_gui/controllers/RNGProcessorController.tscn")
+
+var _total := 0
+var _passed := 0
+var _failed := 0
+var _failures: Array[Dictionary] = []
+
+func run() -> Dictionary:
+    _reset()
+
+    _run_test("wraps_rng_processor_api", func(): _test_wraps_rng_processor_api())
+    _run_test("forwards_generation_signals", func(): _test_forwards_generation_signals())
+    _run_test("exposes_debug_rng_helpers", func(): _test_exposes_debug_rng_helpers())
+
+    return {
+        "suite": "Platform GUI RNGProcessor Controller",
+        "total": _total,
+        "passed": _passed,
+        "failed": _failed,
+        "failures": _failures.duplicate(true),
+    }
+
+func _run_test(name: String, callable: Callable) -> void:
+    _total += 1
+    var message := callable.call()
+    if message == null:
+        _passed += 1
+        return
+    _failed += 1
+    _failures.append({
+        "name": name,
+        "message": String(message),
+    })
+
+func _test_wraps_rng_processor_api() -> Variant:
+    var processor := StubRNGProcessor.new()
+    var event_bus := StubEventBus.new()
+    var controller := _make_controller(processor, event_bus)
+
+    controller.initialize_master_seed(4242)
+    if processor.initialize_calls.size() != 1 or processor.initialize_calls[0] != 4242:
+        return "initialize_master_seed should forward to the processor."
+
+    processor.reset_return_value = 8080
+    var reset_value := controller.reset_master_seed()
+    if reset_value != 8080:
+        return "reset_master_seed should forward return values."
+
+    processor.strategies = PackedStringArray(["alpha", "beta"])
+    var strategies := controller.list_strategies()
+    if strategies.size() != 2 or strategies[0] != "alpha" or strategies[1] != "beta":
+        return "list_strategies must proxy PackedStringArray responses."
+
+    var descriptions := controller.describe_strategies()
+    if descriptions.get("wordlist", {}).get("id", "") != "wordlist":
+        return "describe_strategies should return metadata dictionaries."
+    descriptions["wordlist"]["notes"] = "mutated"
+    if processor.descriptions.get("wordlist", {}).has("notes"):
+        return "describe_strategies must duplicate dictionaries to avoid side effects."
+
+    var config := {"strategy": "wordlist"}
+    var result := controller.generate(config)
+    if result != processor.generate_result:
+        return "generate should return the processor payload."
+    if processor.last_generate_config == null:
+        return "generate must pass the configuration to the processor."
+
+    return null
+
+func _test_forwards_generation_signals() -> Variant:
+    var processor := StubRNGProcessor.new()
+    var event_bus := StubEventBus.new()
+    var controller := _make_controller(processor, event_bus)
+
+    var start_config := {"strategy": "wordlist"}
+    var start_metadata := {"rng_stream": "seeded::wordlist"}
+    processor.emit_generation_started(start_config, start_metadata)
+
+    if event_bus.events.size() != 1:
+        return "generation_started should publish exactly one event."
+    var started := event_bus.events[0]
+    if started.get("name", "") != "rng_generation_started":
+        return "generation_started events must use the rng_generation_started channel."
+    var started_payload: Dictionary = started.get("payload", {})
+    if started_payload.get("type", "") != "generation_started":
+        return "generation_started payload should indicate its type."
+    start_config["strategy"] = "mutated"
+    if started_payload.get("config", {}).get("strategy", "") != "wordlist":
+        return "generation_started payload should duplicate request config dictionaries."
+    start_metadata["rng_stream"] = "mutated"
+    if started_payload.get("metadata", {}).get("rng_stream", "") != "seeded::wordlist":
+        return "generation_started payload should duplicate metadata dictionaries."
+
+    var tracked_metadata := controller.get_latest_generation_metadata()
+    if tracked_metadata.get("rng_stream", "") != "seeded::wordlist":
+        return "Controller should expose the latest metadata snapshot."
+    tracked_metadata["rng_stream"] = "tampered"
+    if controller.get_latest_generation_metadata().get("rng_stream", "") != "seeded::wordlist":
+        return "Metadata accessor must provide defensive copies."
+
+    var complete_config := {"strategy": "wordlist"}
+    var complete_result := {"value": "success"}
+    var complete_metadata := {"rng_stream": "wordlist::complete"}
+    processor.emit_generation_completed(complete_config, complete_result, complete_metadata)
+    if event_bus.events.size() != 2:
+        return "generation_completed should publish a follow-up event."
+    var completed := event_bus.events[1]
+    if completed.get("name", "") != "rng_generation_completed":
+        return "generation_completed events must use the rng_generation_completed channel."
+    var completed_payload: Dictionary = completed.get("payload", {})
+    if completed_payload.get("result", {}).get("value", "") != "success":
+        return "generation_completed payload should include result data."
+
+    var failure_config := {"strategy": "wordlist"}
+    var failure_error := {"code": "strategy_error"}
+    var failure_metadata := {"rng_stream": "wordlist::failure"}
+    processor.emit_generation_failed(failure_config, failure_error, failure_metadata)
+    if event_bus.events.size() != 3:
+        return "generation_failed should publish an error event."
+    var failed := event_bus.events[2]
+    if failed.get("name", "") != "rng_generation_failed":
+        return "generation_failed events must use the rng_generation_failed channel."
+    var failed_payload: Dictionary = failed.get("payload", {})
+    if failed_payload.get("error", {}).get("code", "") != "strategy_error":
+        return "generation_failed payload should include the error dictionary."
+
+    return null
+
+func _test_exposes_debug_rng_helpers() -> Variant:
+    var processor := StubRNGProcessor.new()
+    var event_bus := StubEventBus.new()
+    var controller := _make_controller(processor, event_bus)
+
+    controller.set_debug_rng("debug_instance", false)
+    if processor.last_debug_rng != "debug_instance" or processor.last_attach_to_debug != false:
+        return "set_debug_rng should proxy debug helper wiring options."
+
+    processor.debug_rng_return_value = "active_debug_rng"
+    if controller.get_debug_rng() != "active_debug_rng":
+        return "get_debug_rng should proxy through to the processor."
+
+    return null
+
+func _make_controller(processor: StubRNGProcessor, event_bus: StubEventBus) -> Node:
+    var controller: Node = CONTROLLER_SCENE.instantiate()
+    controller.set_rng_processor_override(processor)
+    controller.set_event_bus_override(event_bus)
+    controller._ready()
+    return controller
+
+func _reset() -> void:
+    _total = 0
+    _passed = 0
+    _failed = 0
+    _failures.clear()
+
+class StubRNGProcessor:
+    extends Node
+
+    signal generation_started(config: Dictionary, metadata: Dictionary)
+    signal generation_completed(config: Dictionary, result: Variant, metadata: Dictionary)
+    signal generation_failed(config: Dictionary, error: Dictionary, metadata: Dictionary)
+
+    var initialize_calls: Array[int] = []
+    var reset_return_value: int = 0
+    var strategies: PackedStringArray = PackedStringArray(["wordlist"])
+    var descriptions: Dictionary = {
+        "wordlist": {"id": "wordlist"},
+    }
+    var generate_result: Variant = {"generated": true}
+    var last_generate_config: Variant = null
+    var last_generate_override: Variant = null
+    var last_debug_rng: Variant = null
+    var last_attach_to_debug: bool = true
+    var debug_rng_return_value: Variant = null
+
+    func initialize_master_seed(seed_value: int) -> void:
+        initialize_calls.append(seed_value)
+
+    func reset_master_seed() -> int:
+        return reset_return_value
+
+    func list_strategies() -> PackedStringArray:
+        return strategies
+
+    func describe_strategies() -> Dictionary:
+        return descriptions
+
+    func generate(config: Variant, override_rng: RandomNumberGenerator = null) -> Variant:
+        last_generate_config = config
+        last_generate_override = override_rng
+        return generate_result
+
+    func set_debug_rng(debug_rng: Variant, attach_to_debug: bool = true) -> void:
+        last_debug_rng = debug_rng
+        last_attach_to_debug = attach_to_debug
+
+    func get_debug_rng() -> Variant:
+        return debug_rng_return_value
+
+    func emit_generation_started(config: Dictionary, metadata: Dictionary) -> void:
+        emit_signal("generation_started", config, metadata)
+
+    func emit_generation_completed(config: Dictionary, result: Variant, metadata: Dictionary) -> void:
+        emit_signal("generation_completed", config, result, metadata)
+
+    func emit_generation_failed(config: Dictionary, error: Dictionary, metadata: Dictionary) -> void:
+        emit_signal("generation_failed", config, error, metadata)
+
+class StubEventBus:
+    extends Node
+
+    var events: Array[Dictionary] = []
+
+    func publish(event_name: String, payload: Dictionary) -> void:
+        events.append({
+            "name": event_name,
+            "payload": payload.duplicate(true),
+        })
