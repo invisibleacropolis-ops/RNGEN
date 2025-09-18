@@ -65,6 +65,13 @@ identifying when to regenerate derived Markov models.
 
 ## 4. Tooling during QA
 
+### Dataset inspector tab (Platform GUI)
+
+1. Open the **Dataset health** tab (`res://addons/platform_gui/panels/datasets/DatasetInspectorPanel.tscn`) from the Platform GUI toolkit. The panel invokes `dataset_inspector.gd` behind the scenes, captures stdout/warning output, and renders a per-folder summary inline so you do not need to leave the editor for a health check.【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L1-L162】
+2. Review the **Warnings** block beneath the folder listing. Empty directories or missing resources surface as ⚠️ entries with the original script message so you can fix the filesystem layout immediately.【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L101-L144】
+3. Use **Open syllable builder** when you need to regenerate syllable sets as part of the cleanup. The button enables the Syllable Set Builder plugin and points artists to the right dock without leaving the dataset workflow.【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L67-L84】【F:name_generator/tools/SyllableSetBuilder.gd†L1-L93】
+4. Follow the inline **Dataset guide** link to jump straight to this document if you need the sourcing and normalisation checklist while triaging folders.【F:addons/platform_gui/panels/datasets/DatasetInspectorPanel.gd†L85-L119】
+
 ### Dataset inspector script
 
 Run the dataset inspector in headless mode to confirm every dataset folder is
