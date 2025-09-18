@@ -20,7 +20,7 @@ func set_master_seed(seed_value: int) -> void:
     _master_seed = seed_value
     for stream_name in _streams.keys():
         var rng: RandomNumberGenerator = _streams[stream_name]
-        _initialize_stream(stream_name, rng)
+        _streams[stream_name] = _initialize_stream(stream_name, rng)
 
 func get_master_seed() -> int:
     return _master_seed
