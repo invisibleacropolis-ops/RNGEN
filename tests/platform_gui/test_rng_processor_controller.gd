@@ -207,15 +207,31 @@ func _test_manages_qa_runs() -> Variant:
     if started_events.size() != 1:
         return "qa_run_started should emit exactly once."
 
-    if output_events.size() != runner.logs.size():
+    if output_events.size() != runner.total_group_log_lines():
         return "qa_run_output should relay runner log entries."
 
     if completed_events.size() != 1:
         return "qa_run_completed should emit when the run finishes."
 
     var completion: Dictionary = completed_events[0].get("payload", {})
-    if completion.get("result", {}).get("exit_code", 1) != 0:
+    var completion_result: Dictionary = completion.get("result", {})
+    if completion_result.get("exit_code", 1) != 0:
         return "Completion payload should report a passing exit code."
+
+    var completion_logs: PackedStringArray = completion.get("logs", PackedStringArray()) if completion.has("logs") else PackedStringArray()
+    if completion_logs.size() != runner.total_group_log_lines():
+        return "Completion payload should expose the combined log output."
+
+    var group_summaries: Array = completion_result.get("group_summaries", []) if completion_result.has("group_summaries") else []
+    if group_summaries.size() != runner.group_payloads.size():
+        return "Grouped runs should report per-group summaries."
+
+    var expected_total := 0
+    for payload in runner.group_payloads.values():
+        var summary: Dictionary = payload.get("summary", {})
+        expected_total += int(summary.get("aggregate_total", 0))
+    if int(completion_result.get("aggregate_total", 0)) != expected_total:
+        return "Grouped runs should aggregate totals across all manifest groups."
 
     var history: Array = controller.get_recent_qa_runs()
     if history.size() != 1:
@@ -224,6 +240,10 @@ func _test_manages_qa_runs() -> Variant:
     var record: Dictionary = history[0] if history.size() > 0 and history[0] is Dictionary else {}
     if String(record.get("log_path", "")) == "":
         return "QA run should persist a log path for later inspection."
+
+    var history_groups: Array = record.get("group_summaries", []) if record.has("group_summaries") else []
+    if history_groups.size() != runner.group_payloads.size():
+        return "History records should retain per-group summaries."
 
     return null
 
@@ -335,29 +355,144 @@ class StubQARunner:
 
     signal log_emitted(line: String)
 
-    var logs := [
-        "Running suite: QA stub",
-        "Suite summary: 3 passed, 0 failed, 3 total.",
-        "ALL TESTS PASSED",
-    ]
+    var group_payloads := {
+        "generator_core": {
+            "logs": PackedStringArray([
+                "Running suite: Generator core stub",
+                "Suite summary: 3 passed, 0 failed, 3 total.",
+                "ALL TESTS PASSED",
+            ]),
+            "summary": {
+                "exit_code": 0,
+                "aggregate_total": 3,
+                "aggregate_passed": 3,
+                "aggregate_failed": 0,
+                "suite_total": 3,
+                "suite_passed": 3,
+                "suite_failed": 0,
+                "diagnostic_total": 0,
+                "diagnostic_passed": 0,
+                "diagnostic_failed": 0,
+                "overall_success": true,
+                "failure_summaries": [],
+            },
+        },
+        "platform_gui": {
+            "logs": PackedStringArray([
+                "Running suite: Platform GUI stub",
+                "Suite summary: 2 passed, 0 failed, 2 total.",
+                "ALL TESTS PASSED",
+            ]),
+            "summary": {
+                "exit_code": 0,
+                "aggregate_total": 2,
+                "aggregate_passed": 2,
+                "aggregate_failed": 0,
+                "suite_total": 2,
+                "suite_passed": 2,
+                "suite_failed": 0,
+                "diagnostic_total": 0,
+                "diagnostic_passed": 0,
+                "diagnostic_failed": 0,
+                "overall_success": true,
+                "failure_summaries": [],
+            },
+        },
+        "diagnostics": {
+            "logs": PackedStringArray([
+                "Running diagnostic: Stub diagnostics",
+                "Diagnostic summary: 1 passed, 0 failed, 1 total.",
+                "ALL TESTS PASSED",
+            ]),
+            "summary": {
+                "exit_code": 0,
+                "aggregate_total": 1,
+                "aggregate_passed": 1,
+                "aggregate_failed": 0,
+                "suite_total": 0,
+                "suite_passed": 0,
+                "suite_failed": 0,
+                "diagnostic_total": 1,
+                "diagnostic_passed": 1,
+                "diagnostic_failed": 0,
+                "overall_success": true,
+                "failure_summaries": [],
+            },
+        },
+    }
+
+    func total_group_log_lines() -> int:
+        var count := 0
+        for payload in group_payloads.values():
+            var logs: Variant = payload.get("logs", PackedStringArray())
+            if logs is PackedStringArray:
+                count += logs.size()
+            elif logs is Array:
+                count += logs.size()
+        return count
 
     func run_manifest(manifest_path: String, yield_frames: bool = false) -> Dictionary:
-        for line in logs:
-            emit_signal("log_emitted", line)
-        return {
+        var combined_logs := PackedStringArray()
+        var summary := {
             "exit_code": 0,
-            "aggregate_total": 3,
-            "aggregate_passed": 3,
+            "aggregate_total": 0,
+            "aggregate_passed": 0,
             "aggregate_failed": 0,
-            "suite_total": 3,
-            "suite_passed": 3,
+            "suite_total": 0,
+            "suite_passed": 0,
             "suite_failed": 0,
             "diagnostic_total": 0,
             "diagnostic_passed": 0,
             "diagnostic_failed": 0,
             "overall_success": true,
-            "logs": PackedStringArray(logs),
+            "failure_summaries": [],
         }
+        for payload in group_payloads.values():
+            var logs_variant := payload.get("logs", PackedStringArray())
+            if logs_variant is PackedStringArray:
+                combined_logs.append_array(logs_variant)
+            elif logs_variant is Array:
+                for line in logs_variant:
+                    combined_logs.append(String(line))
+            var group_summary: Dictionary = payload.get("summary", {})
+            summary["aggregate_total"] += int(group_summary.get("aggregate_total", 0))
+            summary["aggregate_passed"] += int(group_summary.get("aggregate_passed", 0))
+            summary["aggregate_failed"] += int(group_summary.get("aggregate_failed", 0))
+            summary["suite_total"] += int(group_summary.get("suite_total", 0))
+            summary["suite_passed"] += int(group_summary.get("suite_passed", 0))
+            summary["suite_failed"] += int(group_summary.get("suite_failed", 0))
+            summary["diagnostic_total"] += int(group_summary.get("diagnostic_total", 0))
+            summary["diagnostic_passed"] += int(group_summary.get("diagnostic_passed", 0))
+            summary["diagnostic_failed"] += int(group_summary.get("diagnostic_failed", 0))
+        for line in combined_logs:
+            emit_signal("log_emitted", line)
+        summary["logs"] = combined_logs
+        return summary
+
+    func run_group(manifest_path: String, group_id: String, yield_frames: bool = false) -> Dictionary:
+        var payload := group_payloads.get(group_id, null)
+        if payload == null:
+            var missing_logs := PackedStringArray(["Missing group: %s" % group_id])
+            for line in missing_logs:
+                emit_signal("log_emitted", line)
+            return {
+                "exit_code": 1,
+                "overall_success": false,
+                "failure_summaries": ["Group %s missing" % group_id],
+                "logs": missing_logs,
+            }
+        var logs := PackedStringArray()
+        var stored_logs: Variant = payload.get("logs", PackedStringArray())
+        if stored_logs is PackedStringArray:
+            logs.append_array(stored_logs)
+        elif stored_logs is Array:
+            for entry in stored_logs:
+                logs.append(String(entry))
+        for line in logs:
+            emit_signal("log_emitted", line)
+        var summary: Dictionary = payload.get("summary", {}).duplicate(true)
+        summary["logs"] = logs
+        return summary
 
     func run_single_diagnostic(diagnostic_id: String, yield_frames: bool = false) -> Dictionary:
         emit_signal("log_emitted", "Running diagnostic: %s" % diagnostic_id)
