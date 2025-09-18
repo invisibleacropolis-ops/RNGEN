@@ -7,6 +7,33 @@ extends Node
 
 const TestSuiteRunner := preload("res://tests/test_suite_runner.gd")
 
+const _SUMMARY_NUMERIC_KEYS := [
+    "aggregate_total",
+    "aggregate_passed",
+    "aggregate_failed",
+    "suite_total",
+    "suite_passed",
+    "suite_failed",
+    "diagnostic_total",
+    "diagnostic_passed",
+    "diagnostic_failed",
+]
+
+const _DEFAULT_MANIFEST_GROUPS := [
+    {
+        "id": "generator_core",
+        "label": "Generator core suites",
+    },
+    {
+        "id": "platform_gui",
+        "label": "Platform GUI suites",
+    },
+    {
+        "id": "diagnostics",
+        "label": "Diagnostics",
+    },
+]
+
 signal qa_run_started(run_id: String, request: Dictionary)
 signal qa_run_output(run_id: String, line: String)
 signal qa_run_completed(run_id: String, payload: Dictionary)
@@ -176,12 +203,16 @@ func is_qa_run_active() -> bool:
     return _qa_run_in_progress
 
 func run_full_test_suite() -> String:
-    ## Launch the complete regression manifest used by run_all_tests.gd.
-    return _launch_qa_run({
-        "mode": "manifest",
-        "manifest_path": TestSuiteRunner.DEFAULT_MANIFEST_PATH,
-        "label": "Full suite",
-    })
+    ## Launch the grouped manifest runner backed by `tests/test_suite_runner.gd`.
+    ##
+    ## The helper spawns a QA run that iterates the generator core, platform GUI,
+    ## and diagnostics manifest groups defined in `tests/tests_manifest.json`.
+    ## Results are merged into a single payload so downstream panels receive a
+    ## concise status alongside per-group breakdowns.
+    return _launch_qa_run(_make_grouped_manifest_request(
+        TestSuiteRunner.DEFAULT_MANIFEST_PATH,
+        _DEFAULT_MANIFEST_GROUPS
+    ))
 
 func run_targeted_diagnostic(diagnostic_id: String) -> String:
     ## Launch a specific diagnostic by manifest ID.
@@ -288,6 +319,180 @@ func _strip_logs(result: Variant) -> Dictionary:
         summary[key] = _duplicate_variant(dictionary[key])
     return summary
 
+func _duplicate_array(value: Array) -> Array:
+    var duplicate: Array = []
+    for element in value:
+        duplicate.append(_duplicate_variant(element))
+    return duplicate
+
+func _normalize_manifest_groups(source: Variant) -> Array:
+    var groups: Array = []
+    if source is Array:
+        for entry in source:
+            var descriptor := _normalize_manifest_group_entry(entry)
+            if descriptor.get("id", "") != "":
+                groups.append(descriptor)
+    elif source is String:
+        var descriptor := _normalize_manifest_group_entry(source)
+        if descriptor.get("id", "") != "":
+            groups.append(descriptor)
+    return groups
+
+func _normalize_manifest_group_entry(source: Variant) -> Dictionary:
+    var descriptor: Dictionary = {}
+    if source is Dictionary:
+        descriptor = (source as Dictionary).duplicate(true)
+    elif source is String:
+        descriptor = {"id": String(source)}
+    var group_id := String(descriptor.get("id", "")).strip_edges()
+    if group_id == "":
+        return {}
+    var label := String(descriptor.get("label", descriptor.get("name", "")))
+    if label.strip_edges() == "":
+        label = _resolve_group_label(group_id)
+    descriptor["id"] = group_id
+    descriptor["label"] = label
+    return descriptor
+
+func _resolve_group_label(group_id: String) -> String:
+    for descriptor in _DEFAULT_MANIFEST_GROUPS:
+        if descriptor is Dictionary and String(descriptor.get("id", "")) == group_id:
+            return String(descriptor.get("label", group_id))
+    var readable := group_id.replace("_", " ")
+    if readable == "":
+        return group_id
+    return readable.capitalize()
+
+func _execute_manifest_groups(runner: Object, manifest_path: String, groups: Array, yield_frames: bool) -> Dictionary:
+    var aggregated := _make_grouped_summary_template()
+    aggregated["manifest_path"] = manifest_path
+    aggregated["groups"] = _duplicate_array(groups)
+    var aggregated_logs := PackedStringArray()
+    var collected_group_summaries: Array = []
+
+    if groups.is_empty():
+        var warning_line := "No manifest groups provided; grouped run aborted."
+        aggregated_logs.append(warning_line)
+        aggregated["failure_summaries"].append("Grouped manifest :: %s" % warning_line)
+        aggregated["overall_success"] = false
+        aggregated["exit_code"] = 1
+        aggregated["logs"] = aggregated_logs
+        return aggregated
+
+    for descriptor_variant in groups:
+        if not (descriptor_variant is Dictionary):
+            continue
+        var descriptor: Dictionary = descriptor_variant
+        var group_id := String(descriptor.get("id", "")).strip_edges()
+        if group_id == "":
+            continue
+        var group_label := String(descriptor.get("label", _resolve_group_label(group_id)))
+        var group_result_variant := runner.call("run_group", manifest_path, group_id, yield_frames)
+        if group_result_variant is Object and group_result_variant.get_class() == "GDScriptFunctionState":
+            group_result_variant = await group_result_variant
+
+        var group_result: Dictionary = {}
+        if group_result_variant is Dictionary:
+            group_result = group_result_variant
+        else:
+            var warning := "Group %s :: Runner returned an unexpected payload." % group_label
+            group_result = {
+                "exit_code": 1,
+                "overall_success": false,
+                "failure_summaries": [warning],
+                "logs": PackedStringArray([warning]),
+            }
+
+        var group_logs := _normalize_logs(group_result.get("logs", PackedStringArray()))
+        aggregated_logs.append_array(group_logs)
+
+        var group_summary := _strip_logs(group_result)
+        group_summary["group_id"] = group_id
+        group_summary["group_label"] = group_label
+        group_summary = _normalize_summary_payload(group_summary)
+
+        for key in _SUMMARY_NUMERIC_KEYS:
+            aggregated[key] += int(group_summary.get(key, 0))
+
+        var failures_variant := group_summary.get("failure_summaries", [])
+        if failures_variant is Array:
+            for failure in failures_variant:
+                aggregated["failure_summaries"].append(failure)
+        elif failures_variant != null:
+            aggregated["failure_summaries"].append(String(failures_variant))
+
+        var group_exit_code := int(group_summary.get("exit_code", 0))
+        if group_exit_code != 0 and group_exit_code > aggregated.get("exit_code", 0):
+            aggregated["exit_code"] = group_exit_code
+        if group_exit_code != 0:
+            aggregated["overall_success"] = false
+        elif not bool(group_summary.get("overall_success", group_exit_code == 0)):
+            aggregated["overall_success"] = false
+
+        collected_group_summaries.append(group_summary.duplicate(true))
+
+    if aggregated["exit_code"] == 0 and not aggregated.get("overall_success", true):
+        aggregated["exit_code"] = 1
+
+    aggregated["group_summaries"] = collected_group_summaries
+    aggregated["logs"] = aggregated_logs
+    if aggregated["overall_success"]:
+        aggregated["exit_code"] = 0
+    return aggregated
+
+func _make_grouped_summary_template() -> Dictionary:
+    return {
+        "aggregate_total": 0,
+        "aggregate_passed": 0,
+        "aggregate_failed": 0,
+        "suite_total": 0,
+        "suite_passed": 0,
+        "suite_failed": 0,
+        "diagnostic_total": 0,
+        "diagnostic_passed": 0,
+        "diagnostic_failed": 0,
+        "overall_success": true,
+        "failure_summaries": [],
+        "exit_code": 0,
+        "group_summaries": [],
+        "logs": PackedStringArray(),
+    }
+
+func _make_grouped_manifest_request(manifest_path: String, groups: Array) -> Dictionary:
+    ## Build the default grouped manifest request consumed by `_launch_qa_run()`.
+    return {
+        "mode": "manifest_groups",
+        "manifest_path": manifest_path,
+        "label": "Full suite",
+        "groups": _duplicate_array(groups),
+    }
+
+func _normalize_summary_payload(summary: Dictionary) -> Dictionary:
+    var normalized: Dictionary = {}
+    for key in summary.keys():
+        normalized[key] = _duplicate_variant(summary[key])
+
+    for key in _SUMMARY_NUMERIC_KEYS:
+        normalized[key] = int(normalized.get(key, 0))
+
+    var failures_variant := normalized.get("failure_summaries", [])
+    var failures: Array = []
+    if failures_variant is Array:
+        for failure in failures_variant:
+            failures.append(failure)
+    elif failures_variant != null:
+        failures.append(String(failures_variant))
+    normalized["failure_summaries"] = failures
+
+    var exit_code := int(normalized.get("exit_code", 0))
+    normalized["exit_code"] = exit_code
+    if normalized.has("overall_success"):
+        normalized["overall_success"] = bool(normalized.get("overall_success", false))
+    else:
+        normalized["overall_success"] = exit_code == 0
+
+    return normalized
+
 func _process_active_qa_run() -> void:
     var request := _qa_active_request.duplicate(true)
     var runner := _qa_runner
@@ -320,6 +525,27 @@ func _process_active_qa_run() -> void:
             result = {
                 "exit_code": 1,
                 "logs": PackedStringArray(["QA runner does not implement run_single_diagnostic()."]),
+            }
+    elif mode == "manifest_groups":
+        if runner.has_method("run_group"):
+            var manifest_path := String(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
+            var groups := _normalize_manifest_groups(request.get("groups", []))
+            if groups.is_empty():
+                groups = _duplicate_array(_DEFAULT_MANIFEST_GROUPS)
+            var group_result_variant := _execute_manifest_groups(runner, manifest_path, groups, yield_frames)
+            if group_result_variant is Object and group_result_variant.get_class() == "GDScriptFunctionState":
+                group_result_variant = await group_result_variant
+            if group_result_variant is Dictionary:
+                result = group_result_variant
+            else:
+                result = {
+                    "exit_code": 1,
+                    "logs": PackedStringArray(["Grouped manifest runner returned an unexpected payload."]),
+                }
+        else:
+            result = {
+                "exit_code": 1,
+                "logs": PackedStringArray(["QA runner does not implement run_group()."]),
             }
     else:
         if runner.has_method("run_manifest"):
@@ -356,6 +582,10 @@ func _finish_qa_run(request: Dictionary, result: Dictionary) -> void:
     summary["requested_at"] = int(request.get("requested_at", Time.get_ticks_msec()))
     summary["completed_at"] = Time.get_ticks_msec()
     summary["exit_code"] = int(summary.get("exit_code", result.get("exit_code", 1)))
+    var group_summaries := _extract_group_summaries(summary.get("group_summaries", []))
+    if not group_summaries.is_empty():
+        summary["group_summaries"] = group_summaries
+        summary["group_summary_lookup"] = _build_group_summary_lookup(group_summaries)
 
     _qa_recent_runs.insert(0, summary.duplicate(true))
     if _qa_recent_runs.size() > _MAX_QA_RUN_HISTORY:
@@ -365,6 +595,7 @@ func _finish_qa_run(request: Dictionary, result: Dictionary) -> void:
     payload["request"] = request.duplicate(true)
     payload["result"] = summary.duplicate(true)
     payload["logs"] = logs
+    _attach_group_metadata(payload, summary)
 
     emit_signal("qa_run_completed", run_id, payload)
 
@@ -398,6 +629,39 @@ func _persist_qa_log(run_id: String, logs: PackedStringArray) -> String:
 
 func _on_qa_runner_log(run_id: String, line: String) -> void:
     emit_signal("qa_run_output", run_id, String(line))
+
+func _attach_group_metadata(payload: Dictionary, summary: Dictionary) -> void:
+    ## Ensure QA consumers can access grouped manifest results without
+    ## re-normalising controller payloads.
+    var group_summaries := _extract_group_summaries(summary.get("group_summaries", []))
+    if group_summaries.is_empty():
+        return
+    payload["group_summaries"] = group_summaries
+    payload["group_summary_lookup"] = _build_group_summary_lookup(group_summaries)
+
+func _extract_group_summaries(source: Variant) -> Array:
+    var summaries: Array = []
+    if source is Array:
+        for entry in source:
+            if entry is Dictionary:
+                summaries.append((entry as Dictionary).duplicate(true))
+    elif source is Dictionary:
+        for entry in (source as Dictionary).values():
+            if entry is Dictionary:
+                summaries.append((entry as Dictionary).duplicate(true))
+    return summaries
+
+func _build_group_summary_lookup(group_summaries: Array) -> Dictionary:
+    var lookup: Dictionary = {}
+    for entry_variant in group_summaries:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var group_id := String(entry.get("group_id", "")).strip_edges()
+        if group_id == "":
+            continue
+        lookup[group_id] = entry.duplicate(true)
+    return lookup
 
 func _refresh_rng_processor() -> void:
     _cached_rng_processor = null

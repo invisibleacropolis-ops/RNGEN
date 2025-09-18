@@ -2,11 +2,11 @@ extends VBoxContainer
 
 ## Panel that orchestrates regression and diagnostic runs directly from the Platform GUI.
 ##
-## The QA panel exposes quick actions for the headless `run_all_tests.gd` suite,
-## streams log output as the helper executes, and caches recent runs so support
-## engineers can jump to stored summaries or open generated log files. Results
-## are sourced from the RNGProcessor controller to keep middleware wiring
-## consistent with the rest of the editor tooling.
+## The QA panel exposes quick actions for the grouped manifest runner,
+## streams log output as each manifest group executes, and caches recent runs so
+## support engineers can jump to stored summaries or open generated log files.
+## Results are sourced from the RNGProcessor controller to keep middleware
+## wiring consistent with the rest of the editor tooling.
 
 @export var controller_path: NodePath
 
@@ -50,7 +50,7 @@ func _ready() -> void:
 
     _log_path_field.editable = false
 
-    _guidance_label.bbcode_text = "Capture the suite output, then [url=res://devdocs/platform_gui_handbook.md#deterministic-qa-workflow]archive DebugRNG timelines[/url] via the Logs panel when failures occur."
+    _guidance_label.bbcode_text = "Capture the generator core, platform GUI, and diagnostics group output, then [url=res://devdocs/platform_gui_handbook.md#deterministic-qa-workflow]archive DebugRNG timelines[/url] via the Logs panel when failures occur."
 
     _ensure_controller_connections()
     _populate_diagnostics()
@@ -147,10 +147,15 @@ func _on_controller_run_completed(run_id: String, payload: Dictionary) -> void:
     _active_log_path = log_path
     _log_path_field.text = log_path
     var exit_code := int(result.get("exit_code", payload.get("exit_code", 1)))
+    var status_lines := PackedStringArray()
     if exit_code == 0:
-        _set_status(_format_success("QA run completed successfully."))
+        status_lines.append(_format_success("QA run completed successfully."))
     else:
-        _set_status(_format_error("QA run reported failures. Review the log for details."))
+        status_lines.append(_format_error("QA run reported failures. Review the log for details."))
+    var group_breakdown := _format_group_breakdown_lines(_resolve_group_summaries(payload, result))
+    if not group_breakdown.is_empty():
+        status_lines.append_array(group_breakdown)
+    _set_status(status_lines.join("\n"))
     _active_run_id = ""
     _refresh_history()
     _update_buttons()
@@ -219,6 +224,9 @@ func _refresh_history() -> void:
         var index := _history_list.add_item(label)
         _history_list.set_item_metadata(index, run_id)
         _history_lookup[run_id] = record.duplicate(true)
+        var tooltip := _format_history_tooltip(record)
+        if tooltip != "":
+            _history_list.set_item_tooltip(index, tooltip)
     _update_buttons()
 
 func _format_history_label(record: Dictionary) -> String:
@@ -230,17 +238,27 @@ func _format_history_label(record: Dictionary) -> String:
         var seconds := completed_ms / 1000
         completed = Time.get_datetime_string_from_unix_time(seconds)
     var status_icon := "✅" if exit_code == 0 else "✗"
+    var suffix := _format_group_history_suffix(record)
     if completed != "":
+        if suffix != "":
+            return "%s %s (%s) %s" % [status_icon, label, completed, suffix]
         return "%s %s (%s)" % [status_icon, label, completed]
+    if suffix != "":
+        return "%s %s %s" % [status_icon, label, suffix]
     return "%s %s" % [status_icon, label]
 
 func _render_history_log_hint(record: Dictionary) -> void:
     var exit_code := int(record.get("exit_code", 1))
     var label := String(record.get("label", record.get("mode", "QA run")))
+    var lines := PackedStringArray()
     if exit_code == 0:
-        _set_status(_format_success("%s completed successfully." % label))
+        lines.append(_format_success("%s completed successfully." % label))
     else:
-        _set_status(_format_error("%s reported failures; inspect the stored log for details." % label))
+        lines.append(_format_error("%s reported failures; inspect the stored log for details." % label))
+    var breakdown := _format_group_breakdown_lines(_extract_group_summaries(record.get("group_summaries", [])))
+    if not breakdown.is_empty():
+        lines.append_array(breakdown)
+    _set_status(lines.join("\n"))
 
 func _get_selected_diagnostic_id() -> String:
     var selected := _diagnostic_selector.get_selected_id()
@@ -270,6 +288,112 @@ func _format_success(message: String) -> String:
 
 func _format_error(message: String) -> String:
     return "[color=%s]%s[/color]" % [_ERROR_COLOR.to_html(), message]
+
+func _extract_group_summaries(source: Variant) -> Array:
+    var summaries: Array = []
+    if source is Array:
+        for entry in source:
+            if entry is Dictionary:
+                summaries.append(entry)
+    elif source is Dictionary:
+        for entry in source.values():
+            if entry is Dictionary:
+                summaries.append(entry)
+    return summaries
+
+func _resolve_group_summaries(payload: Dictionary, result: Dictionary) -> Array:
+    var primary := _extract_group_summaries(result.get("group_summaries", []))
+    if not primary.is_empty():
+        return primary
+    return _extract_group_summaries(payload.get("group_summaries", []))
+
+func _resolve_group_label_for_display(entry: Dictionary) -> String:
+    var label := String(entry.get("group_label", ""))
+    if label.strip_edges() != "":
+        return label
+    var group_id := String(entry.get("group_id", "")).strip_edges()
+    if group_id == "":
+        return "Group"
+    var parts := group_id.split("_")
+    var words := PackedStringArray()
+    for part_variant in parts:
+        var part := String(part_variant).strip_edges()
+        if part == "":
+            continue
+        words.append(part.capitalize())
+    if words.is_empty():
+        return group_id.capitalize()
+    return " ".join(words)
+
+func _resolve_group_badge_code(entry: Dictionary) -> String:
+    var group_id := String(entry.get("group_id", "")).strip_edges()
+    if group_id == "":
+        var label := _resolve_group_label_for_display(entry)
+        if label == "":
+            return "GRP"
+        return label.substr(0, min(label.length(), 3)).to_upper()
+    var pieces := group_id.split("_")
+    var code := ""
+    for piece_variant in pieces:
+        var piece := String(piece_variant).strip_edges()
+        if piece == "":
+            continue
+        code += piece.substr(0, 1).to_upper()
+    if code == "":
+        return group_id.to_upper()
+    return code
+
+func _resolve_group_icon(entry: Dictionary) -> String:
+    return "✅" if int(entry.get("exit_code", 0)) == 0 else "✗"
+
+func _format_plain_group_summary(entry: Dictionary) -> String:
+    var icon := _resolve_group_icon(entry)
+    var label := _resolve_group_label_for_display(entry)
+    var passed := int(entry.get("aggregate_passed", entry.get("suite_passed", 0)))
+    var failed := int(entry.get("aggregate_failed", entry.get("suite_failed", 0)))
+    var total := int(entry.get("aggregate_total", passed + failed))
+    return "%s %s: %d passed, %d failed (%d total)" % [icon, label, passed, failed, total]
+
+func _format_group_breakdown_lines(group_summaries: Array) -> PackedStringArray:
+    var lines := PackedStringArray()
+    for entry_variant in group_summaries:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var summary_text := _format_plain_group_summary(entry)
+        if int(entry.get("exit_code", 0)) == 0:
+            lines.append(_format_success(summary_text))
+        else:
+            lines.append(_format_error(summary_text))
+    return lines
+
+func _format_group_history_suffix(record: Dictionary) -> String:
+    var group_summaries := _extract_group_summaries(record.get("group_summaries", []))
+    if group_summaries.is_empty():
+        return ""
+    var badges := PackedStringArray()
+    for entry_variant in group_summaries:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var code := _resolve_group_badge_code(entry)
+        badges.append("%s%s" % [code, _resolve_group_icon(entry)])
+    if badges.is_empty():
+        return ""
+    return "[%s]" % " | ".join(badges)
+
+func _format_history_tooltip(record: Dictionary) -> String:
+    var group_summaries := _extract_group_summaries(record.get("group_summaries", []))
+    if group_summaries.is_empty():
+        return ""
+    var lines := PackedStringArray()
+    lines.append(String(record.get("label", record.get("mode", "QA run"))))
+    for entry_variant in group_summaries:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        lines.append(_format_plain_group_summary(entry))
+    return lines.join("\n")
 
 func _ensure_controller_connections() -> void:
     var controller := _get_controller()
