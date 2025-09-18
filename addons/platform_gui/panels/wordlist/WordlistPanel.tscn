@@ -5,8 +5,8 @@
 
 [node name="WordlistPanel" type="VBoxContainer"]
 custom_minimum_size = Vector2(480, 0)
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 script = ExtResource("1_x0gui")
 
@@ -18,21 +18,24 @@ theme_override_font_sizes/font_size = 18
 text = "Word List Strategy"
 
 [node name="HeaderSpacer" type="Control" parent="Header"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+size_flags_horizontal = 3
 
 [node name="RefreshButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata and the resource catalogue."
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="MetadataSummary" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="NotesLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 text = ""
 
 [node name="ResourceSection" type="VBoxContainer" parent="."]
@@ -42,35 +45,38 @@ theme_override_constants/separation = 4
 text = "Available word lists"
 
 [node name="ResourceList" type="ItemList" parent="ResourceSection"]
+unique_name_in_owner = true
 allow_reselect = true
 allow_rmb_select = true
 custom_minimum_size = Vector2(0, 220)
-select_mode = ItemList.SELECT_MULTI
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_EXPAND_FILL
-focus_mode = Control.FOCUS_ALL
+select_mode = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="OptionsSection" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 12
 
 [node name="UseWeights" type="CheckButton" parent="OptionsSection"]
+unique_name_in_owner = true
 text = "Use weights when available"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="DelimiterContainer" type="HBoxContainer" parent="OptionsSection"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
-size_flags_vertical = Control.SIZE_FILL
+size_flags_horizontal = 3
+size_flags_vertical = 1
 
 [node name="DelimiterLabel" type="Label" parent="OptionsSection/DelimiterContainer"]
 text = "Delimiter"
 
 [node name="DelimiterInput" type="LineEdit" parent="OptionsSection/DelimiterContainer"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+unique_name_in_owner = true
+size_flags_horizontal = 3
 text = " "
 tooltip_text = "Leave blank to use a single space between selections."
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="PreviewRow" type="HBoxContainer" parent="."]
@@ -80,23 +86,27 @@ theme_override_constants/separation = 12
 text = "Seed"
 
 [node name="SeedInput" type="LineEdit" parent="PreviewRow"]
-size_flags_horizontal = Control.SIZE_EXPAND_FILL
+unique_name_in_owner = true
+size_flags_horizontal = 3
 placeholder_text = "Optional seed label"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="PreviewButton" type="Button" parent="PreviewRow"]
+unique_name_in_owner = true
 text = "Preview"
-focus_mode = Control.FOCUS_ALL
+focus_mode = 2
 theme_override_styles/focus = ExtResource("2_z1lhr")
 
 [node name="ValidationLabel" type="Label" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 self_modulate = Color(0.870588, 0.196078, 0.203922, 1)
 visible = false
 
 [node name="PreviewOutput" type="RichTextLabel" parent="."]
-autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+unique_name_in_owner = true
+autowrap_mode = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
