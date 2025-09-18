@@ -2,85 +2,105 @@
   "suites": [
     {
       "name": "Generator Strategy Suite",
-      "path": "res://name_generator/tests/test_generator_strategy.gd"
+      "path": "res://name_generator/tests/test_generator_strategy.gd",
+      "group": "generator_core"
     },
     {
       "name": "Hybrid Strategy Suite",
-      "path": "res://name_generator/tests/test_hybrid_strategy.gd"
+      "path": "res://name_generator/tests/test_hybrid_strategy.gd",
+      "group": "generator_core"
     },
     {
       "name": "Debug RNG Suite",
-      "path": "res://name_generator/tests/test_debug_rng.gd"
+      "path": "res://name_generator/tests/test_debug_rng.gd",
+      "group": "generator_core"
     },
     {
       "name": "RNG Processor Suite",
-      "path": "res://name_generator/tests/test_rng_processor.gd"
+      "path": "res://name_generator/tests/test_rng_processor.gd",
+      "group": "generator_core"
     },
     {
       "name": "RNG Processor Headless Suite",
-      "path": "res://tests/test_rng_processor_headless.gd"
+      "path": "res://tests/test_rng_processor_headless.gd",
+      "group": "generator_core"
     },
     {
       "name": "RNG Manager Seed Reset Suite",
-      "path": "res://tests/test_rng_manager_seed_reset.gd"
+      "path": "res://tests/test_rng_manager_seed_reset.gd",
+      "group": "generator_core"
     },
     {
       "name": "Platform GUI RNG Processor Controller Suite",
-      "path": "res://tests/platform_gui/test_rng_processor_controller.gd"
+      "path": "res://tests/platform_gui/test_rng_processor_controller.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Strategy Metadata Service Suite",
-      "path": "res://tests/gui/test_strategy_metadata_service.gd"
+      "path": "res://tests/gui/test_strategy_metadata_service.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Wordlist Panel Suite",
-      "path": "res://tests/gui/test_wordlist_panel.gd"
+      "path": "res://tests/gui/test_wordlist_panel.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Markov Panel Suite",
-      "path": "res://tests/gui/test_markov_panel.gd"
+      "path": "res://tests/gui/test_markov_panel.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Hybrid Pipeline Panel Suite",
-      "path": "res://tests/gui/test_hybrid_pipeline_panel.gd"
+      "path": "res://tests/gui/test_hybrid_pipeline_panel.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Debug Toolbar Suite",
-      "path": "res://tests/gui/test_debug_toolbar.gd"
+      "path": "res://tests/gui/test_debug_toolbar.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Debug Log Panel Suite",
-      "path": "res://tests/gui/test_debug_log_panel.gd"
+      "path": "res://tests/gui/test_debug_log_panel.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI QA Panel Suite",
-      "path": "res://tests/gui/test_qa_panel.gd"
+      "path": "res://tests/gui/test_qa_panel.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Dataset Inspector Panel Suite",
-      "path": "res://tests/gui/test_dataset_inspector_panel.gd"
+      "path": "res://tests/gui/test_dataset_inspector_panel.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Platform GUI Main Interface Suite",
-      "path": "res://tests/interface/test_main_interface_scene.gd"
+      "path": "res://tests/interface/test_main_interface_scene.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Formulas Workspace Suite",
-      "path": "res://tests/gui/test_formulas_workspace.gd"
+      "path": "res://tests/gui/test_formulas_workspace.gd",
+      "group": "platform_gui"
     },
     {
       "name": "Name Generator Diagnostic",
       "path": "res://tests/diagnostics/name_generator_diagnostic.gd",
-      "id": "name_generator"
+      "id": "name_generator",
+      "group": "diagnostics"
     },
     {
       "name": "RNG Stream Router Diagnostic",
-      "path": "res://tests/diagnostics/rng_stream_router_diagnostic.gd"
+      "path": "res://tests/diagnostics/rng_stream_router_diagnostic.gd",
+      "group": "diagnostics"
     },
     {
       "name": "Name Generator RNG Manager Diagnostic",
       "path": "res://tests/diagnostics/name_generator_rng_manager_diagnostic.gd",
-      "id": "ng_rng_manager"
+      "id": "ng_rng_manager",
+      "group": "diagnostics"
     }
   ],
   "diagnostics": [
@@ -88,25 +108,29 @@
       "id": "utils_array_utils",
       "name": "Array Utilities Diagnostic",
       "summary": "Verifies deterministic helpers for RNG-aware array operations.",
-      "path": "res://tests/diagnostics/utils_array_utils_diagnostic.gd"
+      "path": "res://tests/diagnostics/utils_array_utils_diagnostic.gd",
+      "group": "diagnostics"
     },
     {
       "id": "deterministic_array_utils",
       "name": "Deterministic Array Utilities Diagnostic",
       "summary": "Checks the deterministic shuffle helpers used by the generator stack.",
-      "path": "res://tests/diagnostics/deterministic_array_utils_diagnostic.gd"
+      "path": "res://tests/diagnostics/deterministic_array_utils_diagnostic.gd",
+      "group": "diagnostics"
     },
     {
       "id": "wordlist_strategy",
       "name": "Word List Strategy Diagnostic",
       "summary": "Validates list-driven name generation strategies and supporting data.",
-      "path": "res://tests/diagnostics/wordlist_strategy_diagnostic.gd"
+      "path": "res://tests/diagnostics/wordlist_strategy_diagnostic.gd",
+      "group": "diagnostics"
     },
     {
       "id": "syllable_chain_strategy",
       "name": "Syllable Chain Strategy Diagnostic",
       "summary": "Exercises syllable chain configuration and generation edge cases.",
-      "path": "res://tests/diagnostics/syllable_chain_strategy_diagnostic.gd"
+      "path": "res://tests/diagnostics/syllable_chain_strategy_diagnostic.gd",
+      "group": "diagnostics"
     }
   ]
 }
