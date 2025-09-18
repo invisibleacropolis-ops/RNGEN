@@ -141,32 +141,34 @@ func _refresh_metadata() -> void:
 
     var required_list: Array[String] = []
     if required_variant is PackedStringArray:
-        required_list.assign(required_variant)
+        for value in required_variant:
+            required_list.append(String(value))
     elif required_variant is Array:
         for value in required_variant:
             required_list.append(String(value))
 
-    var summary_parts := []
+    var summary_parts: Array[String] = []
     if not required_list.is_empty():
-        summary_parts.append("Requires: %s" % ", ".join(required_list))
+        summary_parts.append("Requires: %s" % _join_strings(required_list, ", "))
     if optional is Dictionary and not optional.is_empty():
         var optional_strings: Array[String] = []
         for key in optional.keys():
             var variant_type := int(optional[key])
-            optional_strings.append("%s (%s)" % [key, Variant.get_type_name(variant_type)])
+            optional_strings.append("%s (%s)" % [key, type_string(variant_type)])
         optional_strings.sort()
-        summary_parts.append("Optional: %s" % ", ".join(optional_strings))
-    _metadata_summary.text = " | ".join(summary_parts)
+        summary_parts.append("Optional: %s" % _join_strings(optional_strings, ", "))
+    _metadata_summary.text = _join_strings(summary_parts, " | ")
 
     var notes: Array[String] = []
     if notes_variant is PackedStringArray:
-        notes.assign(notes_variant)
+        for value in notes_variant:
+            notes.append(String(value))
     elif notes_variant is Array:
         for value in notes_variant:
             notes.append(String(value))
 
     if not notes.is_empty():
-        _notes_label.text = "\n".join(notes)
+        _notes_label.text = _join_strings(notes, "\n")
     else:
         _notes_label.text = ""
 
@@ -204,7 +206,7 @@ func _refresh_resource_catalog() -> void:
             detail_parts.append(metadata["locale"])
         if metadata["domain"] != "":
             detail_parts.append(metadata["domain"])
-        var detail_suffix := detail_parts.join(" · ")
+        var detail_suffix: String = _join_strings(detail_parts, " · ")
         var line := display_name
         if detail_suffix != "":
             line += " — %s" % detail_suffix
@@ -240,7 +242,7 @@ func _discover_markov_resources() -> Array:
                 if not (entry.ends_with(".tres") or entry.ends_with(".res")):
                     entry = dir.get_next()
                     continue
-                var resource_path := path.path_join(entry)
+                var resource_path: String = path.path_join(entry)
                 if not ResourceLoader.exists(resource_path):
                     entry = dir.get_next()
                     continue
@@ -263,7 +265,7 @@ func _derive_display_name(path: String) -> String:
     var segments := path.split("/")
     if segments.is_empty():
         return path
-    var filename := segments.back()
+    var filename := String(segments[segments.size() - 1])
     var trimmed := filename.replace(".tres", "").replace(".res", "")
     return trimmed.capitalize()
 
@@ -292,9 +294,11 @@ func _update_selected_resource_summary() -> void:
 
 func _analyse_model(model: MarkovModelResource) -> Dictionary:
     var states := PackedStringArray()
-    states.assign(model.states)
+    for token in model.states:
+        states.append(String(token))
     var end_tokens := PackedStringArray()
-    end_tokens.assign(model.end_tokens)
+    for token in model.end_tokens:
+        end_tokens.append(String(token))
     var start_tokens := PackedStringArray()
     var invalid_references := PackedStringArray()
     var invalid_reference_lookup := {}
@@ -369,7 +373,7 @@ func _analyse_model(model: MarkovModelResource) -> Dictionary:
                     temperature_issues.append(context)
                 elif float(temperature_value) <= 0.0:
                     temperature_issues.append(context)
-            var neighbours: Array = adjacency[state_id]
+            var neighbours: Array = adjacency[state_id] if adjacency[state_id] is Array else []
             neighbours.append(token_value)
             adjacency[state_id] = neighbours
             if end_tokens.has(token_value):
@@ -487,7 +491,7 @@ func _format_model_summary(model: MarkovModelResource, analysis: Dictionary) -> 
         lines.append("[b]Temperature overrides[/b]: %d (%.2f–%.2f), default %.2f" % [overrides.size(), min_override, max_override, default_temperature])
     else:
         lines.append("[b]Temperature overrides[/b]: 0 (default %.2f)" % default_temperature)
-    return "\n".join(lines)
+    return _join_strings(lines, "\n")
 
 func _format_health_summary(analysis: Dictionary) -> String:
     var lines: Array[String] = []
@@ -536,7 +540,7 @@ func _format_health_summary(analysis: Dictionary) -> String:
 
     if lines.is_empty():
         return ""
-    return "\n".join(lines)
+    return _join_strings(lines, "\n")
 
 func _wrap_health_message(message: String, colour: Color) -> String:
     return "[color=#%s]%s[/color]" % [colour.to_html(false), message]
@@ -552,12 +556,13 @@ func _format_token_sample(tokens: PackedStringArray, limit: int = 4) -> String:
         sample.append(token)
     if tokens.size() > limit:
         sample.append("…")
-    return ", ".join(sample)
+    return _join_strings(sample, ", ")
 
 func _to_packed_string_array(value: Variant) -> PackedStringArray:
     var result := PackedStringArray()
     if value is PackedStringArray:
-        result.assign(value)
+        for entry in value:
+            result.append(String(entry))
     elif value is Array:
         for entry in value:
             result.append(String(entry))
@@ -575,7 +580,7 @@ func _to_float_array(value: Variant) -> Array[float]:
             result.append(float(entry))
     return result
 
-func _update_preview_state(payload: Dictionary) -> void:
+func _update_preview_state(payload: Variant) -> void:
     _preview_label.visible = false
     _preview_label.text = ""
     _validation_label.visible = false
@@ -606,13 +611,13 @@ func _format_error_details(details: Variant) -> String:
         for key in keys:
             var value := dictionary[key]
             lines.append("- [b]%s[/b]: %s" % [String(key), _stringify_detail_value(value)])
-        return "[b]Details:[/b]\n%s" % "\n".join(lines)
+        return "[b]Details:[/b]\n%s" % _join_strings(lines, "\n")
     if details is Array and (details as Array).size() > 0:
         var array: Array = details
         var lines: Array[String] = []
         for item in array:
             lines.append("- %s" % _stringify_detail_value(item))
-        return "[b]Details:[/b]\n%s" % "\n".join(lines)
+        return "[b]Details:[/b]\n%s" % _join_strings(lines, "\n")
     return ""
 
 func _stringify_detail_value(value: Variant) -> String:
@@ -621,7 +626,7 @@ func _stringify_detail_value(value: Variant) -> String:
         var items: Array[String] = []
         for entry in packed:
             items.append(String(entry))
-        return ", ".join(items)
+        return _join_strings(items, ", ")
     if value is Array or value is Dictionary:
         return JSON.stringify(value)
     return String(value)
@@ -671,6 +676,18 @@ func _get_metadata_service() -> Object:
             _cached_metadata_service = singleton
             return _cached_metadata_service
     return null
+
+func _join_strings(values: Variant, separator: String) -> String:
+    var combined := ""
+    var is_first := true
+    for value in values:
+        var segment := String(value)
+        if is_first:
+            combined = segment
+            is_first = false
+        else:
+            combined += "%s%s" % [separator, segment]
+    return combined
 
 func _is_object_valid(candidate: Object) -> bool:
     if candidate == null:

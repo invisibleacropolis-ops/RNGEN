@@ -205,22 +205,22 @@ func _refresh_metadata() -> void:
     if service.has_method("get_optional_key_types"):
         optional = service.call("get_optional_key_types", TEMPLATE_STRATEGY_ID)
 
-    var summary_parts := []
+    var summary_parts: Array[String] = []
     if required.size() > 0:
-        summary_parts.append("Required: %s" % ", ".join(required))
+        summary_parts.append("Required: %s" % _join_strings(required, ", "))
     if not optional.is_empty():
         var optional_keys := PackedStringArray()
         for key in optional.keys():
             optional_keys.append(String(key))
         optional_keys.sort()
-        summary_parts.append("Optional: %s" % ", ".join(optional_keys))
-    _metadata_summary.text = " | ".join(summary_parts)
+        summary_parts.append("Optional: %s" % _join_strings(optional_keys, ", "))
+    _metadata_summary.text = _join_strings(summary_parts, " | ")
 
     var notes := PackedStringArray()
     if service.has_method("get_default_notes"):
         notes = service.call("get_default_notes", TEMPLATE_STRATEGY_ID)
     if notes.size() > 0:
-        _notes_label.text = "\n".join(notes)
+        _notes_label.text = _join_strings(notes, "\n")
     else:
         _notes_label.text = ""
 
@@ -235,7 +235,7 @@ func _update_seed_helper() -> void:
     if stream_hint != "" or seed_hint != "":
         helper_lines.append("Latest middleware seed: %s" % (seed_hint if seed_hint != "" else "—"))
         helper_lines.append("Latest middleware stream: %s" % (stream_hint if stream_hint != "" else "—"))
-    _seed_helper.text = "\n".join(helper_lines)
+    _seed_helper.text = _join_strings(helper_lines, "\n")
 
 func _rebuild_configuration_views() -> void:
     var evaluation := _evaluate_configuration()
@@ -358,7 +358,7 @@ func _build_token_structure(
             token_node["errors"].append(missing_error)
             errors.append(missing_error)
         else:
-            var generator_config_variant := sub_generators[token]
+            var generator_config_variant: Variant = sub_generators[token]
             if typeof(generator_config_variant) != TYPE_DICTIONARY:
                 var type_error := {
                     "code": "invalid_config_type",
@@ -465,10 +465,10 @@ func _populate_token_children(parent: TreeItem, children: Array) -> void:
         var errors: Array = child.get("errors", [])
         if not errors.is_empty():
             token_item.set_custom_color(0, Color(0.8, 0.2, 0.2))
-            var tooltips := []
+            var tooltips: Array[String] = []
             for error in errors:
                 tooltips.append(String(error.get("message", "")))
-            token_item.set_tooltip_text(0, "\n".join(tooltips))
+            token_item.set_tooltip_text(0, _join_strings(tooltips, "\n"))
         _populate_token_children(token_item, child.get("children", []))
 
 func _apply_validation_feedback(errors: Array) -> void:
@@ -485,7 +485,9 @@ func _apply_validation_feedback(errors: Array) -> void:
     if errors.is_empty():
         return
 
-    var primary := errors[0]
+    var primary: Dictionary = {}
+    if errors.size() > 0 and errors[0] is Dictionary:
+        primary = errors[0]
     _validation_label.visible = true
     _validation_label.text = String(primary.get("message", "Template configuration invalid."))
     _validation_label.tooltip_text = _validation_label.text
@@ -508,11 +510,11 @@ func _apply_validation_feedback(errors: Array) -> void:
         hint_messages.append(hint)
     if not hint_messages.is_empty():
         _fix_it_label.visible = true
-        _fix_it_label.text = "\n\n".join(hint_messages)
+        _fix_it_label.text = _join_strings(hint_messages, "\n\n")
         if hint_tooltips.is_empty():
             _fix_it_label.tooltip_text = _fix_it_label.text
         else:
-            _fix_it_label.tooltip_text = "\n\n".join(hint_tooltips)
+            _fix_it_label.tooltip_text = _join_strings(hint_tooltips, "\n\n")
 
     for error in errors:
         match String(error.get("target", "")):
@@ -586,8 +588,8 @@ func _compose_guidance_display(guidance: Dictionary) -> Dictionary:
             tooltip_segments.append("Platform GUI Handbook › %s" % handbook_label)
         text_segments.append(handbook_line)
     return {
-        "text": "\n".join(text_segments),
-        "tooltip": "\n".join(tooltip_segments),
+        "text": _join_strings(text_segments, "\n"),
+        "tooltip": _join_strings(tooltip_segments, "\n"),
     }
 
 func _track_default_modulate(control: Control) -> void:
@@ -666,6 +668,18 @@ func _get_metadata_service() -> Object:
             _cached_metadata_service = singleton
             return _cached_metadata_service
     return null
+
+func _join_strings(values: Variant, separator: String) -> String:
+    var combined := ""
+    var is_first := true
+    for value in values:
+        var segment := String(value)
+        if is_first:
+            combined = segment
+            is_first = false
+        else:
+            combined += "%s%s" % [separator, segment]
+    return combined
 
 func _is_object_valid(candidate: Object) -> bool:
     if candidate == null:

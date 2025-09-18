@@ -157,7 +157,7 @@ func _on_controller_run_completed(run_id: String, payload: Dictionary) -> void:
     var group_breakdown := _format_group_breakdown_lines(_resolve_group_summaries(payload, result))
     if not group_breakdown.is_empty():
         status_lines.append_array(group_breakdown)
-    _set_status(status_lines.join("\n"))
+    _set_status(_join_strings(status_lines, "\n"))
     _active_run_id = ""
     _refresh_history()
     _update_buttons()
@@ -177,7 +177,7 @@ func _handle_run_start(run_id: String, request: Dictionary) -> void:
 
 func _append_log_line(line: String) -> void:
     _log_lines.append(line)
-    _log_view.bbcode_text = "\n".join(_log_lines)
+    _log_view.bbcode_text = _join_strings(_log_lines, "\n")
     call_deferred("_scroll_log_to_end")
 
 func _scroll_log_to_end() -> void:
@@ -260,7 +260,7 @@ func _render_history_log_hint(record: Dictionary) -> void:
     var breakdown := _format_group_breakdown_lines(_extract_group_summaries(record.get("group_summaries", [])))
     if not breakdown.is_empty():
         lines.append_array(breakdown)
-    _set_status(lines.join("\n"))
+    _set_status(_join_strings(lines, "\n"))
 
 func _get_selected_diagnostic_id() -> String:
     var selected := _diagnostic_selector.get_selected_id()
@@ -325,7 +325,7 @@ func _resolve_group_label_for_display(entry: Dictionary) -> String:
         words.append(part.capitalize())
     if words.is_empty():
         return group_id.capitalize()
-    return " ".join(words)
+    return _join_strings(words, " ")
 
 func _resolve_group_badge_code(entry: Dictionary) -> String:
     var group_id := String(entry.get("group_id", "")).strip_edges()
@@ -382,7 +382,7 @@ func _format_group_history_suffix(record: Dictionary) -> String:
         badges.append("%s%s" % [code, _resolve_group_icon(entry)])
     if badges.is_empty():
         return ""
-    return "[%s]" % " | ".join(badges)
+    return "[%s]" % _join_strings(badges, " | ")
 
 func _format_history_tooltip(record: Dictionary) -> String:
     var group_summaries := _extract_group_summaries(record.get("group_summaries", []))
@@ -395,7 +395,7 @@ func _format_history_tooltip(record: Dictionary) -> String:
             continue
         var entry: Dictionary = entry_variant
         lines.append(_format_plain_group_summary(entry))
-    return lines.join("\n")
+    return _join_strings(lines, "\n")
 
 func _ensure_controller_connections() -> void:
     var controller := _get_controller()
@@ -435,6 +435,18 @@ func _get_controller() -> Object:
             _cached_controller = singleton
             return _cached_controller
     return null
+
+func _join_strings(values: Variant, separator: String) -> String:
+    var combined := ""
+    var is_first := true
+    for value in values:
+        var segment := String(value)
+        if is_first:
+            combined = segment
+            is_first = false
+        else:
+            combined += "%s%s" % [separator, segment]
+    return combined
 
 func _is_object_valid(candidate: Object) -> bool:
     if candidate == null:

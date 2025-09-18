@@ -432,17 +432,17 @@ func get_generator_error_hints(strategy_id: String) -> Dictionary:
     var entry: Dictionary = _metadata_cache[key]
     var hints: Dictionary = entry.get("error_hints", {})
     for hint_code in hints.keys():
-        var override := hints[hint_code]
+        var override_value: Variant = hints[hint_code]
         var base_entry: Dictionary = {}
         if merged.has(hint_code) and merged[hint_code] is Dictionary:
             base_entry = _duplicate_dictionary(merged[hint_code])
-        if override is Dictionary:
-            var override_dict: Dictionary = _duplicate_dictionary(override)
+        if override_value is Dictionary:
+            var override_dict: Dictionary = _duplicate_dictionary(override_value)
             for override_key in override_dict.keys():
                 base_entry[override_key] = override_dict[override_key]
             merged[hint_code] = base_entry
         else:
-            base_entry["message"] = String(override)
+            base_entry["message"] = String(override_value)
             if not merged.has(hint_code):
                 merged[hint_code] = base_entry
             else:
@@ -621,11 +621,11 @@ func _build_error_hints(required_keys: PackedStringArray, optional_key_types: Di
 func _duplicate_guidance_map(source: Dictionary) -> Dictionary:
     var clone: Dictionary = {}
     for key in source.keys():
-        var entry := source[key]
-        if entry is Dictionary:
-            clone[key] = _duplicate_dictionary(entry)
+        var entry_variant: Variant = source[key]
+        if entry_variant is Dictionary:
+            clone[key] = _duplicate_dictionary(entry_variant)
         else:
-            clone[key] = entry
+            clone[key] = entry_variant
     return clone
 
 func _duplicate_dictionary(value: Dictionary) -> Dictionary:
@@ -633,3 +633,10 @@ func _duplicate_dictionary(value: Dictionary) -> Dictionary:
     for key in value.keys():
         clone[key] = value[key]
     return clone
+
+func _is_object_valid(candidate: Object) -> bool:
+    if candidate == null:
+        return false
+    if candidate is Node:
+        return is_instance_valid(candidate)
+    return true
