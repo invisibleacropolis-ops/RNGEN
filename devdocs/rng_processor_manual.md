@@ -42,6 +42,8 @@ The class lives at `res://name_generator/RNGProcessor.gd` and can be retrieved a
 - `generation_completed(request_config, result, metadata)` – Fired after a successful run. `result` is the raw payload returned by the active strategy.
 - `generation_failed(request_config, error, metadata)` – Fired when the generator is missing or a strategy reports a structured error. The signal payload mirrors the dictionary returned by `NameGenerator.generate`.
 - `set_debug_rng(debug_rng: DebugRNG, attach_to_debug := true)` / `get_debug_rng()` – Attach or inspect a `DebugRNG` observer. When `attach_to_debug` is `true`, the helper automatically begins monitoring lifecycle signals and propagates itself to `NameGenerator` so strategy-level events are also captured.
+- `DebugRNG.get_log_path()` / `DebugRNG.is_session_open()` – Surface the persisted log location and whether telemetry is still streaming so UI layers can reflect recorder state without peeking into private members.
+- `DebugRNG.read_current_log()` – Retrieve the in-memory telemetry payload as structured dictionaries. The Platform GUI consumes this call to render section filters (timeline, warnings, stream usage, strategy errors) without reparsing the TXT output.
 
 These surface areas are what the Platform GUI will observe. By listening to the signals, the UI can show per-request timelines, associate results with RNG stream derivations, and offer “re-run with same seed” affordances without needing private knowledge of the name generator.
 

@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/platform_gui/components/DebugToolbar.gd" id="1_hm1m4"]
+
+[node name="DebugToolbar" type="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("1_hm1m4")
+
+[node name="SessionLabelTitle" type="Label" parent="."]
+layout_mode = 2
+text = "Session label"
+
+[node name="SessionLabel" type="LineEdit" parent="."]
+layout_mode = 2
+size_flags_horizontal = 1
+custom_minimum_size = Vector2(120, 0)
+
+[node name="TicketTitle" type="Label" parent="."]
+layout_mode = 2
+text = "Ticket"
+
+[node name="TicketInput" type="LineEdit" parent="."]
+layout_mode = 2
+size_flags_horizontal = 1
+custom_minimum_size = Vector2(120, 0)
+
+[node name="NotesTitle" type="Label" parent="."]
+layout_mode = 2
+text = "Notes"
+
+[node name="NotesInput" type="LineEdit" parent="."]
+layout_mode = 2
+size_flags_horizontal = 1
+custom_minimum_size = Vector2(160, 0)
+
+[node name="StartSessionButton" type="Button" parent="."]
+layout_mode = 2
+text = "Start session"
+
+[node name="AttachButton" type="Button" parent="."]
+layout_mode = 2
+text = "Attach"
+
+[node name="DetachButton" type="Button" parent="."]
+layout_mode = 2
+text = "Detach"
+
+[node name="StopSessionButton" type="Button" parent="."]
+layout_mode = 2
+text = "Stop"
+
+[node name="StatusLabel" type="RichTextLabel" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(240, 32)
+bbcode_enabled = true
+scroll_active = false
+scroll_following = true

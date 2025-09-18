@@ -184,6 +184,36 @@ func dispose() -> void:
     ## Alias for close() to match familiar resource lifecycles.
     close()
 
+func get_log_path() -> String:
+    ## Return the current log path used when persisting reports to disk.
+    return _log_path
+
+func is_session_open() -> bool:
+    ## Surface whether DebugRNG is actively recording telemetry.
+    return _session_open
+
+func read_current_log() -> Dictionary:
+    ## Provide a structured snapshot of the in-memory telemetry payload.
+    ##
+    ## The return dictionary mirrors the sections found in the serialized
+    ## plaintext report so UI layers can filter the data without reparsing
+    ## the on-disk document. Each entry is duplicated to avoid downstream
+    ## mutation of the recorder state.
+    var report: Dictionary = {
+        "log_path": _log_path,
+        "session_open": _session_open,
+        "session_started_at": _session_started_at,
+        "session_ended_at": _session_ended_at,
+        "metadata": _duplicate_variant(_session_metadata),
+        "entries": [],
+        "stats": _duplicate_variant(_stats),
+    }
+
+    for entry in _log_entries:
+        report["entries"].append(_duplicate_variant(entry))
+
+    return report
+
 func _on_generation_started(config: Dictionary, metadata: Dictionary) -> void:
     _stats["calls_started"] += 1
     _log_entries.append({
