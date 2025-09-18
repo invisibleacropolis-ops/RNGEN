@@ -9,8 +9,10 @@ The entry point performs the following high level workflow:
 
 * Reset any stale ``tests/results.*`` artifacts to avoid confusing Codex with
   old reports.
-* Launch a headless Godot instance with ``run_all_tests.gd`` which emits JSON
-  and JUnit style reports that the script parses after the engine exits.
+* Launch one or more headless Godot instances using the manifest group runner
+  scripts (``run_generator_tests.gd``, ``run_diagnostics_tests.gd``, and
+  ``run_platform_gui_tests.gd``). Each run emits JSON and optional JUnit style
+  reports that the script merges after the engine exits.
 * Summarise the run for humans while simultaneously producing a structured JSON
   payload tailored for Codex' streaming diagnostics channel.
 * Optionally persist those outputs to disk when ``--output`` is supplied so the
@@ -33,7 +35,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 from xml.etree import ElementTree
 
 # ---------------------------------------------------------------------------
@@ -67,6 +69,7 @@ class ScriptReport:
     failures: int
     errors: List[str] = field(default_factory=list)
     xml_failure: Optional[str] = None
+    group: Optional[str] = None
 
     @property
     def status(self) -> str:
@@ -75,7 +78,7 @@ class ScriptReport:
 
 @dataclass
 class ManifestSummary:
-    """Aggregated statistics produced by ``run_all_tests.gd``."""
+    """Aggregated statistics produced by the manifest group runners."""
 
     scripts_passed: int = 0
     scripts_failed: int = 0
@@ -132,6 +135,7 @@ class ManifestRun:
                     "failures": script.failures,
                     "errors": script.errors,
                     "xml_failure": script.xml_failure,
+                    "group": script.group,
                 }
                 for script in self.scripts
             ],
@@ -155,6 +159,8 @@ class ManifestRun:
             lines.append("Script outcomes:")
             for script in self.scripts:
                 detail = f"{script.status}: {script.path} ({script.successes}/{script.total})"
+                if script.group:
+                    detail = f"{detail} [group: {script.group}]"
                 lines.append(f"  - {detail}")
                 if script.errors:
                     for entry in script.errors:
@@ -204,7 +210,7 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--manifest",
         default="tests/tests_manifest.json",
-        help="Path to the manifest consumed by run_all_tests.gd.",
+        help="Path to the manifest consumed by the Godot manifest runners.",
     )
     parser.add_argument(
         "--results-json",
@@ -238,6 +244,11 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Skip the automatic deletion of pre-existing test reports.",
     )
+    parser.add_argument(
+        "--group",
+        choices=["generator_core", "diagnostics", "platform_gui"],
+        help="Restrict execution to a single manifest group.",
+    )
     return parser.parse_args(argv)
 
 
@@ -260,10 +271,18 @@ def _collect_diagnostics(manager: CodexGodotProcessManager, sink: List[Dict[str,
             })
 
 
+MANIFEST_GROUP_SCRIPTS: Dict[str, str] = {
+    "generator_core": "res://tests/run_generator_tests.gd",
+    "diagnostics": "res://tests/run_diagnostics_tests.gd",
+    "platform_gui": "res://tests/run_platform_gui_tests.gd",
+}
+
+
 def _run_godot(
     *,
     project_root: Path,
     godot_binary: Path,
+    script_path: str,
     extra_env: Optional[Dict[str, str]] = None,
 ) -> tuple[int, List[Dict[str, str]], float]:
     """Launch Godot using the process manager and wait for completion."""
@@ -271,7 +290,7 @@ def _run_godot(
     manager = CodexGodotProcessManager(
         godot_binary=str(godot_binary),
         project_root=str(project_root),
-        extra_args=["--script", "res://tests/run_all_tests.gd", "--quit"],
+        extra_args=["--script", script_path, "--quit"],
         env_overrides=extra_env,
     )
 
@@ -296,13 +315,14 @@ def _run_godot(
     return exit_code, logs, duration
 
 
-def _load_json_results(path: Path) -> tuple[ManifestSummary, List[ScriptReport]]:
+def _load_json_results(path: Path) -> tuple[ManifestSummary, List[ScriptReport], Dict[str, Any]]:
     if not path.exists():
-        return ManifestSummary(error=f"JSON results missing at {path}"), []
+        return ManifestSummary(error=f"JSON results missing at {path}"), [], {}
 
     data = json.loads(path.read_text(encoding="utf-8"))
-    summary_data = data.get("summary", {}) if isinstance(data, dict) else {}
-    tests_data = data.get("tests", []) if isinstance(data, dict) else []
+    payload: Dict[str, Any] = data if isinstance(data, dict) else {}
+    summary_data = payload.get("summary", {}) if isinstance(payload.get("summary"), dict) else {}
+    tests_data = payload.get("tests", []) if isinstance(payload.get("tests"), list) else []
 
     summary = ManifestSummary(
         scripts_passed=int(summary_data.get("scripts_passed", 0) or 0),
@@ -327,7 +347,7 @@ def _load_json_results(path: Path) -> tuple[ManifestSummary, List[ScriptReport]]
                 )
             )
 
-    return summary, scripts
+    return summary, scripts, payload
 
 
 def _augment_with_xml(path: Path, scripts: List[ScriptReport]) -> None:
@@ -360,6 +380,54 @@ def _augment_with_xml(path: Path, scripts: List[ScriptReport]) -> None:
                 script.errors.append(failure_text)
 
 
+def _load_xml_root(path: Path) -> Optional[ElementTree.Element]:
+    if not path.exists():
+        return None
+
+    try:
+        return ElementTree.fromstring(path.read_text(encoding="utf-8"))
+    except ElementTree.ParseError:
+        return None
+
+
+def _merge_junit_roots(roots: Sequence[ElementTree.Element]) -> Optional[ElementTree.Element]:
+    suites: List[ElementTree.Element] = []
+    for root in roots:
+        if root.tag == "testsuite":
+            suites.append(root)
+        elif root.tag == "testsuites":
+            suites.extend(list(root))
+
+    if not suites:
+        return None
+
+    merged = ElementTree.Element("testsuites")
+
+    totals = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
+    total_time = 0.0
+
+    for suite in suites:
+        clone = ElementTree.fromstring(ElementTree.tostring(suite, encoding="utf-8"))
+        merged.append(clone)
+
+        for key in totals:
+            try:
+                totals[key] += int(float(suite.get(key, "0")))
+            except ValueError:
+                continue
+
+        try:
+            total_time += float(suite.get("time", "0"))
+        except ValueError:
+            continue
+
+    for key, value in totals.items():
+        merged.set(key, str(value))
+    merged.set("time", f"{total_time:.6f}")
+
+    return merged
+
+
 def _persist_outputs(output_dir: Path, run: ManifestRun) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     summary_path = output_dir / "summary.txt"
@@ -378,30 +446,124 @@ def _execute_attempt(
     json_path: Path,
     xml_path: Path,
     cleanup: bool,
+    group: Optional[str],
 ) -> ManifestRun:
-    if cleanup:
-        _cleanup_reports([json_path, xml_path])
+    groups_to_run = [group] if group else list(MANIFEST_GROUP_SCRIPTS.keys())
 
-    exit_code, logs, duration = _run_godot(
-        project_root=project_root,
-        godot_binary=godot_binary,
-        extra_env={
-            "CODEX_TEST_MANIFEST": str(manifest_path),
+    aggregated_summary = ManifestSummary()
+    aggregated_scripts: List[ScriptReport] = []
+    aggregated_logs: List[Dict[str, str]] = []
+    aggregated_duration = 0.0
+    aggregated_exit_code = 0
+    raw_json_payload: Dict[str, Any] = {
+        "summary": {
+            "scripts_passed": 0,
+            "scripts_failed": 0,
+            "assertions": 0,
+            "error": None,
         },
-    )
+        "tests": [],
+    }
+    xml_roots: List[ElementTree.Element] = []
 
-    summary, scripts = _load_json_results(json_path)
-    _augment_with_xml(xml_path, scripts)
+    for group_name in groups_to_run:
+        if cleanup:
+            _cleanup_reports([json_path, xml_path])
+
+        script_path = MANIFEST_GROUP_SCRIPTS[group_name]
+        exit_code, logs, duration = _run_godot(
+            project_root=project_root,
+            godot_binary=godot_binary,
+            script_path=script_path,
+            extra_env={
+                "CODEX_TEST_MANIFEST": str(manifest_path),
+                "CODEX_MANIFEST_GROUP": group_name,
+            },
+        )
+
+        aggregated_exit_code = max(aggregated_exit_code, exit_code)
+        aggregated_duration += duration
+
+        for log in logs:
+            entry = dict(log)
+            entry.setdefault("group", group_name)
+            aggregated_logs.append(entry)
+
+        summary, scripts, raw_payload = _load_json_results(json_path)
+        for script in scripts:
+            script.group = group_name
+        _augment_with_xml(xml_path, scripts)
+
+        xml_root = _load_xml_root(xml_path)
+        if xml_root is not None:
+            xml_roots.append(xml_root)
+
+        aggregated_summary.scripts_passed += summary.scripts_passed
+        aggregated_summary.scripts_failed += summary.scripts_failed
+        aggregated_summary.assertions += summary.assertions
+
+        if summary.error:
+            tagged_error = f"{group_name}: {summary.error}"
+            if aggregated_summary.error:
+                aggregated_summary.error = f"{aggregated_summary.error}; {tagged_error}"
+            else:
+                aggregated_summary.error = tagged_error
+
+        aggregated_scripts.extend(scripts)
+
+        tests_array = raw_payload.get("tests")
+        if isinstance(tests_array, list):
+            merged_tests = raw_json_payload.get("tests")
+            if not isinstance(merged_tests, list):
+                merged_tests = []
+                raw_json_payload["tests"] = merged_tests
+            for entry in tests_array:
+                if isinstance(entry, dict):
+                    merged_entry: Dict[str, Any] = dict(entry)
+                    merged_entry.setdefault("group", group_name)
+                    merged_tests.append(merged_entry)
+
+        raw_summary = raw_payload.get("summary")
+        summary_payload = raw_json_payload.get("summary")
+        if not isinstance(summary_payload, dict):
+            summary_payload = {}
+            raw_json_payload["summary"] = summary_payload
+        if isinstance(raw_summary, dict):
+            summary_payload["scripts_passed"] = int(summary_payload.get("scripts_passed", 0) or 0) + int(raw_summary.get("scripts_passed", 0) or 0)
+            summary_payload["scripts_failed"] = int(summary_payload.get("scripts_failed", 0) or 0) + int(raw_summary.get("scripts_failed", 0) or 0)
+            summary_payload["assertions"] = int(summary_payload.get("assertions", 0) or 0) + int(raw_summary.get("assertions", 0) or 0)
+
+    summary_payload = raw_json_payload.get("summary")
+    if not isinstance(summary_payload, dict):
+        summary_payload = {}
+        raw_json_payload["summary"] = summary_payload
+    summary_payload["scripts_passed"] = aggregated_summary.scripts_passed
+    summary_payload["scripts_failed"] = aggregated_summary.scripts_failed
+    summary_payload["assertions"] = aggregated_summary.assertions
+    summary_payload["error"] = aggregated_summary.error
+
+    results_json_path: Optional[str] = None
+    if groups_to_run:
+        json_path.write_text(json.dumps(raw_json_payload, indent=2) + "\n", encoding="utf-8")
+        results_json_path = str(json_path)
+
+    results_xml_path: Optional[str] = None
+    if xml_roots:
+        merged_xml = _merge_junit_roots(xml_roots)
+        if merged_xml is not None:
+            xml_text = ElementTree.tostring(merged_xml, encoding="unicode")
+            xml_path.write_text(xml_text + "\n", encoding="utf-8")
+            results_xml_path = str(xml_path)
 
     run = ManifestRun(
-        exit_code=exit_code,
-        summary=summary,
-        scripts=scripts,
+        exit_code=aggregated_exit_code,
+        summary=aggregated_summary,
+        scripts=aggregated_scripts,
         manifest_path=str(manifest_path),
-        results_json=str(json_path) if json_path.exists() else None,
-        results_xml=str(xml_path) if xml_path.exists() else None,
-        duration=duration,
-        logs=logs,
+        results_json=results_json_path,
+        results_xml=results_xml_path,
+        duration=aggregated_duration,
+        logs=aggregated_logs,
         attempt=attempt,
         max_attempts=max_attempts,
     )
@@ -437,6 +599,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             json_path=json_path,
             xml_path=xml_path,
             cleanup=not args.keep_artifacts,
+            group=args.group,
         )
         last_run = run
 
