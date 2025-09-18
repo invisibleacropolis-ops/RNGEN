@@ -1,0 +1,129 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://addons/platform_gui/workspaces/formulas/FormulasWorkspace.gd" id="1_vnru3"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/hybrid/HybridPipelinePanel.tscn" id="2_ny06x"]
+[ext_resource type="PackedScene" path="res://addons/platform_gui/panels/template/TemplatePanel.tscn" id="3_rxymd"]
+
+[node name="FormulasWorkspace" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_vnru3")
+
+[node name="Main" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Header" type="HBoxContainer" parent="Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="Main/Header"]
+layout_mode = 2
+text = "Formulas"
+size_flags_horizontal = 1
+
+[node name="BlueprintSelector" type="OptionButton" parent="Main/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 1
+
+[node name="HandbookLink" type="RichTextLabel" parent="Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 24)
+autowrap_mode = 3
+
+[node name="BlueprintNotes" type="RichTextLabel" parent="Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 64)
+autowrap_mode = 3
+
+[node name="PropagationPanel" type="PanelContainer" parent="Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 200)
+
+[node name="PropagationVBox" type="VBoxContainer" parent="Main/PropagationPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PropagationTitle" type="Label" parent="Main/PropagationPanel/PropagationVBox"]
+layout_mode = 2
+text = "Seed & Alias Propagation"
+
+[node name="PropagationTree" type="Tree" parent="Main/PropagationPanel/PropagationVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 3
+allow_reselect = true
+hide_root = false
+
+[node name="EditorSplit" type="HSplitContainer" parent="Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 240)
+
+[node name="HybridColumn" type="VBoxContainer" parent="Main/EditorSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HybridLabel" type="Label" parent="Main/EditorSplit/HybridColumn"]
+layout_mode = 2
+text = "Hybrid pipeline"
+
+[node name="HybridPanelContainer" type="PanelContainer" parent="Main/EditorSplit/HybridColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HybridPanel" parent="Main/EditorSplit/HybridColumn/HybridPanelContainer" instance=ExtResource("2_ny06x")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TemplateColumn" type="VBoxContainer" parent="Main/EditorSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TemplateLabel" type="Label" parent="Main/EditorSplit/TemplateColumn"]
+layout_mode = 2
+text = "Template node"
+
+[node name="TemplatePanelContainer" type="PanelContainer" parent="Main/EditorSplit/TemplateColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TemplatePanel" parent="Main/EditorSplit/TemplateColumn/TemplatePanelContainer" instance=ExtResource("3_rxymd")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PreviewRow" type="HBoxContainer" parent="Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 40)
+
+[node name="PreviewButton" type="Button" parent="Main/PreviewRow"]
+layout_mode = 2
+size_flags_horizontal = 1
+text = "Preview formula"
+
+[node name="PreviewLabel" type="RichTextLabel" parent="Main/PreviewRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 3
+visible = false
+custom_minimum_size = Vector2(0, 40)
+

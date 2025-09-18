@@ -68,6 +68,14 @@ Follow these steps whenever you need to work inside the Platform GUI:
 7. Review the **Token expansion preview** tree. Each row lists the recursion depth, resolved strategy display name, and the seed that TemplateStrategy will pass to the child generator. Nested template configs expand inline so you can verify cascaded definitions without leaving the panel.
 8. Press **Preview** to request a deterministic sample. Middleware validation errors reuse the metadata service's guidance (for example, empty tokens or missing strategy keys) so the fix is always spelled out next to the relevant control.
 
+### Crafting sentence formulas
+
+1. Open the **Formulas** workspace (`res://addons/platform_gui/workspaces/formulas/FormulasWorkspace.tscn`). The top banner links to the matching anchor inside [`devdocs/sentences.md`](./sentences.md) so you can cross-reference the original blueprint while you work.
+2. Choose a blueprint from the selector. Each option pre-loads the HybridStrategy steps and the nested TemplateStrategy used in the handbook example. The inline notes recap which datasets are involved and why the seeds use specific prefixes.
+3. Review the **Seed & Alias Propagation** panel. Rows tinted blue confirm that aliases inherit the pipeline seed (for example, `skill_sentence_v1::step_skill_verb`), while red rows highlight missing aliases or seeds that need attention before previews stay deterministic.
+4. Edit the template node in the right column. Any changes automatically sync into the matching hybrid step so the in-panel template editor and the standalone template workspace always reflect the same configuration.
+5. Press **Preview formula** to run the combined payload through the middleware. Successful runs return a single deterministic sentence, and the seed tree updates with the latest inheritance trail so you can export the configuration knowing exactly which RNG streams were used.
+
 ### Reviewing DebugRNG logs
 
 1. Switch to the **Debug Logs** tab. When DebugRNG is active, the middleware writes to `user://debug_rng_report.txt` (or a custom path you configured earlier).

@@ -41,6 +41,10 @@
       "path": "res://tests/gui/test_hybrid_pipeline_panel.gd"
     },
     {
+      "name": "Formulas Workspace Suite",
+      "path": "res://tests/gui/test_formulas_workspace.gd"
+    },
+    {
       "name": "Name Generator Diagnostic",
       "path": "res://tests/diagnostics/name_generator_diagnostic.gd",
       "id": "name_generator"

@@ -13,6 +13,8 @@ extends VBoxContainer
 @export var controller_path: NodePath
 @export var metadata_service_path: NodePath
 
+signal configuration_changed
+
 const TEMPLATE_STRATEGY_ID := "template"
 const TOKEN_PATTERN := "\\[(?<token>[^\\[\\]]+)\\]"
 const DEFAULT_MAX_DEPTH := 8
@@ -58,6 +60,31 @@ func _ready() -> void:
     _update_seed_helper()
     _rebuild_configuration_views()
 
+func apply_config_payload(config: Dictionary) -> void:
+    var template_string := String(config.get("template_string", ""))
+    if _template_input.text != template_string:
+        _template_input.text = template_string
+    var max_depth := int(config.get("max_depth", DEFAULT_MAX_DEPTH))
+    if int(_max_depth_spin.value) != max_depth:
+        _max_depth_spin.value = max_depth
+    var seed_value := String(config.get("seed", ""))
+    if _seed_edit.text != seed_value:
+        _seed_edit.text = seed_value
+    var sub_generators := config.get("sub_generators", {})
+    if typeof(sub_generators) == TYPE_DICTIONARY:
+        var json := JSON.stringify(sub_generators, "  ")
+        if _sub_generators_edit.text != json:
+            _sub_generators_edit.text = json
+    else:
+        if _sub_generators_edit.text != "":
+            _sub_generators_edit.text = ""
+    _rebuild_configuration_views()
+    _update_seed_helper()
+    _notify_configuration_changed()
+
+func evaluate_configuration(seed_override: String = "") -> Dictionary:
+    return _evaluate_configuration(seed_override)
+
 func set_controller_override(controller: Object) -> void:
     _controller_override = controller
     _cached_controller = null
@@ -98,16 +125,20 @@ func _on_refresh_pressed() -> void:
 
 func _on_template_changed() -> void:
     _rebuild_configuration_views()
+    _notify_configuration_changed()
 
 func _on_sub_generators_changed() -> void:
     _rebuild_configuration_views()
+    _notify_configuration_changed()
 
 func _on_max_depth_changed(_value: float) -> void:
     _rebuild_configuration_views()
+    _notify_configuration_changed()
 
 func _on_seed_changed(_text: String) -> void:
     _rebuild_configuration_views()
     _update_seed_helper()
+    _notify_configuration_changed()
 
 func _on_preview_button_pressed() -> void:
     var controller := _get_controller()
@@ -149,6 +180,7 @@ func _on_preview_button_pressed() -> void:
         "message": String(response),
     })
     _update_seed_helper()
+    _notify_configuration_changed()
 
 func _refresh_metadata() -> void:
     var service := _get_metadata_service()
@@ -201,10 +233,12 @@ func _rebuild_configuration_views() -> void:
     _render_token_tree(evaluation["structure"])
     _apply_validation_feedback(evaluation["errors"])
 
-func _evaluate_configuration() -> Dictionary:
+func _evaluate_configuration(seed_override: String = "") -> Dictionary:
     var template_string := _template_input.text
     var max_depth := int(_max_depth_spin.value)
     var seed_value := _seed_edit.text.strip_edges()
+    if seed_override != "":
+        seed_value = seed_override
     var errors: Array = []
 
     if max_depth <= 0:
@@ -500,6 +534,11 @@ func _set_control_highlight(control: Control, highlight: bool) -> void:
         control.self_modulate = _ERROR_TINT
     elif _control_default_modulates.has(control):
         control.self_modulate = _control_default_modulates[control]
+
+func _notify_configuration_changed() -> void:
+    if not is_inside_tree():
+        return
+    configuration_changed.emit()
 
 func _resolve_strategy_display_name(strategy_id: String) -> String:
     if strategy_id == "":
