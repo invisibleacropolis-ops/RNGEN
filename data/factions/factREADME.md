@@ -10,7 +10,7 @@ Author the faction dataset as three parallel resource lists so hybrid strategies
 - **Structure nouns** – Collective nouns that describe the organisation type (e.g. "Order", "Syndicate", "League"). Use singular forms to avoid subject-verb agreement issues when the template adds pluralisation.
 - **Location modifiers** – Geographic or cosmological anchors (e.g. "of the Sapphire Coast", "from Orion", "of Western Reach"). Store the leading preposition if one is required so templates can reuse the phrase verbatim.
 
-Maintain each category as a dedicated Godot Resource (`.tres` or `.res`) or compatible JSON/CSV surrogate that the data conversion step can ingest. Align resource naming with the category (for example, `ideology_terms.tres`). This repository now includes `ideology_terms.tres`, `structure_nouns.tres`, and `location_modifiers.tres` under `data/factions/` so designers have ready-to-wire exemplars for each bucket.
+Maintain each category as a dedicated Godot Resource (`.tres` or `.res`) or compatible JSON/CSV surrogate that the data conversion step can ingest. Align resource naming with the category (for example, `ideology_terms.tres`). This repository now includes `ideology_terms.tres`, `structure_nouns.tres`, and `location_modifiers.tres` under `data/factions/` so designers have ready-to-wire exemplars for each bucket. Parallel template variants—`ideology_terms_template.tres`, `structure_nouns_template.tres`, and `location_modifiers_template.tres`—live alongside the production lists to document authoring conventions without risking accidental edits to live data.
 
 ## Resource conversion workflow
 
@@ -23,20 +23,19 @@ Document any bespoke conversion steps alongside the script you used so future up
 
 ## Ready-to-clone templates
 
-The `data/factions/templates/` directory ships with example `.tres` files for
-each resource type discussed above:
+The `data/factions/templates/` directory ships with example `.tres` files for each resource type discussed above. Use them together with the root-level template word lists when onboarding new data authors:
 
-- `faction_wordlist_template.tres` illustrates how to populate a
-  `WordListResource` with ideology terms and weighting metadata.
-- `faction_syllable_template.tres` demonstrates a lightweight
-  `SyllableSetResource` that mixes optional middle syllables.
-- `faction_markov_template.tres` captures a minimal
-  `MarkovModelResource` wired for the modern `states` + `start_tokens` layout
-  required by `MarkovModelResource.gd`.
+- `faction_wordlist_template.tres` illustrates how to populate a `WordListResource` with ideology terms and weighting metadata.
+- `faction_syllable_template.tres` demonstrates a lightweight `SyllableSetResource` that mixes optional middle syllables.
+- `faction_markov_template.tres` captures a minimal `MarkovModelResource` wired for the modern `states` + `start_tokens` layout required by `MarkovModelResource.gd`.
 
-Duplicate these assets, rename them to match your content, and then swap the
-example entries for your curated vocabulary before wiring the resource into a
-strategy.
+When cloning these templates, wire the new faction hybrid or template strategy to the filenames that match your dataset's lifecycle stage:
+
+1. Reference `*_template.tres` assets inside prototype configurations so reviewers immediately recognise placeholder vocabulary. For example, a hybrid definition might chain `ideology_terms_template.tres`, `structure_nouns_template.tres`, and `location_modifiers_template.tres` while the writers curate final terms.
+2. Swap the configuration to `ideology_terms.tres`, `structure_nouns.tres`, and `location_modifiers.tres` once content is approved. The production files retain the same schema, so no strategy code changes are required.
+3. Preserve explicit `weighted_entries` arrays (see `ideology_terms_template.tres` for a biased rare term) when you need deterministic frequency control. Godot automatically normalises those weights at runtime via `WordListResource.gd`.
+
+Duplicate these assets, rename them to match your content, and then swap the example entries for your curated vocabulary before wiring the resource into a strategy. Document the swap in your change notes so downstream teams understand whether a template or production dataset feeds the generator.
 
 ## Hybrid and template patterns
 
