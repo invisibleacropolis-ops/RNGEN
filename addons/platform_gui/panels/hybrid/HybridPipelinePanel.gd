@@ -344,7 +344,7 @@ func _on_step_selected(index: int) -> void:
     _update_step_details(step)
     _highlight_active_step(step)
 
-func _on_step_deselected() -> void:
+func _on_step_deselected(_position: Vector2 = Vector2.ZERO, _mouse_button_index: int = 0) -> void:
     _ensure_nodes_ready()
     _update_step_details(null)
     _highlight_active_step(null)
