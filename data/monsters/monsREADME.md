@@ -12,6 +12,12 @@ Provide `WordListResource` assets that catalogue:
 - **Textures and materials** – Skin, scale, fur, and exoskeleton descriptors, including colours and surface qualities.
 - **Anatomical modifiers** – Horn configurations, wing structures, tail types, sensory organs, and elemental infusions.
 
+Starter templates live at:
+
+- [`res://data/monsters/body_plans_template.tres`](body_plans_template.tres)
+- [`res://data/monsters/textures_template.tres`](textures_template.tres)
+- [`res://data/monsters/behaviours_template.tres`](behaviours_template.tres)
+
 Ready-made examples live under `data/monsters/templates/`. Copy the
 `monster_wordlist_template.tres` file to bootstrap a new list with weighting
 metadata already in place.
@@ -20,7 +26,7 @@ Keep each list scoped to a single concept so Hybrid templates can mix and match 
 
 ### Behaviour lexicon
 
-Author complementary `WordListResource` files that describe behaviours, combat styles, and habitats. Break the catalogue into focused themes such as "aggressive openers", "territorial responses", "habitat-specific verbs", and "social patterns". These datasets feed into descriptive suffixes (e.g., "that stalks the dunes") or title prefixes ("The Cradle-Watcher").
+Author complementary `WordListResource` files that describe behaviours, combat styles, and habitats. Break the catalogue into focused themes such as "aggressive openers", "territorial responses", "habitat-specific verbs", and "social patterns". These datasets feed into descriptive suffixes (e.g., "that stalks the dunes") or title prefixes ("The Cradle-Watcher"). Use `behaviours_template.tres` for a quick starting list and expand it into theme-specific catalogues.
 
 ## Creature vocalisation data
 
@@ -33,6 +39,9 @@ Author complementary `WordListResource` files that describe behaviours, combat s
 
 The `monster_syllable_template.tres` example inside `data/monsters/templates/`
 shows a curated prefix/middle/suffix split you can duplicate for new species.
+For neutral guttural calls, load the shared
+[`res://data/syllable_sets/monsters/vocalisations_template.tres`](../syllable_sets/monsters/vocalisations_template.tres)
+resource and replace the syllables with species-specific phonemes.
 
 ### Markov models
 
@@ -43,7 +52,10 @@ shows a curated prefix/middle/suffix split you can duplicate for new species.
 
 For quick experiments, duplicate `monster_markov_template.tres` from
 `data/monsters/templates/`. It already follows the `states`/`start_tokens`
-layout required by the current `MarkovModelResource` implementation.
+layout required by the current `MarkovModelResource` implementation. You can
+also load [`res://data/markov_models/monsters/cries_template.tres`](../markov_models/monsters/cries_template.tres)
+to seed guttural cry patterns for hybrid prototypes before recording bespoke
+datasets.
 
 ## Hybrid strategy examples
 
@@ -56,17 +68,17 @@ var config := {
     "steps": [
         {
             "strategy": "wordlist",
-            "wordlist_paths": ["res://data/monsters/body_plans.tres"],
+            "wordlist_paths": ["res://data/monsters/body_plans_template.tres"],
             "store_as": "body"
         },
         {
             "strategy": "markov",
-            "markov_model_path": "res://data/markov_models/monsters/guttural_calls.tres",
+            "markov_model_path": "res://data/markov_models/monsters/cries_template.tres",
             "store_as": "call"
         },
         {
             "strategy": "syllable",
-            "syllable_set_path": "res://data/syllable_sets/monsters/razor_suffixes.tres",
+            "syllable_set_path": "res://data/syllable_sets/monsters/vocalisations_template.tres",
             "store_as": "suffix"
         }
     ],

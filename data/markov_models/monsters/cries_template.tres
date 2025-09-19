@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("kra", "ghu", "ul", "ith", "rak")
+start_tokens = [{"token": "kra", "weight": 1.0}, {"token": "ghu", "weight": 0.8}]
+transitions = {
+"kra": [{"token": "ghu", "weight": 0.5}, {"token": "rak", "weight": 0.5}],
+"ghu": [{"token": "ul", "weight": 1.0}],
+"ul": [{"token": "ith", "weight": 1.0}],
+"ith": [{"token": "<END>", "weight": 1.0}],
+"rak": [{"token": "ith", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+locale = "guttural"
+domain = "monsters.vocalisations"

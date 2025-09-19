@@ -15,13 +15,20 @@ Store datasets as Godot `.tres` resources (or compatible formats) so they load t
 The `data/places/templates/` folder provides example resources that adhere to
 the structure described above:
 
-- `place_wordlist_template.tres` – `WordListResource` with balanced descriptor
-  and biome phrases.
-- `place_syllable_template.tres` – `SyllableSetResource` configured with
-  optional middle fragments to demonstrate compound place roots.
-- `place_markov_template.tres` – `MarkovModelResource` prepared with explicit
-  states, start tokens, and weighted transitions compatible with the current
-  generator runtime.
+- [`place_wordlist_template.tres`](templates/place_wordlist_template.tres) –
+  `WordListResource` with balanced descriptor and biome phrases that you can
+  reference directly as `res://data/places/templates/place_wordlist_template.tres`.
+- [`place_syllable_template.tres`](templates/place_syllable_template.tres) –
+  `SyllableSetResource` configured with optional middle fragments to demonstrate
+  compound place roots (`res://data/places/templates/place_syllable_template.tres`).
+- [`place_markov_template.tres`](templates/place_markov_template.tres) –
+  `MarkovModelResource` prepared with explicit states, start tokens, and weighted
+  transitions compatible with the current generator runtime
+  (`res://data/places/templates/place_markov_template.tres`).
+- [`roots_template.tres`](../markov_models/roots_template.tres) – Markov model
+  stored alongside the shared markov assets. Load it via
+  `res://data/markov_models/roots_template.tres` when you need a neutral root
+  generator for experiments.
 
 Copy and rename a template when you need a quick starting point, then replace
 the placeholder entries with your curated data.
@@ -39,8 +46,8 @@ var config = {
     "strategy": "template",
     "template": "$descriptor $biome",
     "wordlists": {
-        "descriptor": ["res://data/places/wordlists/descriptors/mystic_descriptors.tres"],
-        "biome": ["res://data/places/wordlists/biomes/mountain_biomes.tres"],
+        "descriptor": ["res://data/places/templates/place_wordlist_template.tres"],
+        "biome": ["res://data/places/templates/place_wordlist_template.tres"],
     },
 }
 ```
@@ -58,23 +65,28 @@ var config = {
     "steps": [
         {
             "strategy": "markov",
-            "markov_model_path": "res://data/places/markov_models/coastal_roots.tres",
+            "markov_model_path": "res://data/markov_models/roots_template.tres",
             "store_as": "root",
         },
         {
             "strategy": "syllable",
-            "syllable_set_path": "res://data/places/syllable_sets/shore_suffixes.tres",
+            "syllable_set_path": "res://data/places/templates/place_syllable_template.tres",
             "store_as": "suffix",
         },
         {
             "strategy": "wordlist",
-            "wordlist_paths": ["res://data/places/wordlists/descriptors/nautical_descriptors.tres"],
+            "wordlist_paths": ["res://data/places/templates/place_wordlist_template.tres"],
             "store_as": "descriptor",
         },
     ],
     "template": "$descriptor $root$suffix",
 }
+
 ```
+
+Swap any of the templated paths above with your curated datasets to mix
+bespoke descriptors, syllable suffixes, or trained Markov roots once you're
+ready to graduate from the starter assets.
 
 The hybrid chain lets you blend deterministic syllable assembly with Markov outputs, while the final template preserves control over the final rendering.
 
