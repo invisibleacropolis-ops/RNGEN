@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("har", "bor", "lun", "dra", "mor")
+start_tokens = [{"token": "har", "weight": 1.0}, {"token": "lun", "weight": 0.8}, {"token": "dra", "weight": 0.9}]
+transitions = {
+"har": [{"token": "bor", "weight": 1.0}],
+"bor": [{"token": "<END>", "weight": 0.6}, {"token": "mor", "weight": 0.4}],
+"lun": [{"token": "dra", "weight": 1.0}],
+"dra": [{"token": "<END>", "weight": 0.7}, {"token": "mor", "weight": 0.3}],
+"mor": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+notes = "Template Markov chain for place-name roots mixing terminal stops and optional suffix jumps."
