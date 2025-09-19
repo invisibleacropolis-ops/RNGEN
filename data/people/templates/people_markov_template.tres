@@ -1,0 +1,23 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("al", "cor", "ma", "tha", "en", "is", "on", "ris", "len")
+start_tokens = [{"token": "al", "weight": 1.0}, {"token": "cor", "weight": 1.0}, {"token": "ma", "weight": 0.75}, {"token": "tha", "weight": 0.5}]
+transitions = {
+"al": [{"token": "en", "weight": 1.0}],
+"cor": [{"token": "is", "weight": 0.5}, {"token": "on", "weight": 0.5}],
+"ma": [{"token": "ris", "weight": 1.0}],
+"tha": [{"token": "len", "weight": 1.0}],
+"en": [{"token": "<END>", "weight": 1.0}],
+"is": [{"token": "<END>", "weight": 1.0}],
+"on": [{"token": "<END>", "weight": 1.0}],
+"ris": [{"token": "<END>", "weight": 1.0}],
+"len": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+notes = "Template Markov chain for people names showing token weighting and termination entries."

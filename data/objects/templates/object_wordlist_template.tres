@@ -1,0 +1,8 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entries = PackedStringArray("Auric Glaive", "Shattered Relic", "Obsidian Lens", "Whispering Coil")
+weighted_entries = [{"value": "Auric Glaive", "weight": 1.0}, {"value": "Shattered Relic", "weight": 0.8}, {"value": "Obsidian Lens", "weight": 1.2}, {"value": "Whispering Coil", "weight": 0.9}]

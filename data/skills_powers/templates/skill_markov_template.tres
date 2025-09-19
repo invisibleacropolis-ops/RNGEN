@@ -1,0 +1,25 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("py", "ro", "ae", "ther", "um", "bra", "lum", "ina", "burst", "ward", "form")
+start_tokens = [{"token": "py", "weight": 1.0}, {"token": "ae", "weight": 0.8}, {"token": "um", "weight": 0.7}, {"token": "lum", "weight": 0.6}]
+transitions = {
+"py": [{"token": "ro", "weight": 1.0}],
+"ae": [{"token": "ther", "weight": 1.0}],
+"um": [{"token": "bra", "weight": 1.0}],
+"lum": [{"token": "ina", "weight": 1.0}],
+"ro": [{"token": "burst", "weight": 1.0}],
+"ther": [{"token": "ward", "weight": 1.0}],
+"bra": [{"token": "form", "weight": 1.0}],
+"ina": [{"token": "ward", "weight": 1.0}],
+"burst": [{"token": "<END>", "weight": 1.0}],
+"ward": [{"token": "<END>", "weight": 1.0}],
+"form": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+notes = "Skill naming chain that maps prefix syllables to themed suffix payloads."

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entries = PackedStringArray("Order", "Consortium", "League", "Collective", "Compact")
+weighted_entries = [{"value": "Order", "weight": 1.0}, {"value": "Consortium", "weight": 0.9}, {"value": "League", "weight": 1.1}, {"value": "Collective", "weight": 0.95}, {"value": "Compact", "weight": 0.85}]
+locale = "en"
+domain = "factions"

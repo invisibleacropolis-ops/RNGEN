@@ -1,0 +1,8 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entries = PackedStringArray("Cleave", "Ward", "Entwine", "Surge")
+weighted_entries = [{"value": "Cleave", "weight": 1.0}, {"value": "Ward", "weight": 1.2}, {"value": "Entwine", "weight": 0.8}, {"value": "Surge", "weight": 1.1}]

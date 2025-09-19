@@ -12,6 +12,16 @@ Populate the directory with the following resource files:
 
 Name files descriptively (for example `action_verbs.tres`, `elemental_themes.tres`, and `suffixes.tres`) so downstream configs remain self-documenting.
 
+The `data/skills_powers/templates/` folder includes starter resources you can
+copy when assembling new datasets:
+
+- `skill_wordlist_template.tres` demonstrates a verb-focused
+  `WordListResource` with weighted entries.
+- `skill_syllable_template.tres` offers a prewired `SyllableSetResource` for
+  suffix construction.
+- `skill_markov_template.tres` provides a compliant `MarkovModelResource`
+  showing the modern transition block format.
+
 ## Conversion & verification workflow
 
 1. Collect raw terms in a plain-text or CSV scratch file.

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("aur", "ic", "obs", "idian", "whis", "pering", "gla", "ive", "coil", "lens")
+start_tokens = [{"token": "aur", "weight": 1.0}, {"token": "obs", "weight": 1.0}, {"token": "whis", "weight": 0.8}, {"token": "gla", "weight": 0.6}]
+transitions = {
+"aur": [{"token": "ic", "weight": 1.0}],
+"obs": [{"token": "idian", "weight": 1.0}],
+"whis": [{"token": "pering", "weight": 1.0}],
+"gla": [{"token": "ive", "weight": 1.0}],
+"ic": [{"token": "<END>", "weight": 1.0}],
+"idian": [{"token": "<END>", "weight": 1.0}],
+"pering": [{"token": "<END>", "weight": 1.0}],
+"coil": [{"token": "<END>", "weight": 1.0}],
+"lens": [{"token": "<END>", "weight": 1.0}],
+"ive": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+notes = "Object naming Markov template showing how multi-token outputs terminate."

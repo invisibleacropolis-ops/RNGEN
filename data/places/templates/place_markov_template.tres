@@ -1,0 +1,25 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("storm", "sun", "cry", "mar", "reach", "ken", "stal", "shrou", "mere", "fell", "hold")
+start_tokens = [{"token": "storm", "weight": 1.0}, {"token": "sun", "weight": 0.8}, {"token": "cry", "weight": 0.9}, {"token": "mar", "weight": 0.7}]
+transitions = {
+"storm": [{"token": "reach", "weight": 1.0}],
+"sun": [{"token": "ken", "weight": 1.0}],
+"cry": [{"token": "stal", "weight": 1.0}],
+"mar": [{"token": "shrou", "weight": 1.0}],
+"reach": [{"token": "<END>", "weight": 0.5}, {"token": "mere", "weight": 0.5}],
+"ken": [{"token": "fell", "weight": 1.0}],
+"stal": [{"token": "hold", "weight": 1.0}],
+"shrou": [{"token": "fell", "weight": 1.0}],
+"mere": [{"token": "<END>", "weight": 1.0}],
+"fell": [{"token": "<END>", "weight": 1.0}],
+"hold": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+notes = "Place name model that chains root fragments with optional suffix transitions."

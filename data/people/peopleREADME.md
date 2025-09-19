@@ -34,9 +34,10 @@ and strategies share the same inputs.
 2. Right-click inside `res://data/wordlists/people/` and choose **New Resource…**.
 3. Search for `WordListResource` and create a new `.tres` file (e.g.
    `given_names_en_female.tres`).
-4. Paste your list into the `words` array in the Inspector, preserving one entry
-   per element. Use the **Sort** button to keep ordering deterministic when
-   weights are not supplied.
+4. Paste your list into the `entries` array in the Inspector, preserving one
+   entry per element. Use the optional `weighted_entries` helper if you need to
+   bias selection, or rely on the **Sort** button to keep ordering deterministic
+   when weights are not supplied.
 5. Commit the `.tres` file alongside a short changelog entry describing the
    source and any filters applied.
 
@@ -98,6 +99,29 @@ Consume the model with the Markov strategy:
     "temperature": 0.9
 }
 ```
+
+## Starter templates
+
+Clone the example resources in `data/people/templates/` whenever you need a
+baseline asset that already targets the expected resource type. The
+`data/people/wordlists/`, `data/people/syllable_sets/`, and
+`data/people/markov_models/` directories now ship with matching starter assets
+so you can wire a complete dataset into a strategy without building everything
+from scratch:
+
+- `people_wordlist_template.tres` / `people_template_given_names.tres` – Sample
+  `WordListResource` files populated with balanced given names and matching
+  weights.
+- `people_syllable_template.tres` /
+  `people_template_clan_syllables.tres` – `SyllableSetResource` examples that
+  split prefixes, middles, and suffixes for hybrid syllable strategies.
+- `people_markov_template.tres` /
+  `people_template_dwarven_markov.tres` – `MarkovModelResource` examples with
+  explicit `states`, `start_tokens`, and transition weights compatible with the
+  modern Markov strategy implementation.
+
+Duplicate a template, rename it to match your dataset, and replace the sample
+values with your curated lists before committing the new resource.
 
 ## When to chain datasets with Hybrid configs
 

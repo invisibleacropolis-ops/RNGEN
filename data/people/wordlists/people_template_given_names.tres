@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entries = PackedStringArray("Aveline", "Corin", "Maris", "Thalen", "Eryndor", "Selise")
+weighted_entries = [{"value": "Aveline", "weight": 1.5}, {"value": "Corin", "weight": 1.0}, {"value": "Maris", "weight": 1.0}, {"value": "Thalen", "weight": 0.8}, {"value": "Eryndor", "weight": 0.9}, {"value": "Selise", "weight": 1.2}]
+locale = "en"
+domain = "people"

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class_name="WordListResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1_0"]
+
+[resource]
+entries = PackedStringArray(
+    "Shrouded",
+    "Whispering",
+    "Silver",
+    "Emerald",
+    "Frost-kissed",
+    "Golden",
+    "Bramble",
+    "Starlit",
+    "Misty",
+    "Verdant",
+    "Ancient",
+    "Autumnal",
+    "Blooming",
+    "Rain-soaked",
+    "Windswept",
+    "Sun-dappled",
+    "Moonlit",
+    "Quiet",
+    "Twilight",
+    "Hidden",
+    "Storm-guarded",
+    "Crystal",
+    "Evergreen",
+    "Shadowed"
+)
+locale = "en"
+domain = "places:temperate_descriptors"

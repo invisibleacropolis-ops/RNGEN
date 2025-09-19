@@ -34,6 +34,28 @@ This folder holds themed vocabularies for equipment, curios, relics, and other i
 - **Hybrid pipelines** (`steps` + optional `template`) shine when the name depends on staged decisions or needs interpolation from multiple sources (e.g. pick material → select item type → slot in an effect to yield "Auric Glaive of Drowning"). Use them for multi-sentence blurbs or when data must be reused later in the generation process.
 - For sentence-style or paragraph outputs, use the `template` key available to both TemplateStrategy and HybridStrategy. It provides full-string control ("Forged from $material, this $item_core hums with $effect"), keeping formatting consistent across locales.
 
+## Starter templates
+
+Reference the assets in `data/objects/templates/` when you need an immediate
+resource scaffold:
+
+- `object_wordlist_template.tres` stores a small equipment-flavoured
+  `WordListResource` with weighted entries.
+- `object_syllable_template.tres` shows how to distribute fragments across the
+  `SyllableSetResource` arrays while keeping the middle optional.
+- `object_markov_template.tres` is a `MarkovModelResource` configured with the
+  modern transition layout so new models can plug directly into the generator.
+
+Copy the relevant template, rename it, and replace the placeholder entries with
+your item vocabulary before committing the resource.
+
+| Template filename | Contents | Reuse guidance |
+| --- | --- | --- |
+| `weapon_materials_template.tres` | Weighted sample of mundane through legendary alloys (steel, meteoric iron, obsidian, starfire alloy). | Start with TemplateStrategy for quick `$modifier $material $weapon_core` pairings; HybridStrategy can reference it in a `steps` chain when branching into effect-driven loot. |
+| `weapon_modifiers_template.tres` | Uniform list of tonal adjectives (keen, ancient, ceremonial, whispering). | Works as-is for TemplateStrategy slots; reuse in Hybrid setups when combining with conditional templates or follow-up effect picks. |
+| `weapon_cores_template.tres` | Uniform base noun list (blade, spear, glaive, scythe). | Ideal for both TemplateStrategy and HybridStrategy as the structural noun anchor before embellishments. |
+| `weapon_effects_template.tres` | Uniform suffix phrases (of embers, of echoes, of tides, of dawns). | Drop directly into TemplateStrategy endings or pull in during Hybrid finalisation steps when effects depend on earlier choices. |
+
 ## Quality assurance checklist
 - Run the dataset inspector to confirm new `.tres` resources appear with the expected entry counts:
   ```

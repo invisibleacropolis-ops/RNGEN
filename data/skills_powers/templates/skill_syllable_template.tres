@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/SyllableSetResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+prefixes = PackedStringArray("Py", "Ae", "Um", "Lum")
+middles = PackedStringArray("ro", "ther", "bra")
+suffixes = PackedStringArray("burst", "ward", "form")
+allow_empty_middle = true

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/SyllableSetResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+prefixes = PackedStringArray("kra", "ghul", "ith", "vor")
+middles = PackedStringArray("gra", "thok", "ruk")
+suffixes = PackedStringArray("nar", "gash", "ith")
+allow_empty_middle = true
+locale = "guttural"
+domain = "monsters.vocalisations"
