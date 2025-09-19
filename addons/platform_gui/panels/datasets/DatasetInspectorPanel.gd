@@ -166,7 +166,9 @@ func _render_idle_state() -> void:
 func _render_capture(capture: Dictionary) -> void:
     _ensure_nodes_ready()
     var stdout_lines: Array = capture.get("stdout", [])
-    var directories := _parse_directories(stdout_lines)
+    var directories: Array = capture.get("directories", [])
+    if directories.is_empty():
+        directories = _parse_directories(stdout_lines)
     var warnings: Array = capture.get("warnings", [])
     var errors: Array = capture.get("errors", [])
 
@@ -226,6 +228,7 @@ func _execute_inspector() -> Dictionary:
         "stdout": [],
         "warnings": [],
         "errors": [],
+        "directories": [],
     }
     var script_path := dataset_inspector_script_path
     if script_path == "":
@@ -242,12 +245,72 @@ func _execute_inspector() -> Dictionary:
         capture["errors"].append("Dataset inspector must be a valid Script resource.")
         return capture
     var inspector_script: Script = script_resource
+
+    if inspector_script.has_method("collect_report"):
+        var report_payload: Variant = inspector_script.call("collect_report")
+        if report_payload is Dictionary:
+            return _build_capture_from_report(report_payload as Dictionary)
+
     capture = _capture_messages(func():
         var instance: Object = inspector_script.new()
         if instance != null:
             instance.free()
     )
+    if not capture.has("directories"):
+        capture["directories"] = []
     return capture
+
+func _build_capture_from_report(report: Dictionary) -> Dictionary:
+    var capture := {
+        "stdout": [],
+        "warnings": [],
+        "errors": [],
+        "directories": [],
+    }
+
+    var directories_variant: Variant = report.get("directories", [])
+    if directories_variant is Array:
+        var directories: Array = []
+        for entry in directories_variant:
+            if entry is Dictionary:
+                directories.append((entry as Dictionary).duplicate(true))
+        capture["directories"] = directories
+        capture["stdout"] = _serialise_directories(directories)
+
+    var warnings_variant: Variant = report.get("warnings", [])
+    if warnings_variant is Array:
+        capture["warnings"] = _duplicate_string_array(warnings_variant)
+
+    var errors_variant: Variant = report.get("errors", [])
+    if errors_variant is Array:
+        capture["errors"] = _duplicate_string_array(errors_variant)
+
+    return capture
+
+func _serialise_directories(directories: Array) -> Array:
+    var lines := []
+    for entry_variant in directories:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var path := String(entry.get("path", ""))
+        if path.is_empty():
+            continue
+        lines.append(path)
+        var children: Array = entry.get("children", [])
+        for child in children:
+            lines.append("  - %s" % String(child))
+    return lines
+
+func _duplicate_string_array(values: Variant) -> Array:
+    var result := []
+    if values is Array:
+        for value in values:
+            result.append(String(value))
+    elif values is PackedStringArray:
+        for value in values:
+            result.append(String(value))
+    return result
 
 func _capture_messages(callable: Callable) -> Dictionary:
     _ensure_nodes_ready()

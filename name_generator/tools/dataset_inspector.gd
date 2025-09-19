@@ -1,15 +1,33 @@
 extends SceneTree
 
 ## Walks the data directory and prints basic statistics about available datasets.
-func _init():
-    _inspect_datasets()
-    quit()
+##
+## The script doubles as a library for the Platform GUI: callers can invoke
+## `collect_report()` to receive a structured snapshot without relying on
+## runtime debugger hooks. Command-line usage (`godot --headless --script ...`)
+## still streams the same stdout output and warnings so existing documentation
+## remains accurate.
+func _init(auto_run: bool = true):
+    if auto_run:
+        var report := collect_report()
+        _emit_stdout(report)
+        quit()
 
-func _inspect_datasets() -> void:
+static func collect_report() -> Dictionary:
+    ## Gather the dataset inspection report without printing to stdout.
+    var report := {
+        "directories": [],
+        "warnings": [],
+        "errors": [],
+    }
+    _inspect_datasets(report)
+    return report
+
+static func _inspect_datasets(report: Dictionary) -> void:
     var data_path := "res://data"
     var dir := DirAccess.open(data_path)
     if dir == null:
-        push_error("Missing resource: data directory not found at %s" % data_path)
+        _record_error(report, "Missing resource: data directory not found at %s" % data_path)
         return
 
     dir.list_dir_begin()
@@ -18,17 +36,17 @@ func _inspect_datasets() -> void:
     while entry != "":
         if dir.current_is_dir() and not entry.begins_with("."):
             found_any = true
-            _report_directory("%s/%s" % [data_path, entry])
+            _report_directory(report, "%s/%s" % [data_path, entry])
         entry = dir.get_next()
     dir.list_dir_end()
 
     if not found_any:
-        push_warning("No dataset folders discovered under %s" % data_path)
+        _record_warning(report, "No dataset folders discovered under %s" % data_path)
 
-func _report_directory(path: String) -> void:
+static func _report_directory(report: Dictionary, path: String) -> void:
     var child_dir := DirAccess.open(path)
     if child_dir == null:
-        push_warning("Unable to open %s" % path)
+        _record_warning(report, "Unable to open %s" % path)
         return
 
     child_dir.list_dir_begin()
@@ -41,8 +59,33 @@ func _report_directory(path: String) -> void:
     child_dir.list_dir_end()
 
     if contents.is_empty():
-        push_warning("%s is empty" % path)
-    else:
-        print("%s" % path)
-        for item in contents:
-            print("  - %s" % item)
+        _record_warning(report, "%s is empty" % path)
+        return
+
+    var directory_entry := {
+        "path": path,
+        "children": contents.duplicate(true),
+    }
+    (report["directories"] as Array).append(directory_entry)
+
+static func _record_warning(report: Dictionary, message: String) -> void:
+    push_warning(message)
+    (report["warnings"] as Array).append(message)
+
+static func _record_error(report: Dictionary, message: String) -> void:
+    push_error(message)
+    (report["errors"] as Array).append(message)
+
+static func _emit_stdout(report: Dictionary) -> void:
+    var directories: Array = report.get("directories", [])
+    for entry_variant in directories:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var path := String(entry.get("path", ""))
+        if path.is_empty():
+            continue
+        print(path)
+        var children: Array = entry.get("children", [])
+        for child in children:
+            print("  - %s" % String(child))

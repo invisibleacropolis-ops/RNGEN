@@ -10,7 +10,11 @@ extends Control
 ## environment shipped with the add-on while keeping the editor hierarchy fully
 ## self-contained for tests and tooling.
 
+const _RNG_MANAGER_SINGLETON := StringName("RNGManager")
+const _NAME_GENERATOR_SINGLETON := StringName("NameGenerator")
 const _RNG_PROCESSOR_SINGLETON := StringName("RNGProcessor")
+const _RNGManager := preload("res://name_generator/RNGManager.gd")
+const _NameGenerator := preload("res://name_generator/NameGenerator.gd")
 const _RNGProcessor := preload("res://name_generator/RNGProcessor.gd")
 
 @onready var _event_bus: Node = $EventBus
@@ -32,9 +36,13 @@ const _RNGProcessor := preload("res://name_generator/RNGProcessor.gd")
 
 var _registered_singletons: Array = []
 var _local_rng_processor: Node = null
+var _local_rng_manager: Node = null
+var _local_name_generator: Node = null
 
 func _ready() -> void:
 	## Register middleware singletons and cascade overrides to the UI components.
+	_ensure_rng_manager_singleton()
+	_ensure_name_generator_singleton()
 	_ensure_rng_processor_singleton()
 	_register_singleton("PlatformGUIEventBus", _event_bus)
 	_register_singleton("RNGProcessorController", _controller)
@@ -71,6 +79,12 @@ func _exit_tree() -> void:
 	if is_instance_valid(_local_rng_processor):
 		_local_rng_processor.queue_free()
 	_local_rng_processor = null
+	if is_instance_valid(_local_name_generator):
+		_local_name_generator.queue_free()
+	_local_name_generator = null
+	if is_instance_valid(_local_rng_manager):
+		_local_rng_manager.queue_free()
+	_local_rng_manager = null
 
 func _register_singleton(name: StringName, node: Object) -> void:
 	## Register the provided node as a singleton if the slot is free.
@@ -92,3 +106,19 @@ func _ensure_rng_processor_singleton() -> void:
 	_local_rng_processor = _RNGProcessor.new()
 	add_child(_local_rng_processor)
 	_register_singleton(_RNG_PROCESSOR_SINGLETON, _local_rng_processor)
+
+func _ensure_rng_manager_singleton() -> void:
+	## Instantiate a local RNGManager when the autoload is unavailable.
+	if Engine.has_singleton(_RNG_MANAGER_SINGLETON):
+		return
+	_local_rng_manager = _RNGManager.new()
+	add_child(_local_rng_manager)
+	_register_singleton(_RNG_MANAGER_SINGLETON, _local_rng_manager)
+
+func _ensure_name_generator_singleton() -> void:
+	## Instantiate a local NameGenerator when the autoload is unavailable.
+	if Engine.has_singleton(_NAME_GENERATOR_SINGLETON):
+		return
+	_local_name_generator = _NameGenerator.new()
+	add_child(_local_name_generator)
+	_register_singleton(_NAME_GENERATOR_SINGLETON, _local_name_generator)
