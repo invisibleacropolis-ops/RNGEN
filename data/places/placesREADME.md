@@ -33,6 +33,16 @@ the structure described above:
 Copy and rename a template when you need a quick starting point, then replace
 the placeholder entries with your curated data.
 
+## Curated wordlists
+
+Use the production-ready lists below to seed temperate biomes without cloning
+the templates when you just need evocative building blocks:
+
+| Resource | Scope | Notes |
+| --- | --- | --- |
+| `wordlists/biomes/temperate_biomes.tres` | Neutral temperate geography nouns (`Vale`, `Moor`, `Wilds`). | Works directly with `$descriptor $biome` templates and Hybrid pipelines that store the biome under an alias for later reuse. |
+| `wordlists/descriptors/temperate_descriptors.tres` | Atmosphere-heavy adjectives (`Whispering`, `Sun-dappled`, `Storm-guarded`). | Pair with the biome list for quick place names or reuse as embellishments in Hybrid templates. |
+
 ## Composing place names
 
 Several generation strategies can reference the datasets in this folder. The examples below mirror the configuration dictionaries passed to `NameGenerator.generate`.
