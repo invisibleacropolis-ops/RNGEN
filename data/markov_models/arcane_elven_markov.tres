@@ -5,31 +5,97 @@
 [resource]
 script = ExtResource("1")
 order = 2
-states = PackedStringArray("ae", "el", "er", "la", "li", "ly", "ar", "an", "ia", "is", "ra", "ri", "ry", "in", "na", "ny", "ya", "ys")
+states = PackedStringArray(
+    "ae",
+    "el",
+    "er",
+    "la",
+    "li",
+    "ly",
+    "ar",
+    "an",
+    "ia",
+    "is",
+    "ra",
+    "ri",
+    "ry",
+    "in",
+    "na",
+    "ny",
+    "ya",
+    "ys"
+)
 start_tokens = [
     {"token": "ae", "weight": 0.4},
     {"token": "el", "weight": 0.35},
     {"token": "li", "weight": 0.25}
 ]
 transitions = {
-"ae": [{"token": "el", "weight": 0.6}, {"token": "er", "weight": 0.4}],
-"el": [{"token": "la", "weight": 0.5}, {"token": "li", "weight": 0.3}, {"token": "ly", "weight": 0.2}],
-"la": [{"token": "ar", "weight": 0.5}, {"token": "an", "weight": 0.5}],
-"li": [{"token": "ia", "weight": 0.6}, {"token": "is", "weight": 0.4}],
-"ar": [{"token": "ra", "weight": 0.2}, {"token": "ri", "weight": 0.3}, {"token": "ry", "weight": 0.5}],
-"ri": [{"token": "in", "weight": 0.6}, {"token": "is", "weight": 0.4}],
-"in": [{"token": "na", "weight": 0.4}, {"token": "ny", "weight": 0.6}],
-"ny": [{"token": "ya", "weight": 0.7}, {"token": "ys", "weight": 0.3}],
-"ya": [{"token": "an", "weight": 0.6}, {"token": "ar", "weight": 0.4}],
-"er": [{"token": "<END>", "weight": 1.0}],
-"ly": [{"token": "<END>", "weight": 1.0}],
-"an": [{"token": "<END>", "weight": 1.0}],
-"ia": [{"token": "<END>", "weight": 1.0}],
-"is": [{"token": "<END>", "weight": 1.0}],
-"ra": [{"token": "<END>", "weight": 1.0}],
-"ry": [{"token": "<END>", "weight": 1.0}],
-"na": [{"token": "<END>", "weight": 1.0}],
-"ys": [{"token": "<END>", "weight": 1.0}]
+    "ae": [
+        {"token": "el", "weight": 0.6},
+        {"token": "er", "weight": 0.4}
+    ],
+    "el": [
+        {"token": "la", "weight": 0.5},
+        {"token": "li", "weight": 0.3},
+        {"token": "ly", "weight": 0.2}
+    ],
+    "la": [
+        {"token": "ar", "weight": 0.5},
+        {"token": "an", "weight": 0.5}
+    ],
+    "li": [
+        {"token": "ia", "weight": 0.6},
+        {"token": "is", "weight": 0.4}
+    ],
+    "ar": [
+        {"token": "ra", "weight": 0.2},
+        {"token": "ri", "weight": 0.3},
+        {"token": "ry", "weight": 0.5}
+    ],
+    "ri": [
+        {"token": "in", "weight": 0.6},
+        {"token": "is", "weight": 0.4}
+    ],
+    "in": [
+        {"token": "na", "weight": 0.4},
+        {"token": "ny", "weight": 0.6}
+    ],
+    "ny": [
+        {"token": "ya", "weight": 0.7},
+        {"token": "ys", "weight": 0.3}
+    ],
+    "ya": [
+        {"token": "an", "weight": 0.6},
+        {"token": "ar", "weight": 0.4}
+    ],
+    "er": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "ly": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "an": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "ia": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "is": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "ra": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "ry": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "na": [
+        {"token": "<END>", "weight": 1.0}
+    ],
+    "ys": [
+        {"token": "<END>", "weight": 1.0}
+    ]
 }
 end_tokens = PackedStringArray("<END>")
 default_temperature = 0.95
