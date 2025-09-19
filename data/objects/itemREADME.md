@@ -49,6 +49,13 @@ resource scaffold:
 Copy the relevant template, rename it, and replace the placeholder entries with
 your item vocabulary before committing the resource.
 
+| Template filename | Contents | Reuse guidance |
+| --- | --- | --- |
+| `weapon_materials_template.tres` | Weighted sample of mundane through legendary alloys (steel, meteoric iron, obsidian, starfire alloy). | Start with TemplateStrategy for quick `$modifier $material $weapon_core` pairings; HybridStrategy can reference it in a `steps` chain when branching into effect-driven loot. |
+| `weapon_modifiers_template.tres` | Uniform list of tonal adjectives (keen, ancient, ceremonial, whispering). | Works as-is for TemplateStrategy slots; reuse in Hybrid setups when combining with conditional templates or follow-up effect picks. |
+| `weapon_cores_template.tres` | Uniform base noun list (blade, spear, glaive, scythe). | Ideal for both TemplateStrategy and HybridStrategy as the structural noun anchor before embellishments. |
+| `weapon_effects_template.tres` | Uniform suffix phrases (of embers, of echoes, of tides, of dawns). | Drop directly into TemplateStrategy endings or pull in during Hybrid finalisation steps when effects depend on earlier choices. |
+
 ## Quality assurance checklist
 - Run the dataset inspector to confirm new `.tres` resources appear with the expected entry counts:
   ```
