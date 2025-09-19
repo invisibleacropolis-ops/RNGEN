@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entries = PackedStringArray("of the Sapphire Coast", "from Orion", "of Western Reach", "of the Gilded Expanse", "from the Ashen Depths")
+weighted_entries = [{"value": "of the Sapphire Coast", "weight": 1.0}, {"value": "from Orion", "weight": 0.9}, {"value": "of Western Reach", "weight": 1.1}, {"value": "of the Gilded Expanse", "weight": 0.85}, {"value": "from the Ashen Depths", "weight": 0.95}]
+locale = "en"
+domain = "factions"
