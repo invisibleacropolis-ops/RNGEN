@@ -1,0 +1,692 @@
+﻿RNGEN - MAIN OPERATIONS MANUAL
+
+
+Welcome! We are so excited for you to start using this tool. Before we dive in, let's get one thing straight: this guide, and the tool it describes, was made for writers, artists, and narrative designers. It was not made for programmers, engineers, or computer wizards. It was made for you. If you've ever felt intimidated by new software, please know that this manual is designed to be your friendly, patient guide. We will hold your hand every step of the way, explain everything in plain English, and show you how this simple program can become one of the most powerful creative partners in your writing toolkit. There are no stupid questions here, and we promise to cover everything you could possibly want to know.1
+So, what is this thing, anyway? The best way to think about it is as a Magic Recipe Box.1 Imagine you're a chef who wants to invent a new, exciting dish. You have all sorts of wonderful ingredients in your pantry: spices, vegetables, meats, and sauces. You also have a collection of recipe cards that tell you different ways to combine those ingredients. Sometimes you follow a recipe exactly, and sometimes you just grab a few ingredients at random to see what happens. This tool works in exactly the same way.
+* Your Wordlists are the Ingredients: As a writer, your ingredients are words. You will provide the tool with lists of words—character names, locations, magical items, personality traits, plot twists, anything you can imagine. These are the raw materials that fuel every creation.1
+* The Tool is Your Recipe Book and Chef: The main screen of the tool is like your recipe book. You'll set a few simple options that tell the tool how to combine your ingredients. Do you want it to be very creative and mix things that don't normally go together? Or do you want it to be more traditional? Once you've chosen your recipe, you press one button, and the tool acts as your creative chef, instantly "cooking" up new combinations and ideas for you to use.1
+The entire purpose of this tool is to serve you, the creative professional. It is an artist-facing control centre designed specifically for deterministic name generation, allowing art and narrative teams to experiment with generator strategies, run large batches of ideas with predictable outcomes, and even inspect the same diagnostic information that support engineers use when troubleshooting.1 It's here to help you when you feel stuck, to spark new ideas when your well of inspiration feels dry, and to generate interesting possibilities you might never have thought of on your own. We're not going to talk about code or complex computer science. We're going to talk about what this tool can
+do for you and how it can benefit your creative process.1
+Let's get started by taking a quick, no-pressure tour of your new kitchen.
+
+
+Chapter 2: Touring Your Creative Kitchen: A High-Level Overview
+
+
+Before we start cooking, let's just take a calm look around the kitchen. You don't need to touch anything or remember any complicated names. The goal of this chapter is simply to show you where everything is, so the space feels a little more familiar. Think of this as walking into a new room and just glancing around to get your bearings.1
+The main window of the Platform GUI is your "Creative Kitchen." It's a bit more advanced than a simple recipe box; it's a full workspace with different stations for different tasks. At the top of the window, you'll see a row of tabs. These are the main stations in your kitchen, each with a specific purpose.1 The table below provides a map to your new workspace, explaining the function of each station and the quick actions you can perform there.1
+Station Name (Tab)
+	Purpose in the Kitchen
+	Quick Actions
+	Generators
+	Your workbench of creative appliances, where you configure and preview ideas.
+	Generate, preview, bookmark configs
+	Seeds
+	The magic bookmark station, where you manage the secret numbers that make your results reproducible.
+	Apply, randomise, import/export state
+	Debug Logs
+	The mechanic's toolbox, for inspecting the tool's internal activity to help with bug reports.
+	Refresh log, filter sections, download reports
+	Dataset Health
+	Your pantry and ingredient inspector, for auditing your wordlists and launching data creation tools.
+	Refresh inventories, open tooling, deep-link docs
+	Formulas
+	The master recipe station, for combining different appliances to create complex sentences.
+	Preview formulas, inspect seed inheritance
+	Exports
+	The packaging and delivery station, for bundling large batches of generated ideas into shareable packages.
+	Stage batch jobs, export CSV/JSON, attach DebugRNG snapshot
+	Admin Tools
+	The workspace organizer, for managing your kitchen layout, bookmarks, and experimental features.
+	Restore defaults, sync bookmarks, toggle experimental features
+	For now, let's focus on the most important station: the Generators Tab. When you click on it, you'll see another set of tabs inside. These are your specialized "appliances," each one designed for a different creative recipe 1:
+* Wordlist Panel: The simple "Mixer." It takes one or more lists of words and combines them. Perfect for creating character names or simple concepts.
+* Syllable Chain Panel: The "Word Blender." It takes lists of syllables (like "kael," "en," "thor") and blends them together to create new, unique, and pronounceable words. Fantastic for fantasy or sci-fi names.
+* Template Panel: The "Sentence Weaver." This appliance lets you write a sentence with special placeholders, like "The [adjective][noun] of [place]," and then tells the tool what kinds of words to use to fill in those blanks.
+* Markov Panel: The "Pattern Mimic." This is a more advanced appliance that learns the patterns from a piece of text you give it and then generates new text that sounds similar.
+* Hybrid Pipeline Panel: The "Master Recipe Card." This is the most powerful appliance in the kitchen. It lets you chain the other appliances together, creating complex, multi-step recipes where the result of one step becomes an ingredient for the next.
+Now that you've seen the layout, let's walk through the process of setting up your kitchen for the first time. It's easier than you think.
+
+
+Chapter 3: Setting Up Your Kitchen: The Launch Checklist
+
+
+Every great creative session starts with a little preparation. This chapter will walk you through the simple, one-time setup process to ensure your creative kitchen is ready to go. Following these steps guarantees that the tool has access to all the "plumbing and electricity" it needs to function correctly.1
+
+
+Step 1: Open the Project Correctly
+
+
+The Platform GUI is like a custom-built kitchen; it needs to be in the right house to work. The "house" is the Godot project file, project.godot, located in the main folder (the repository root).
+1. Launch the Godot 4.4 application.
+2. In the project manager window, click the "Import" or "Scan" button and select the main folder containing the project.godot file.
+3. Once it appears in your project list, double-click it to open.
+It is crucial that you open the project this way and do not rename the main folder. The GUI is deeply integrated with the project's structure and expects to find its core engine, the RNGProcessor, right where it's supposed to be. Opening a blank project or a renamed folder is like trying to use your kitchen appliances in an empty lot—they simply won't have power.1
+
+
+Step 2: Confirm the Autoloads are Active
+
+
+"Autoloads" are special scripts that the project loads automatically every time it starts. Think of them as the main power switches for your kitchen. They are the essential bridges that connect the user-friendly GUI to the powerful generation engine running behind the scenes. We need to make sure these bridges are in place.
+1. In the Godot editor, navigate to the top menu and click Project > Project Settings.
+2. In the Project Settings window, find and click on the Autoload tab.
+3. You should see a list with at least three crucial entries: RNGManager, NameGenerator, and RNGProcessor. Verify that the "Enabled" checkbox is ticked for all three.1
+If any of these are missing, it's like a key appliance is unplugged. You can easily fix this by clicking the folder icon next to the "Path" field and navigating to the corresponding .gd file in the res://autoloads/ or res://name_generator/ folders to re-add them.1
+
+
+Step 3: Run the GUI Scene
+
+
+With the project open and the autoloads confirmed, you are ready to open your creative kitchen.
+1. Press the F5 key on your keyboard, or click the "Play" icon (a triangle) in the top-right corner of the Godot editor.
+2. This action launches the main interface scene, Main_Interface.tscn.1
+3. A new window will appear, which is the Platform GUI itself. You should see the main tabs we discussed in the previous chapter: Generators, Seeds, Debug Logs, Exports, and Admin Tools.1
+You have now successfully launched the tool and are ready to begin creating!
+
+
+Step 4 (Optional): Turn on the "Kitchen Cam" (Enable Debug Logging)
+
+
+Sometimes, it's helpful to record your creative process, especially if you encounter an unexpected issue and need to show an engineer exactly what happened. The DebugRNG toolbar is your "kitchen camera" for this purpose.
+1. Find the DebugRNG toolbar at the top of the main window. It is bundled with the GUI in res://addons/platform_gui/components/DebugToolbar.tscn.1
+2. Fill in the metadata fields: give your session a descriptive label, add a ticket ID if you have one, and write any quick notes. This information will be saved alongside the recording, providing valuable context.
+3. Press the Start session button. This prepares a new recording session.
+4. Click the Attach button. This connects the recorder to the main engine (RNGProcessor). The tool will now start writing a detailed report of every action you take.1
+You can Detach to pause the recording at any time and Stop to finalize and save the report file. This is a powerful diagnostic tool that you can safely ignore for daily work but is invaluable when you need to collaborate with the technical team.
+
+
+Part 2: The Chef's Workbench: Mastering the Generators
+
+
+
+
+Chapter 4: The Wordlist Mixer (WordlistPanel)
+
+
+The best way to learn something new is to just dive in and do it. In this chapter, we are going to walk you through a complete cycle of generating an idea using the simplest appliance, the Wordlist Panel. We have provided example wordlists for you, so you don't have to worry about creating anything yourself just yet. The goal here is to have a quick success and see how simple the tool really is.1
+
+
+Your First Creation in Five Clicks
+
+
+1. Select the Wordlist Appliance: First, make sure you are on the main Generators tab. Inside this tab, you will see the row of "appliance" tabs. Click on the one labeled WordlistPanel to select it.1
+2. Choose Your Ingredients: Now, we need to load our ingredients. Look at the main area of the panel. You will see a list box labeled Resource browser. This is where all the pre-made wordlists for your project are stored. For this example, scroll through the list and click on the entry for skill_verbs.tres. Then, while holding down the Ctrl key (or Cmd on a Mac), click on skill_themes.tres. You have now selected two ingredient lists.1
+3. Set Your Options (or Don't!): Just below the resource list, you'll see a few simple options. For now, we can ignore these and just use the default settings. We'll explore what they do in a moment.1
+4. Hit the Magic Button: Now for the fun part! Find the button labeled Preview at the bottom of the panel and click it. This is the "Generate" button for this appliance.1
+5. Review the Results: Instantly, you will see new text appear in the box below the button. The tool has taken one word from each of the files you selected and combined them to create a new idea. Congratulations, you've just used the Idea Engine! If you see an idea you love, you can simply highlight the text with your mouse, right-click, and choose "Copy" to paste it into your writing document.1
+See? It's that simple. Now that you understand the basic workflow, let's take a closer look at all the fun dials and knobs on this creative appliance.
+
+
+A Deep Dive into the Wordlist Mixer
+
+
+This is the most straightforward appliance, perfect for combining existing lists of words. Every control on this panel is a way for you to direct the creative outcome.1
+* Metadata Banner: At the very top of the panel, you'll see a summary of the "recipe" requirements. This banner is sourced directly from the middleware's internal schema, telling you which fields are required and which are optional. It's a handy cheat sheet to ensure your configuration is valid before you even press "Preview".1
+* Resource browser: This is your shelf of wordlist ingredients. You can select one or more WordListResource files. Each entry in the list provides helpful at-a-glance information, such as its locale (e.g., en-US), its domain (e.g., fantasy, sci-fi), and whether it contains weighting data. This allows you to mix and match compatible lists with confidence.1
+* Use weights when available Checkbox: Some wordlists have "weights" assigned to them, making certain words more likely to be picked than others. Imagine a bag of marbles with ten red ones and only two blue ones; you're far more likely to draw a red marble. If this box is checked, the generator will respect those weights. If it's unchecked, every word has an equal chance of being chosen, as if there were an equal number of each color of marble.1
+* Delimiter field: This text box controls what character is put between the words that are combined. By default, it's a single space. If you were generating a list of firstname-lastname, you could put a hyphen - here. If you were generating a comma-separated list for a spreadsheet, you could enter , .1
+* Seed label: This is your "Magic Bookmark" for this specific generation. If you put a number or a word in here (e.g., "test1"), the "random" result you get will always be the same for that seed. This is called deterministic generation, and it's incredibly useful for recreating a result you liked or sharing it with a teammate. If you leave it blank, you'll get a new result every time you click Preview.1
+* Refresh Button: If you add new wordlist files to your project while the Platform GUI is already open, they won't appear in the resource browser automatically. Clicking this button tells the tool to rescan the project folders and reload its catalogue of available resources and schema hints.1
+* Preview Button: This is the "Start Cooking!" button. When you click it, the panel performs several actions behind the scenes. It calls a function called build_config_payload, which gathers all your settings (the selected resources, the delimiter, the seed, etc.) into a digital "recipe card." This recipe card is then handed off to the main RNGProcessor engine, which processes the request and returns the result. If the request is successful, the result appears in the preview area. If there's a problem with your recipe (like you forgot to select a resource), a red error message will appear directly below the controls, telling you exactly what to fix.1
+
+
+Chapter 5: The Syllable Blender (SyllableChainPanel)
+
+
+This appliance is for inventing new, unique, and pronounceable words from scratch by combining syllables. It's a fantastic tool for creating names for fantasy characters, alien species, or magical locations that sound cohesive and intentional.1
+
+
+A Deep Dive into the Syllable Blender
+
+
+The Syllable Blender works by taking pre-defined word fragments—prefixes, middles, and suffixes—and chaining them together according to a set of rules you provide.
+* Metadata Banner: Just like the Wordlist panel, this banner at the top shows you the required and optional fields for a valid Syllable Chain recipe, pulled directly from the middleware's schema.1
+* Resource browser: This list allows you to pick a SyllableSetResource file. These are special ingredient lists that contain separate columns for prefixes (beginnings of words), middles, and suffixes (endings of words). Each entry in the browser summarizes the number of prefixes, middles, and suffixes available in that file, along with its locale and domain tags, so you can judge its creative potential at a glance.1
+* Details Panel: Once you select a resource, a small panel appears beneath the list. A key piece of information here is whether the resource "allows empty middles." This tells you if the ingredient set is capable of making simple two-part names (prefix + suffix) or if it always requires a middle component. The GUI uses this information to intelligently adjust the controls available to you.1
+* Require at least one middle syllable Checkbox: If this is checked, the generator will always include at least one syllable from the "middle" column of your resource file. This is a powerful way to enforce a certain complexity or structure in your generated names. When you enable this, the panel automatically clamps the minimum value of the "Middle syllable range" slider to 1, preventing you from creating a configuration that the middleware would reject.1
+* Middle syllable range Sliders: These two sliders let you control the minimum and maximum number of middle syllables to use. For example, you could set it to generate words with between 1 (min) and 3 (max) middle syllables. The panel automatically adjusts the slider's maximum range to match the number of middle syllables available in your selected resource, so you are never capped prematurely.1 If you set an invalid range (e.g., a minimum greater than the maximum), the sliders will tint red and an inline validation message will appear, giving you immediate feedback to correct the error.1
+* Minimum length: This lets you set a minimum character length for the final generated word. If the initial combination of prefix, middle(s), and suffix doesn't meet this threshold, the tool will intelligently append extra middle syllables until the length requirement is satisfied. Leave it at 0 to accept any length.1
+* Regex cleanup presets: These are advanced "cleanup" rules that are applied after a name has been generated. They are perfect for polishing the final output. For example, you can check "Collapse triple letters" to automatically turn "Zarrra" into "Zarra," or "Trim stray apostrophes" to clean up artifacts from joining syllables. These presets map directly to a post_processing_rules array that the middleware can execute.1
+* Seed and Preview: These controls work exactly as they do in the Wordlist Panel. Provide an optional seed for deterministic results, and click Preview to see your newly invented word. Successful runs appear inline, while any validation errors from the middleware (like an invalid middle range) are echoed in red with helpful hints so you can fix your recipe on the spot.1
+
+
+Chapter 6: The Sentence Weaver (TemplatePanel)
+
+
+This appliance is one of the most versatile in your kitchen. It lets you build complex results by writing a simple sentence with special placeholders, and then defining how each of those placeholders should be filled. It's the key to generating structured content like quest descriptions, item names with modifiers, or character backstories.1
+
+
+A Deep Dive into the Sentence Weaver
+
+
+The power of the Template Panel comes from its ability to nest generators within other generators, creating a tree of creative possibilities.
+* Metadata Banner: The banner at the top recaps the required keys for a valid template recipe: template_string and sub_generators, as well as optional settings like max_depth.1
+* Template string field: This is the heart of the panel. Here, you write your template. Any word or phrase inside square brackets, like [adjective], becomes a placeholder (or "token") that needs to be filled. For example: "The [adjective] hero must find the [magic_item] of [place]." As you type, you'll see your tokens appear in the Token expansion preview tree below, confirming that the tool's parser understands your structure.1
+* Child generator definitions (JSON editor): This large text box is where you define what fills your tokens. You'll write a small recipe in a special format called JSON that tells the tool, for example, that the [adjective] token should be filled by picking a word from an adjectives.tres wordlist. The panel validates the JSON as you type and will highlight any tokens in your template that do not have a matching definition in this box, preventing errors before they happen.1
+* Max depth: This is a safety feature to prevent infinite loops. If you accidentally have one token call another token, which in turn calls the first token (e.g., [A] is defined to generate , and is defined to generate [A]), this setting stops the process after a certain number of steps (the default is 8). The live validator in the panel will tint this control red and show you the middleware's error message if your template structure would violate this limit, allowing you to fix it proactively.1
+* Seed helper: When you provide an optional seed, this banner provides extra context by illustrating exactly how child seeds will be derived for each token (e.g., parent_seed::token_name::occurrence_number). It also shows the latest seed and stream information from the middleware, which is extremely helpful for debugging complex, nested templates.1
+* Token expansion preview tree: This is a visual map of your template. It shows you every token you've created and how they connect to each other. Each row displays the recursion depth, the name of the generator that will fill the token, and the precise seed that will be passed to that child generator. If you nest templates within other templates, they will expand inline, allowing you to verify the entire cascaded definition from a single view.1
+* Preview Button: Clicking Preview sends your complete template configuration to the middleware for a deterministic sample. If there are any validation errors (such as an empty token `` or a token that is missing a definition), the error message will appear in red next to the relevant control, with a clear explanation of how to fix it.1
+
+
+Chapter 7: The Pattern Mimic (MarkovPanel)
+
+
+This is a more advanced appliance that operates on a fascinating principle: it learns the statistical patterns from a list of words you provide and then generates new, original words that sound stylistically similar. It's the perfect tool for when you want to create names that feel like they belong to a specific culture or language, without simply reusing existing words.1
+
+
+A Deep Dive into the Pattern Mimic
+
+
+The Markov Panel is both a generator and a powerful diagnostic tool for assessing the quality of your source data.
+* Metadata Banner: The banner provides a quick reference for the required key (markov_model_path) and optional settings like max_length, sourced directly from the middleware schema.1
+* Resource browser: Here, you select a MarkovModelResource file. This is a special ingredient file that has been "pre-digested" by another tool to analyze the letter-by-letter patterns in a source wordlist. Each entry in the browser surfaces the model's locale and domain metadata, helping you pick the right corpus for your needs.1
+* Summary Cards: Once you select a resource, two summary cards populate with detailed information:
+   * Model Summary: This card reports key statistics like the number of states (unique characters or tokens), the list of start/end tokens, and any temperature override ranges defined in the model.
+   * Health Block: This is an incredibly helpful diagnostic display. It gives you a "quality score" for your selected Markov model by highlighting potential issues like missing transitions (a character that is followed by nothing), unreachable tokens (a character that can never be reached from a starting character), and direct terminators (characters that immediately end a word). This allows you to gauge the integrity of your dataset at a glance and decide if your source list needs cleaning up.1
+* Maximum length: This sets the maximum number of tokens (or parts) the generated word can have. This prevents the generator from creating words that are excessively long. Leaving it at 0 allows the model to generate words of any length until it naturally reaches a termination point.1
+* Seed and Preview: As with the other panels, these control determinism and trigger the generation. When you click Preview, the panel sends the seed, model path, and max length to the RNGProcessor. If the middleware rejects the request due to an issue with the model or configuration, a red validation stack appears. It shows not only the primary error message but also a bulleted list of diagnostic details extracted from the error payload, giving you a clear path to remediation.1
+
+
+Chapter 8: The Master Recipe Card (HybridPipelinePanel)
+
+
+This is the most powerful appliance in your creative kitchen. It doesn't generate ideas on its own; instead, it lets you chain the other appliances together, creating complex, multi-step recipes where the result of one step becomes an ingredient for the next. This is the key to creating highly structured and layered content, such as a character who has a generated name, a generated title, and a generated backstory, all combined into a single, cohesive output.1
+
+
+A Deep Dive into the Master Recipe Card
+
+
+The Hybrid Pipeline is where all the other tools come together. Its interface is designed to manage this complexity by breaking the process down into a clear sequence.
+* Step List: This is where you build your multi-step recipe. You can add, remove, and reorder steps. Each item in the list represents a call to one of the other generator panels (Wordlist, Template, etc.).1
+* Strategy Selector and Add step Button: To build your recipe, you first use the Strategy selector dropdown to choose which type of generator you want for your next step (e.g., "wordlist," "template"). Then, you click the Add step button to add it to your list.1
+* Step Details and Alias field: When you select a step from the list, its full configuration panel appears in the main area. Here, you can give the result of that step a unique name, or "alias," in the Alias field. For example, you could have a Wordlist step that generates a character's first name and give it the alias first_name. This alias is crucial because it allows you to reference this specific result later in the pipeline.1
+* Template field: This is the final step of the recipe. Here, you can write a template that combines the results of all your previous steps by using their aliases, prefixed with a dollar sign. For example: "Quest for $first_name: Retrieve the lost $magic_item." This template interpolates the stored values from earlier steps to produce the final, structured output.1
+* Pipeline Tree: This provides a visual overview of your entire multi-step recipe. It's a tree diagram that shows each step in order, its alias, the generator it uses, and, most importantly, how the seeds and RNG streams flow from the main pipeline seed down into each individual step. This makes it easy to understand and debug the deterministic flow of your complex creation.1
+* Seed and Preview: The seed you provide in this panel becomes the master seed for the entire pipeline. When you click Preview, the tool executes each step in order, storing the results in their aliases, and then assembles the final output using your template string. If any nested step reports an error, the error message will be surfaced in the main feedback area, and the failing step will be highlighted in the list, allowing for targeted troubleshooting.1
+
+
+Part 3: The Word Wizard's Pantry: Creating and Managing Datasets
+
+
+
+
+Chapter 9: Understanding Your Ingredients: Data Resources Explained
+
+
+So far, we've been using the ingredients that we provided for you. But the true power of the Idea Engine is unleashed when you start providing your own ingredients—your own words, ideas, and concepts. To do that, you need to create your own "wordlists".1
+The term "wordlist" might sound a bit technical, but at its core, it's simply a way of organizing information so that a computer can read it easily. As a writer, you are already an expert at organizing information. A wordlist is just another organizational tool, like a filing cabinet for your ideas.1 This process involves two key concepts: your raw, human-readable source files, and the special, engine-ready resource files the tool actually uses.
+* Raw Ingredients (Your Source Files): These are the files you will create and edit directly, using familiar tools. They are typically plain text files, like .csv or .json. Think of these as the fresh vegetables you've just picked from your garden.1
+* Prepared Ingredients (Godot Resources): The Platform GUI, for reasons of speed and efficiency, doesn't use your raw files directly. Instead, it uses special, optimized Godot resource files that end in .tres. Think of these as the same vegetables, but now they've been washed, chopped, and placed in labeled jars, ready for the chef to use instantly.1
+The crucial part of this process is that the conversion from raw ingredient to prepared ingredient is handled for you automatically. Your main job is to create the raw source files correctly. The project includes special importer tools that handle the conversion. The process is simple:
+1. Place your newly created .csv or .json file into the project's designated data folder (e.g., res://data/wordlists/).
+2. The project's file system will automatically detect the new file and run the correct importer script on it.
+3. A new file with the same name but ending in .tres will be created right next to your original file. For example, Character_Names.csv will become Character_Names.tres.1
+That's it! The next time you open the Platform GUI and go to the appropriate generator panel, you will see your new .tres file appear in the Resource browser, ready to be used in your creative recipes.1
+There are three main types of "ingredient jars" you will be creating 1:
+1. WordListResource: For simple or weighted lists of words.
+2. SyllableSetResource: For lists of word fragments (prefixes, middles, suffixes).
+3. MarkovModelResource: For storing the statistical patterns learned from a source text.
+In the next chapters, we will teach you how to create the raw source files for each of these resource types.
+
+
+Chapter 10: Crafting Word Lists (WordListResource)
+
+
+A WordListResource is the most fundamental ingredient type, used by the Wordlist, Template, and Hybrid strategies. It is, at its heart, a simple list of words. Creating one involves sourcing good data, cleaning it up, and formatting it correctly for the automated importer.1
+
+
+Sourcing and Normalization
+
+
+The quality of your generated output is directly tied to the quality of your input lists. Follow these best practices when preparing your data:
+1. Start from Curated Material: Begin with lists that match the locale (language/region) and domain (genre, e.g., fantasy, sci-fi) you want the generator to express. This metadata will be stored in the final resource, making it easier to filter and find later.1
+2. Preserve Frequency Data: If your source list includes frequency or popularity information (e.g., a list of common baby names), keep it! This can be used to create "weighted" lists where more common words appear more often.1
+3. Vet the Raw Material: Before importing, scan your list for offensive, trademarked, or noisy data (like typos or formatting errors). Removing problematic entries early saves you from having to clean up the generated results later.1
+4. Clean the Data: Ensure you perform basic data cleaning, such as trimming leading/trailing whitespace from each entry and collapsing duplicate entries. The tool's helpers expect a unique list of entries.1
+
+
+Formatting for Import
+
+
+For WordListResource files, the simplest and most reliable format to use is a CSV file created in a spreadsheet program like Google Sheets or Microsoft Excel.
+To Create a Simple List:
+1. Open a New Spreadsheet: Start with a blank grid.
+2. Create a Column Header: In the first cell (A1), type a simple header, like value.
+3. Fill in Your Data: In the cells below the header, enter each word or phrase for your list, one per row.
+4. Export as a CSV File: Go to the "File" menu, choose "Download" or "Export," and select Comma-separated values (.csv). Save the file with a descriptive name (e.g., fantasy_cities.csv) into the appropriate res://data/ subfolder.1
+To Create a Weighted List:
+A weighted list allows you to make some entries appear more frequently than others. For example, in a list of materials, you might want "iron" to be more common than "mithril."
+1. Open a New Spreadsheet.
+2. Create Two Column Headers: In cell A1, type value. In cell B1, type weight.
+3. Fill in Your Data: In the value column, enter your words. In the weight column, enter a number. Higher numbers are more likely to be chosen. For example:
+value
+	weight
+	iron
+	10
+	steel
+	5
+	mithril
+	1
+	4. Export as a CSV File: Follow the same export process as before. The importer is smart enough to detect the value and weight columns and will build the weighted entries automatically.1
+Once your CSV is imported and the .tres file is generated, it's ready to be used in the Wordlist Panel. Just remember to check the Use weights when available box to make the generator respect your weightings.1
+
+
+Chapter 11: Building Syllable Sets (SyllableSetResource)
+
+
+When you want to invent entirely new words that still sound like they belong to a specific language or culture, you'll need a SyllableSetResource. This resource type doesn't store whole words, but rather the building blocks of words: prefixes, middles, and suffixes. The easiest way to create these is with the built-in Syllable Set Builder tool.1
+
+
+Using the Syllable Set Builder
+
+
+This tool is an editor plugin that adds a special dock to your Godot interface, designed to streamline the process of converting a list of existing words into a structured syllable set.
+1. Accessing the Tool: First, you need to enable the plugin. Go to Project > Project Settings > Plugins and make sure the Syllable Set Builder is checked "Enabled." A new dock will appear on the right-hand side of the editor, labeled "Syllable Sets".1
+2. Preparing Your Source Words: The builder works by analyzing a list of existing words that have the "feel" you're aiming for. Create a simple, one-word-per-line list in a plain text file or spreadsheet column. For example, if you want to create new fantasy elf names, you might start with a list of existing elf names from your favorite books.1
+3. Using the Builder:
+   * Open the Syllable Set Builder dock.
+   * You can either paste your list of words directly into the large text input area, or you can click the Load WordListResource... button to import an existing .tres wordlist you've already created.
+   * The tool's status panel will report how many unique words it has ingested from your input.1
+   * Provide a descriptive name for your new resource in the Output file name field (e.g., elven_syllables).
+   * Click the Build syllable set button.
+4. Understanding the Output: The tool applies a heuristic syllabification algorithm to each word in your source list. It treats the first syllable as a prefix, the last syllable as a suffix, and any syllables in between as middles. Single-syllable words are cleverly stored as both a prefix and a suffix, allowing them to be combined or to stand alone as a valid generated name. The final SyllableSetResource is saved as a .tres file in the res://data/syllable_sets/ directory, ready to be used by the Syllable Chain Panel.1
+
+
+Chapter 12: Training Statistical Models (MarkovModelResource)
+
+
+A MarkovModelResource is the most complex ingredient type. It's a statistical model that learns the probabilistic relationships between characters or tokens in a source text. This allows the Markov Panel to generate new words that mimic the phonetic and structural patterns of the original data, resulting in highly authentic-sounding names.1
+
+
+The Markov Model Lifecycle
+
+
+Creating a high-quality Markov model is entirely dependent on the quality of your source data, which is often called a "corpus."
+1. Create the Corpus: A corpus is simply a plain text file containing a large, clean list of example names or words. This is the most important step. The list should be deduplicated and normalized for spelling and casing to ensure the patterns the model learns are consistent and strong.1 For example, if you want to generate realistic modern American names, your corpus should be a long list of such names.
+2. The Training Process: The conversion from a raw text corpus into a MarkovModelResource.tres file is handled by a command-line tool. You will run a script that reads your corpus, analyzes the transition probabilities between every character, and serializes this data into the final resource file. This file will contain the model's states, start_tokens, end_tokens, and the weighted transition tables that the generator uses to walk from one character to the next.1
+3. Validating Your Model in the GUI: This is a crucial final step. Once your .tres model has been generated and placed in the res://data/markov_models/ folder, you should immediately open the Platform GUI and navigate to the Markov Panel.
+   * Select your newly created model from the Resource browser.
+   * Carefully examine the Health Block. This diagnostic tool will instantly tell you if your model has issues. For example, it might warn you about "unreachable tokens" (parts of your source data that can never be generated) or a low number of start tokens that can successfully reach an end token.
+   * Use this feedback to refine your source corpus. You may need to add more examples or clean the existing data to fix the highlighted issues. Rebuild the model whenever you make substantial changes to the underlying corpus to ensure the transition data remains in sync.1
+
+
+Chapter 13: Maintaining Your Pantry: The Dataset Health Dashboard
+
+
+As your project grows, so will your collection of ingredient files. The Dataset Health tab acts as your automated pantry inspector, helping you audit your data folders and quickly identify problems without having to check every file manually.1
+This panel is a user-friendly interface for the dataset_inspector.gd script, which runs behind the scenes to check your res://data/ directory for common issues.1
+1. Running an Inspection: To start a health check, simply navigate to the Dataset Health tab and click the main button at the top of the panel. The tool will execute the inspector script, capture all of its output, and render a summary directly in the GUI.1
+2. Interpreting the Results: The panel is divided into two main areas:
+   * Folder Inventory: This section provides a per-folder summary of the res://data directory, showing you which files are present in each subfolder. This is useful for quickly verifying that your newly imported resources are in the correct place.1
+   * Warnings Stack: This is the most important part of the health check. Any problems detected by the inspector script will appear here, marked with a ⚠️ icon and red status text. Common warnings include empty directories that need content, missing root folders, or other script-related issues that could cause problems for the generators.1
+3. Quick-Fix Buttons: The panel includes convenient shortcuts to help you act on the inspection results immediately:
+   * Open syllable builder: If the inspection highlights gaps or issues with your syllable sets, this button will activate the Syllable Set Builder plugin and bring its dock into focus, allowing you to regenerate your resources without leaving the workflow.1
+   * Dataset guide: This contextual link jumps you directly to the comprehensive dataset production guide in the developer documentation, providing a quick reference for sourcing and normalization checklists while you triage any identified issues.1
+
+
+Part 4: Advanced Techniques and Collaboration
+
+
+
+
+Chapter 14: Authoring Complex Narratives: The Formulas Workspace
+
+
+Now that you're comfortable with the individual appliances, it's time to unlock the tool's most powerful feature for narrative designers: the Formulas Workspace. This dedicated workspace is designed for building "master recipes" that combine the Hybrid and Template strategies to generate complete, structured sentences and narrative blurbs.1
+The best way to understand this is to walk through a pre-made example.
+1. Open the Workspace: Navigate to the main tab labeled Formulas. This will load the FormulasWorkspace.tscn scene.1
+2. Choose a Blueprint: At the top, you will see a dropdown menu labeled Blueprint selector. Blueprints are curated, pre-made recipes that demonstrate best practices for sentence construction. Select the option Skill sentence (hybrid + nested template).1
+3. Analyze the Recipe: The screen will now populate with a complete, two-part recipe. On the left, you'll see the configuration for a Hybrid Pipeline. On the right, you'll see the configuration for a Template Panel that is being used within the hybrid pipeline.1
+Let's break down what this recipe is doing 1:
+* The Hybrid Steps (Left Panel): Look at the step list. It has three steps:
+   1. A wordlist step picks a random verb from skill_verbs.tres and stores the result in an "alias" named skill_verb.
+   2. Another wordlist step picks a random theme from skill_themes.tres and stores it in an alias named skill_theme.
+   3. A template step, which is the crucial connection. This step is configured to use the template shown in the panel on the right.
+* The Template (Right Panel): Now look at the template string. It says The $skill_verb of $skill_theme [skill_payload]. This template does two things:
+   1. It takes the results from the first two steps (which we saved in the $skill_verb and $skill_theme aliases) and plugs them into the sentence.
+   2. It then uses its own internal sub-generator to fill the [skill_payload] token from another wordlist.
+* Visualizing the Flow (Seed & Alias Propagation Panel): This panel provides a visual tree of the entire process. Rows tinted blue confirm that aliases are correctly inheriting the main pipeline seed (e.g., skill_sentence_v1::step_skill_verb), ensuring the result is deterministic. Red rows highlight missing aliases or other issues that need attention.1
+When you click the Preview formula button, the tool executes this entire chain reaction, resulting in a complete, structured sentence like "The Amplify of Storms to unravel wards." This demonstrates how you can combine simple, small wordlists into complex, narrative-rich outputs.1
+
+
+Chapter 15: The Magic Bookmark: Reproducibility with Seeds
+
+
+Have you ever gotten a "random" result that you absolutely loved and wanted to show a colleague, only to find you couldn't get it again? The Platform GUI solves this problem with a system called "seeds." Think of the Master Seed as a "Magic Bookmark" for the entire tool's random state.1 If you and a teammate both use the same Master Seed, you will both get the exact same "random" results from every generator, every single time. This is incredibly powerful for collaboration, testing, and ensuring deterministic outcomes.1
+The Seeds tab loads the Seeds Dashboard, which gives you full control over this creative bookmark.1
+* Master Seed Display: The header of this panel always displays the current Master Seed being used by the tool's middleware, ensuring you always know the current state.1
+* Applying a Manual Seed: To sync up with a teammate, simply paste an agreed-upon seed value into the Enter master seed field and press Apply. The dashboard will send this value to the middleware, and a confirmation banner will appear. The entire tool will now operate from this shared deterministic starting point.1
+* Randomizing the Seed: If you want a fresh, unpredictable set of results, click Randomize. The panel calls the middleware to generate a new random Master Seed and automatically drops the result into the input field, ready for you to copy and save alongside any screenshots or notes.1
+* Derived RNG Streams Table: This table gives you a detailed look at how the Master Seed is used to create separate, isolated random number streams for different parts of the tool. It shows the seed and state for each stream and indicates whether the data is coming from the live RNGManager or the middleware's fallback cache, which is useful for debugging.1
+* Exporting and Importing State: This is the most powerful feature for collaboration and bug reporting.
+   * Export state: Clicking this button copies the entire RNG topology—the master seed plus the exact position of every single derived stream—to the clipboard as a JSON payload.
+   * Import state: You can paste a previously exported payload into the text area and click Import state. The panel validates the JSON and then restores the middleware to that exact state. This allows a teammate or QA engineer to perfectly replicate your tool's state on their machine, guaranteeing they can reproduce the exact same results for testing or review.1
+
+
+Chapter 16: From Idea to Delivery: Managing Batch Exports
+
+
+While the Preview button is great for experimenting with a single idea, the Exports tab is your station for mass production. It allows you to queue up hundreds or thousands of generator runs and package the results into a clean, shareable bundle for use in the game, by localization teams, or for QA review.1
+1. Stage Your Jobs: The workflow begins in the Generators tab. Once you have a configuration you're happy with, switch to the Exports tab and press Add job. This captures the current generator configuration—its strategy, parameters, and seed metadata—and adds it to a queue. You can repeat this process to stage multiple, different generator configurations in a single batch.1
+2. Annotate for Context: For each job in the queue, use the Annotate button to record important metadata. This could be a localization code, a platform identifier (e.g., "PS5"), or a sprint number. These annotations are saved in the exported manifest, providing crucial context for anyone who uses the data downstream.1
+3. Choose Your Format: The GUI supports two primary export formats:
+   * CSV (Comma-Separated Values): This format flattens the results into a simple table, perfect for opening in a spreadsheet. Any arrays in the results are automatically expanded into semicolon-separated strings for compatibility.1
+   * JSON (JavaScript Object Notation): This format exports the full data payload, including all metadata. It's ideal for machine-to-machine handoffs or when the downstream consumer needs the complete, structured data.1
+4. Run the Batch: Click Run batch. The GUI will iterate through every job in your queue, calling the RNGProcessor for each one. Progress indicators will show you the status of each job in real time, just like in the single-run workflow.1
+5. Download the Bundle: When the batch is complete, click Download bundle. This retrieves a single, timestamped directory containing everything needed for a perfect handoff: the manifest file, the raw results in your chosen format (CSV or JSON), and an optional DebugRNG snapshot if you had recording enabled. This bundle is optimized for archival and submission to external QA teams, as it contains all the data and seed information required to reproduce the entire run.1
+
+
+Chapter 17: Customizing Your Workspace: The Admin Tools
+
+
+The Admin Tools tab is your personal control panel for customizing the Platform GUI to fit your specific workflow. Your preferences are stored locally in a settings.json file, so the tool will remember your layout between sessions.1
+* Save and Restore Layouts: If you have a preferred arrangement of panels and tabs that you use for a specific task, you can save it as a preset. Use Save current layout to bookmark the active tab, panel sizing, and the state of the debug toolbar. You can then return to this exact layout at any time by clicking Restore layout. This is perfect for quickly switching between different creative contexts.1
+* Share Your Presets with the Team: To ensure your team has a consistent and efficient workspace, you can share your presets. Press Sync bookmarks to export your saved layouts and other preferences as a JSON file. This file can be shared with other artists, who can then import it during their onboarding to guarantee everyone starts with the same workspace defaults.1
+* Opt-in to Experimental Features: The tools team sometimes releases new panels or features in a beta state. The Experimental features list allows you to opt in or out of these beta tests using feature flags. This lets you try out new functionality in a safe way without affecting the stable workflow of the rest of your team. The list automatically validates flags against the middleware's capabilities, so any unsupported experiments are hidden from view.1
+
+
+Part 5: The Mechanic's Toolbox: Troubleshooting and Support
+
+
+
+
+Chapter 18: The Generator First-Aid Kit: A Visual Guide to Common Errors
+
+
+Even with the friendliest tool, you might occasionally see an error message pop up. This is perfectly normal and usually means something very simple needs to be fixed. This chapter translates the most common symptoms into plain-language advice.1
+Symptom
+	What It Means & What to Try
+	"No strategies available" in the dropdown
+	The GUI can't connect to the main generation engine. First, ensure the Godot project autoloads are active by following the launch checklist. Then, press the Reload Strategies button in the UI. This forces the GUI to re-scan for available generator types.
+	Generator previews ignore the selected seed
+	The tool is being told to override your manual seed. Check that the Randomize seed before each run checkbox in the toolbar is disabled. Also, go to the Admin Tools tab and make sure the experimental flag Force random seeds is turned off.
+	"Failed to generate" error banner
+	Your recipe has an error. Double-check your inputs; required fields that are empty will often turn red. If the error persists, open the Debug Logs tab to read the detailed error message. You can use the Copy config JSON button to share the exact failing recipe with an engineer.
+	Debug Logs tab is empty
+	The "kitchen camera" is off. Go to the DebugRNG toolbar, toggle Record DebugRNG Session on, and run the generator again. This connects the logger to the middleware so it can start writing the report file.
+	Export bundle missing DebugRNG snapshot
+	The "Include DebugRNG snapshot" option was likely disabled during the export process. In the Exports tab, confirm this checkbox is enabled before you click Run batch. If the toggle is missing entirely, you may need to enable the Exports.DebugRNG feature flag in the Admin Tools tab.
+	Seed value keeps changing unexpectedly
+	The tool is set to randomize the seed automatically. Find the Randomize seed before each run checkbox in the toolbar and disable it. This will ensure the tool respects the manually applied seed from the Seeds tab.
+	Admin Tools flags do not persist
+	The tool can't save your settings file. This is usually a file permissions issue with user://platform_gui/settings.json. Check with your technical support to ensure Godot has permission to write to that location. Deleting the file after fixing permissions will allow the tool to regenerate it with default settings.
+	GUI window will not launch
+	The project is not set up correctly. Open Godot's "Output" panel at the bottom of the editor to look for error messages. The most common cause is missing autoloads or a renamed project folder, which prevents the GUI from finding the RNGProcessor engine. Follow the launch checklist to restore the correct project path and settings.
+	
+
+Chapter 19: When to Call an Engineer: Using the Debugging and QA Tools
+
+
+In your tour of the "Creative Kitchen," you may have noticed two tabs that look a bit more technical: Debug Logs and a QA Panel (if enabled). For your day-to-day creative work, you can safely ignore these. They are the "Mechanic's Toolbox," designed for the technical team to diagnose issues. However, if you ever encounter a persistent bug, our support team might ask for your help in filing a report. In that case, the process is very simple.1
+
+
+Using the Debug Logs Tab
+
+
+When DebugRNG recording is active, this tab gives you a real-time view into the tool's internal operations.
+1. Refresh Log: Click this button to pull the latest telemetry from the middleware without having to re-parse the raw log file from disk.1
+2. Filter Sections: Use the dropdown to jump between key sections of the report: Generation timeline, Warnings, Stream usage, and Strategy errors. This allows you to quickly find the most relevant information. Warnings are marked with a ⚠️ glyph, while failures are tinted red for easy scanning.1
+3. Download Report: When you need to share the log with an engineer, enter a target file path (e.g., user://debug_rng_copy.txt) and press Download. This saves a clean copy of the raw .txt report that can be attached to a support ticket.1
+
+
+Using the QA Panel
+
+
+The QA Panel provides a simple, one-click interface for running the project's full suite of automated health checks.
+1. Run Full Test Suite: Click the large Run full test suite button. This will execute the same regression tests that engineers use, covering the generator core, the Platform GUI itself, and a set of curated diagnostics.1
+2. Monitor the Log: You will see text start to scroll in the log view on the right. This is the live output from the test runner.1
+3. Share the Results: Once the run is complete, the results will be summarized. You can then use the Debug Logs tab to download the full session report, which will now contain the detailed results of the test run, and attach it to your bug report. This information is invaluable for our technical team and will help them solve your problem much more quickly.1
+
+
+Appendix A: Complete Middleware Error Code Reference
+
+
+When the middleware reports an error, the GUI shows a plain-language summary and a link to this handbook. Use the tables below to dig deeper into each family of errors. Every row mirrors the hint and tooltip structure surfaced in the panels.1
+
+
+Configuration Payloads
+
+
+Error code
+	What it means
+	How to fix it
+	invalid_config_type
+	Configuration payload must be provided as a Dictionary.
+	Regenerate the payload from the GUI form or rebuild it using the handbook configuration template.
+	
+
+Required Key Mismatches
+
+
+Error code
+	What it means
+	How to fix it
+	missing_required_keys
+	Configuration is missing at least one required key.
+	Compare your payload with the required key list documented in this handbook before retrying.
+	
+
+Optional Key Typing
+
+
+Error code
+	What it means
+	How to fix it
+	invalid_key_type
+	Optional key value does not match the expected type.
+	Confirm each optional key uses the type shown in the optional key reference table.
+	
+
+Resource Lookups
+
+
+Error code
+	What it means
+	How to fix it
+	missing_resource
+	Referenced resource could not be loaded from disk.
+	Verify the path, file extension, and import status against the resource checklist.
+	invalid_resource_type
+	Loaded resource exists but does not match the expected type.
+	Open the referenced file in Godot and confirm it inherits from the required resource class.
+	
+
+Word List Datasets
+
+
+Error code
+	What it means
+	How to fix it
+	invalid_wordlist_paths_type
+	wordlist_paths must contain resource paths or WordListResource instances.
+	Select word lists through the GUI picker or mirror the array structure described in the handbook.
+	invalid_wordlist_entry
+	Word list entries must be strings or WordListResource objects.
+	Clean the array so only resource paths or preloaded resources remain before generating.
+	wordlists_missing
+	No word list resources were provided to the strategy.
+	Use the resource browser to add at least one dataset before generating.
+	wordlists_no_selection
+	The configured word lists did not return any entries.
+	Double-check that each word list contains entries and the filters match the handbook workflow.
+	wordlist_invalid_type
+	Loaded resource is not a WordListResource.
+	Confirm the path targets a .tres exported from the word list builder tools.
+	wordlist_empty
+	Word list resource does not expose any entries.
+	Populate the dataset via the builder and reimport before attempting another preview.
+	
+
+Syllable Chain Ranges
+
+
+Error code
+	What it means
+	How to fix it
+	invalid_syllable_set_path
+	syllable_set_path must be a valid resource path.
+	Browse to an existing syllable set asset listed in the handbook inventory.
+	invalid_syllable_set_type
+	Loaded resource is not a SyllableSetResource.
+	Rebuild the asset using the syllable set builder described in the handbook.
+	empty_prefixes
+	Selected syllable set is missing prefix entries.
+	Edit the dataset so every required syllable column contains at least one entry.
+	empty_suffixes
+	Selected syllable set is missing suffix entries.
+	Populate suffix data in the resource before generating again.
+	missing_required_middles
+	Configuration requires middle syllables but the resource has none.
+	Add middle syllables to the dataset or disable the require_middle option.
+	middle_syllables_not_available
+	Requested middle syllables but the resource does not define any.
+	Reduce the middle syllable range or update the dataset with middle entries.
+	invalid_middle_range
+	middle_syllables must define a valid min/max range.
+	Ensure min is less than or equal to max and matches the examples in the handbook.
+	unable_to_satisfy_min_length
+	Generated name could not reach the requested minimum length.
+	Lower the minimum length or expand the syllable set to include longer fragments.
+	
+
+Template Nesting
+
+
+Error code
+	What it means
+	How to fix it
+	invalid_template_type
+	Template payload must be a string before tokens can be resolved.
+	Copy the template examples directly from the handbook to restore the correct syntax.
+	empty_token
+	Template contains an empty token placeholder (``).
+	Replace empty placeholders with named tokens so they can map to sub-generators.
+	missing_template_token
+	Template references a token that is not defined in sub_generators.
+	Add a matching entry to the sub-generator dictionary following the handbook example.
+	invalid_sub_generators_type
+	sub_generators must be a Dictionary keyed by template tokens.
+	Restructure the payload so each token maps to a configuration dictionary.
+	invalid_max_depth
+	max_depth must be a positive integer.
+	Set max_depth using the defensive defaults outlined in the handbook.
+	missing_strategy
+	Sub-generator entry is missing its strategy identifier.
+	Assign a strategy ID that matches the middleware catalog before generating.
+	template_recursion_depth_exceeded
+	Nested templates exceeded the configured max_depth.
+	Increase max_depth or simplify nested calls per the handbook escalation steps.
+	name_generator_unavailable
+	NameGenerator singleton or script is unavailable.
+	Enable the autoloads noted in the launch checklist or restore the default script path.
+	
+
+Hybrid Pipelines
+
+
+Error code
+	What it means
+	How to fix it
+	invalid_steps_type
+	Hybrid strategy expects steps to be an Array of dictionaries.
+	Collect step definitions through the Hybrid panel so the payload structure matches the handbook.
+	empty_steps
+	Hybrid strategy requires at least one configured step.
+	Add a step that points to a generator or reuse the starter pipelines documented in the handbook.
+	invalid_step_entry
+	Each hybrid step must be a Dictionary entry.
+	Recreate the step via the GUI to avoid mixing scalar values with configuration dictionaries.
+	invalid_step_config
+	Hybrid step config payload must be a Dictionary.
+	Open the child panel referenced in the handbook to capture a fresh configuration block.
+	missing_step_strategy
+	Hybrid step is missing its strategy identifier.
+	Select a generator for every step so the middleware knows which strategy to invoke.
+	hybrid_step_error
+	A nested hybrid step reported its own error.
+	Inspect the step details and open the referenced panel for targeted troubleshooting.
+	
+
+Markov Chain Datasets
+
+
+Error code
+	What it means
+	How to fix it
+	invalid_markov_model_path
+	markov_model_path must point to a MarkovModelResource.
+	Select a model from the Dataset Health inventory before requesting a preview.
+	missing_markov_model_path
+	Configuration omitted the Markov model path.
+	Fill in the model path or pick a dataset using the Markov panel workflow.
+	invalid_model_states
+	Markov model state table is malformed.
+	Re-export the dataset using the builder to refresh state counts.
+	missing_transition_for_token
+	Model lacks a transition table for one of the referenced tokens.
+	Regenerate the dataset to include transitions for every token referenced in the state table.
+	max_length_exceeded
+	Generation stopped after exceeding the configured max_length.
+	Increase max_length or relax temperature constraints per the troubleshooting table.
+	
+
+Appendix B: Printable Workflow Checklists
+
+
+These printable checklists summarise the most common Platform GUI workflows. Duplicate them into project wikis, sprint handoffs, or build scripts so every export stays deterministic.1
+
+
+Launch Readiness
+
+
+* [ ] Repository synced and up-to-date.
+* [ ] Godot 4.4 installed and pointing to the repository root.
+* [ ] project.godot opened from the root (no renamed folder).
+* [ ] Autoloads RNGManager, NameGenerator, and RNGProcessor enabled in Project Settings.
+* [ ] DebugRNG toolbar visible (toggle from View > Docks if hidden).
+* [ ] Optional: DebugRNG metadata filled out (session label, ticket ID, notes).
+* [ ] Active workspace preset selected in Admin Tools if you rely on custom layouts.
+
+
+Batch Export Readiness
+
+
+* [ ] Generators tab configured with the desired strategy and validated inputs.
+* [ ] Seeds tab shows the expected master seed (apply manual seed if needed).
+* [ ] Randomize seed before each run disabled unless a unique set is required.
+* [ ] DebugRNG recording enabled for telemetry-rich export bundles.
+* [ ] Jobs staged in the Exports tab with meaningful annotations (locale, sprint, feature tag).
+* [ ] Export format selected (CSV or JSON) and verified against downstream consumer expectations.
+* [ ] Include DebugRNG snapshot toggle enabled if QA needs timeline context.
+* [ ] Destination directory is writable (check OS permissions when exporting to shared drives).
+
+
+Post-Export Handoff
+
+
+* [ ] Bundle folder renamed with ticket ID and date stamp.
+* [ ] Manifest and payload files spot-checked for expected data volume.
+* [ ] rng_state.json imported locally to verify reproducibility.
+* [ ] DebugRNG .txt file reviewed for warnings before delivery.
+* [ ] Summary README updated with platform, localization, and sprint notes.
+* [ ] Bundle archived in the studio’s handoff location and linked from the tracking ticket.
+
+
+Appendix C: Glossary of Terms
+
+
+* Alias: A custom name (e.g., $first_name) you give to the result of a step in the Hybrid Pipeline so you can reference it in later steps.
+* Autoload: A script that Godot loads automatically at startup, providing essential engine-level functionality to the GUI.
+* Corpus: A body of text (like a list of names) used as the source material to train a Markov model.
+* CSV (Comma-Separated Values): A simple text file format for storing lists of data, easily created and edited with spreadsheet software.
+* Determinism: The principle that given the same starting seed, a generator will always produce the exact same sequence of "random" results.
+* JSON (JavaScript Object Notation): A text format for storing structured data with key-value pairs, used for complex configurations like sub-generators in the Template Panel.
+* Middleware (RNGProcessor): The central "engine" of the tool. It sits between the GUI and the low-level generators, managing requests, seeds, and logging.
+* Resource (.tres file): A special, engine-optimized Godot file format used to store data like wordlists, syllable sets, and Markov models.
+* RNG (Random Number Generator): The part of the system that produces random numbers. The tool uses a deterministic RNG to ensure results can be reproduced.
+* Seed: A starting number or string used to initialize the random number generator. The same seed will always produce the same results.
+* Strategy: A specific method of generation, such as Wordlist, Syllable Chain, or Template. Each strategy has its own dedicated panel in the GUI.
+* Token: A placeholder in a template string, enclosed in square brackets (e.g., [adjective]), that is replaced by a sub-generator.
+Works cited
+1. Adapting Godot RNG Manual for Platform GUI.docx
