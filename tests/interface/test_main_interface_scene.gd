@@ -95,7 +95,9 @@ func _test_propagates_controller_and_metadata_overrides() -> Variant:
 
 func _test_exposes_expected_tabs() -> Variant:
     return _with_interface(func(interface: Control):
-        var main_tabs: TabContainer = interface.get_node("MainLayout/MainTabs") as TabContainer
+        var main_tabs: TabContainer = interface.get_node_or_null("MainScrollContainer/MainLayout/MainTabs") as TabContainer
+        if main_tabs == null:
+            main_tabs = interface.get_node_or_null("MainLayout/MainTabs") as TabContainer
         if main_tabs == null:
             return "MainTabs TabContainer should exist under the main layout."
         var visible_titles: Array[String] = []

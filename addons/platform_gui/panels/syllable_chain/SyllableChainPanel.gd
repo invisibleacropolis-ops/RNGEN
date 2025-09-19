@@ -21,6 +21,7 @@ var _require_middle_toggle: CheckButton= null
 var _middle_min_spin: SpinBox= null
 var _middle_max_spin: SpinBox= null
 var _min_length_spin: SpinBox= null
+var _refresh_button: Button = null
 var _regex_preset_container: VBoxContainer= null
 var _seed_edit: LineEdit= null
 var _preview_button: Button= null
@@ -84,6 +85,10 @@ func _ensure_nodes_ready() -> void:
 		_middle_max_spin = get_node("%MiddleMaxSpin") as SpinBox
 	if _min_length_spin == null:
 		_min_length_spin = get_node("%MinLengthSpin") as SpinBox
+	if _refresh_button == null:
+		_refresh_button = get_node_or_null("%RefreshButton") as Button
+		if _refresh_button == null:
+			_refresh_button = get_node_or_null("Header/RefreshButton") as Button
 	if _regex_preset_container == null:
 		_regex_preset_container = get_node("%RegexPresetContainer") as VBoxContainer
 	if _seed_edit == null:
@@ -100,8 +105,14 @@ func _ensure_nodes_ready() -> void:
 		_notes_label = get_node("%NotesLabel") as Label
 func _ready() -> void:
 	_ensure_nodes_ready()
-	_preview_button.pressed.connect(_on_preview_button_pressed)
-	%RefreshButton.pressed.connect(_on_refresh_pressed)
+	if _preview_button != null:
+		_preview_button.pressed.connect(_on_preview_button_pressed)
+	else:
+		push_warning("Preview button node missing; preview action disabled.")
+	if _refresh_button != null:
+		_refresh_button.pressed.connect(_on_refresh_pressed)
+	else:
+		push_warning("Refresh button node missing; automatic refresh disabled.")
 	_resource_list.item_selected.connect(_on_resource_selected)
 	_require_middle_toggle.toggled.connect(_on_require_middle_toggled)
 	_seed_edit.text_submitted.connect(_on_seed_submitted)
@@ -112,7 +123,6 @@ func _ready() -> void:
 	_refresh_metadata()
 	_refresh_resource_catalog()
 	_update_preview_state(null)
-
 func set_controller_override(controller: Object) -> void:
 	_ensure_nodes_ready()
 	_controller_override = controller
