@@ -211,7 +211,7 @@ func _build_regex_preset_controls() -> void:
 		button.text = String(preset.get("label", identifier.capitalize()))
 		button.tooltip_text = String(preset.get("description", ""))
 		button.focus_mode = Control.FOCUS_ALL
-		button.add_theme_style_override("focus", FOCUS_STYLE)
+		button.add_theme_stylebox_override("focus", FOCUS_STYLE)
 		_regex_preset_container.add_child(button)
 		_regex_presets[identifier] = {
 			"definition": preset,
