@@ -28,6 +28,13 @@ var _status_label: RichTextLabel= null
 var _history_list: ItemList= null
 var _guidance_label: RichTextLabel= null
 
+func _stringify(value: Variant) -> String:
+    if value is String:
+        return value
+    if value == null:
+        return ""
+    return str(value)
+
 var _controller_override: Object = null
 var _cached_controller: Object = null
 var _connected_controller: Object = null
@@ -117,7 +124,7 @@ func _on_run_suite_pressed() -> void:
         _set_status(_format_error("RNGProcessor controller unavailable; suite launch skipped."))
         return
     var run_id_variant := controller.call("run_full_test_suite")
-    _handle_run_start(String(run_id_variant), {"label": "Full suite"})
+    _handle_run_start(_stringify(run_id_variant), {"label": "Full suite"})
 
 func _on_run_diagnostic_pressed() -> void:
     _ensure_nodes_ready()
@@ -130,7 +137,7 @@ func _on_run_diagnostic_pressed() -> void:
         _set_status(_format_error("Select a diagnostic before launching."))
         return
     var run_id_variant := controller.call("run_targeted_diagnostic", selected_id)
-    _handle_run_start(String(run_id_variant), {"label": "Diagnostic %s" % selected_id})
+    _handle_run_start(_stringify(run_id_variant), {"label": "Diagnostic %s" % selected_id})
 
 func _on_refresh_diagnostics_pressed() -> void:
     _ensure_nodes_ready()
@@ -159,12 +166,12 @@ func _on_history_selected(index: int) -> void:
     _ensure_nodes_ready()
     if index < 0 or index >= _history_list.item_count:
         return
-    var run_id := String(_history_list.get_item_metadata(index))
+    var run_id := _stringify(_history_list.get_item_metadata(index))
     if not _history_lookup.has(run_id):
         return
     var record: Dictionary = _history_lookup[run_id]
     _active_run_id = run_id
-    _active_log_path = String(record.get("log_path", ""))
+    _active_log_path = _stringify(record.get("log_path", ""))
     _log_path_field.text = _active_log_path
     _render_history_log_hint(record)
     _update_buttons()
@@ -182,7 +189,7 @@ func _on_controller_run_output(run_id: String, line: String) -> void:
 func _on_controller_run_completed(run_id: String, payload: Dictionary) -> void:
     _ensure_nodes_ready()
     var result: Dictionary = payload.get("result", {}) if payload.has("result") else {}
-    var log_path := String(payload.get("log_path", ""))
+    var log_path := _stringify(payload.get("log_path", ""))
     _active_log_path = log_path
     _log_path_field.text = log_path
     var exit_code := int(result.get("exit_code", payload.get("exit_code", 1)))
@@ -209,7 +216,7 @@ func _handle_run_start(run_id: String, request: Dictionary) -> void:
     _log_lines.clear()
     _log_view.bbcode_text = ""
     _log_path_field.text = ""
-    var label := String(request.get("label", "QA run"))
+    var label := _stringify(request.get("label", "QA run"))
     _set_status(_format_info("Started %s." % label))
     _update_buttons()
 
@@ -245,8 +252,8 @@ func _populate_diagnostics(force: bool = false) -> void:
     _diagnostic_selector.add_item("Select diagnostic", -1)
     for entry_variant in _diagnostic_catalog:
         var entry: Dictionary = entry_variant if entry_variant is Dictionary else {}
-        var display_name := String(entry.get("name", entry.get("id", "Unnamed diagnostic")))
-        var id_value := String(entry.get("id", ""))
+        var display_name := _stringify(entry.get("name", entry.get("id", "Unnamed diagnostic")))
+        var id_value := _stringify(entry.get("id", ""))
         _diagnostic_selector.add_item(display_name)
         _diagnostic_selector.set_item_metadata(_diagnostic_selector.item_count - 1, id_value)
 
@@ -263,7 +270,7 @@ func _refresh_history() -> void:
         if not (record_variant is Dictionary):
             continue
         var record: Dictionary = record_variant
-        var run_id := String(record.get("run_id", ""))
+        var run_id := _stringify(record.get("run_id", ""))
         var label := _format_history_label(record)
         var index := _history_list.add_item(label)
         _history_list.set_item_metadata(index, run_id)
@@ -275,7 +282,7 @@ func _refresh_history() -> void:
 
 func _format_history_label(record: Dictionary) -> String:
     _ensure_nodes_ready()
-    var label := String(record.get("label", record.get("mode", "QA run")))
+    var label := _stringify(record.get("label", record.get("mode", "QA run")))
     var exit_code := int(record.get("exit_code", 1))
     var completed_ms := int(record.get("completed_at", 0))
     var completed := ""
@@ -295,7 +302,7 @@ func _format_history_label(record: Dictionary) -> String:
 func _render_history_log_hint(record: Dictionary) -> void:
     _ensure_nodes_ready()
     var exit_code := int(record.get("exit_code", 1))
-    var label := String(record.get("label", record.get("mode", "QA run")))
+    var label := _stringify(record.get("label", record.get("mode", "QA run")))
     var lines := PackedStringArray()
     if exit_code == 0:
         lines.append(_format_success("%s completed successfully." % label))
@@ -311,7 +318,7 @@ func _get_selected_diagnostic_id() -> String:
     var selected := _diagnostic_selector.get_selected_id()
     if selected >= 0:
         var metadata := _diagnostic_selector.get_item_metadata(_diagnostic_selector.selected)
-        return String(metadata)
+        return _stringify(metadata)
     return ""
 
 func _update_buttons() -> void:
@@ -363,16 +370,16 @@ func _resolve_group_summaries(payload: Dictionary, result: Dictionary) -> Array:
 
 func _resolve_group_label_for_display(entry: Dictionary) -> String:
     _ensure_nodes_ready()
-    var label := String(entry.get("group_label", ""))
+    var label := _stringify(entry.get("group_label", ""))
     if label.strip_edges() != "":
         return label
-    var group_id := String(entry.get("group_id", "")).strip_edges()
+    var group_id := _stringify(entry.get("group_id", "")).strip_edges()
     if group_id == "":
         return "Group"
     var parts := group_id.split("_")
     var words := PackedStringArray()
     for part_variant in parts:
-        var part := String(part_variant).strip_edges()
+        var part := _stringify(part_variant).strip_edges()
         if part == "":
             continue
         words.append(part.capitalize())
@@ -382,7 +389,7 @@ func _resolve_group_label_for_display(entry: Dictionary) -> String:
 
 func _resolve_group_badge_code(entry: Dictionary) -> String:
     _ensure_nodes_ready()
-    var group_id := String(entry.get("group_id", "")).strip_edges()
+    var group_id := _stringify(entry.get("group_id", "")).strip_edges()
     if group_id == "":
         var label := _resolve_group_label_for_display(entry)
         if label == "":
@@ -391,7 +398,7 @@ func _resolve_group_badge_code(entry: Dictionary) -> String:
     var pieces := group_id.split("_")
     var code := ""
     for piece_variant in pieces:
-        var piece := String(piece_variant).strip_edges()
+        var piece := _stringify(piece_variant).strip_edges()
         if piece == "":
             continue
         code += piece.substr(0, 1).to_upper()
@@ -448,7 +455,7 @@ func _format_history_tooltip(record: Dictionary) -> String:
     if group_summaries.is_empty():
         return ""
     var lines := PackedStringArray()
-    lines.append(String(record.get("label", record.get("mode", "QA run"))))
+    lines.append(_stringify(record.get("label", record.get("mode", "QA run"))))
     for entry_variant in group_summaries:
         if not (entry_variant is Dictionary):
             continue
@@ -502,7 +509,7 @@ func _join_strings(values: Variant, separator: String) -> String:
     var combined := ""
     var is_first := true
     for value in values:
-        var segment := String(value)
+        var segment := _stringify(value)
         if is_first:
             combined = segment
             is_first = false
@@ -521,4 +528,4 @@ func _is_object_valid(candidate: Object) -> bool:
 func _on_meta_clicked(meta: Variant) -> void:
     _ensure_nodes_ready()
     if meta is String:
-        OS.shell_open(ProjectSettings.globalize_path(String(meta)))
+        OS.shell_open(ProjectSettings.globalize_path(_stringify(meta)))

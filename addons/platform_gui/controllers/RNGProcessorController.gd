@@ -43,6 +43,13 @@ func _is_gdscript_function_state(value: Variant) -> bool:
 
 @export var event_bus_path: NodePath
 
+func _stringify(value: Variant) -> String:
+	if value is String:
+		return value
+	if value == null:
+		return ""
+	return str(value)
+
 var _rng_processor_override: Object = null
 var _cached_rng_processor: Object = null
 var _connected_processor: Object = null
@@ -107,7 +114,7 @@ func list_strategies() -> PackedStringArray:
 	var packed := PackedStringArray()
 	if strategies is Array:
 		for value in strategies:
-			packed.append(String(value))
+			packed.append(_stringify(value))
 	return packed
 
 func describe_strategies() -> Dictionary:
@@ -309,7 +316,7 @@ func _normalize_logs(logs_variant: Variant) -> PackedStringArray:
 	if logs_variant is Array:
 		var converted := PackedStringArray()
 		for value in logs_variant:
-			converted.append(String(value))
+			converted.append(_stringify(value))
 		return converted
 	return PackedStringArray()
 
@@ -348,11 +355,11 @@ func _normalize_manifest_group_entry(source: Variant) -> Dictionary:
 	if source is Dictionary:
 		descriptor = (source as Dictionary).duplicate(true)
 	elif source is String:
-		descriptor = {"id": String(source)}
-	var group_id := String(descriptor.get("id", "")).strip_edges()
+		descriptor = {"id": _stringify(source)}
+	var group_id := _stringify(descriptor.get("id", "")).strip_edges()
 	if group_id == "":
 		return {}
-	var label := String(descriptor.get("label", descriptor.get("name", "")))
+	var label := _stringify(descriptor.get("label", descriptor.get("name", "")))
 	if label.strip_edges() == "":
 		label = _resolve_group_label(group_id)
 	descriptor["id"] = group_id
@@ -361,8 +368,8 @@ func _normalize_manifest_group_entry(source: Variant) -> Dictionary:
 
 func _resolve_group_label(group_id: String) -> String:
 	for descriptor in _DEFAULT_MANIFEST_GROUPS:
-		if descriptor is Dictionary and String(descriptor.get("id", "")) == group_id:
-			return String(descriptor.get("label", group_id))
+		if descriptor is Dictionary and _stringify(descriptor.get("id", "")) == group_id:
+			return _stringify(descriptor.get("label", group_id))
 	var readable := group_id.replace("_", " ")
 	if readable == "":
 		return group_id
@@ -388,10 +395,10 @@ func _execute_manifest_groups(runner: Object, manifest_path: String, groups: Arr
 		if not (descriptor_variant is Dictionary):
 			continue
 		var descriptor: Dictionary = descriptor_variant
-		var group_id := String(descriptor.get("id", "")).strip_edges()
+		var group_id := _stringify(descriptor.get("id", "")).strip_edges()
 		if group_id == "":
 			continue
-		var group_label := String(descriptor.get("label", _resolve_group_label(group_id)))
+		var group_label := _stringify(descriptor.get("label", _resolve_group_label(group_id)))
 		var group_result_variant := runner.call("run_group", manifest_path, group_id, yield_frames)
 		if _is_gdscript_function_state(group_result_variant):
 			group_result_variant = await group_result_variant
@@ -424,7 +431,7 @@ func _execute_manifest_groups(runner: Object, manifest_path: String, groups: Arr
 			for failure in failures_variant:
 				aggregated["failure_summaries"].append(failure)
 		elif failures_variant != null:
-			aggregated["failure_summaries"].append(String(failures_variant))
+			aggregated["failure_summaries"].append(_stringify(failures_variant))
 
 		var group_exit_code := int(group_summary.get("exit_code", 0))
 		if group_exit_code != 0 and group_exit_code > aggregated.get("exit_code", 0):
@@ -486,7 +493,7 @@ func _normalize_summary_payload(summary: Dictionary) -> Dictionary:
 		for failure in failures_variant:
 			failures.append(failure)
 	elif failures_variant != null:
-		failures.append(String(failures_variant))
+		failures.append(_stringify(failures_variant))
 	normalized["failure_summaries"] = failures
 
 	var exit_code := int(normalized.get("exit_code", 0))
@@ -508,13 +515,13 @@ func _process_active_qa_run() -> void:
 		})
 		return
 
-	var mode := String(request.get("mode", "manifest"))
+	var mode := _stringify(request.get("mode", "manifest"))
 	var yield_frames := bool(request.get("yield_frames", _qa_yield_between_logs))
 	var result: Dictionary = {}
 
 	if mode == "diagnostic":
 		if runner.has_method("run_single_diagnostic"):
-			var diagnostic_id := String(request.get("diagnostic_id", ""))
+			var diagnostic_id := _stringify(request.get("diagnostic_id", ""))
 			var diagnostic_result_variant := runner.call("run_single_diagnostic", diagnostic_id, yield_frames)
 			if _is_gdscript_function_state(diagnostic_result_variant):
 				diagnostic_result_variant = await diagnostic_result_variant
@@ -533,7 +540,7 @@ func _process_active_qa_run() -> void:
 			}
 	elif mode == "manifest_groups":
 		if runner.has_method("run_group"):
-			var manifest_path := String(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
+			var manifest_path := _stringify(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
 			var groups := _normalize_manifest_groups(request.get("groups", []))
 			if groups.is_empty():
 				groups = _duplicate_array(_DEFAULT_MANIFEST_GROUPS)
@@ -552,7 +559,7 @@ func _process_active_qa_run() -> void:
 			}
 	else:
 		if runner.has_method("run_manifest"):
-			var manifest_path := String(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
+			var manifest_path := _stringify(request.get("manifest_path", TestSuiteRunner.DEFAULT_MANIFEST_PATH))
 			var manifest_result_variant := runner.call("run_manifest", manifest_path, yield_frames)
 			if _is_gdscript_function_state(manifest_result_variant):
 				manifest_result_variant = await manifest_result_variant
@@ -572,16 +579,16 @@ func _process_active_qa_run() -> void:
 	_finish_qa_run(request, result)
 
 func _finish_qa_run(request: Dictionary, result: Dictionary) -> void:
-	var run_id := String(request.get("run_id", ""))
+	var run_id := _stringify(request.get("run_id", ""))
 	var logs := _normalize_logs(result.get("logs", PackedStringArray()))
 	var log_path := _persist_qa_log(run_id, logs)
 	var summary := _strip_logs(result)
 
 	summary["run_id"] = run_id
 	summary["log_path"] = log_path
-	summary["mode"] = String(request.get("mode", ""))
-	summary["label"] = String(request.get("label", summary.get("mode", "")))
-	summary["diagnostic_id"] = String(request.get("diagnostic_id", ""))
+	summary["mode"] = _stringify(request.get("mode", ""))
+	summary["label"] = _stringify(request.get("label", summary.get("mode", "")))
+	summary["diagnostic_id"] = _stringify(request.get("diagnostic_id", ""))
 	summary["requested_at"] = int(request.get("requested_at", Time.get_ticks_msec()))
 	summary["completed_at"] = Time.get_ticks_msec()
 	summary["exit_code"] = int(summary.get("exit_code", result.get("exit_code", 1)))
@@ -626,12 +633,12 @@ func _persist_qa_log(run_id: String, logs: PackedStringArray) -> String:
 	if file == null:
 		return ""
 	for line in logs:
-		file.store_line(String(line))
+		file.store_line(_stringify(line))
 	file.close()
 	return full_path
 
 func _on_qa_runner_log(run_id: String, line: String) -> void:
-	emit_signal("qa_run_output", run_id, String(line))
+	emit_signal("qa_run_output", run_id, _stringify(line))
 
 func _attach_group_metadata(payload: Dictionary, summary: Dictionary) -> void:
 	## Ensure QA consumers can access grouped manifest results without
@@ -660,7 +667,7 @@ func _build_group_summary_lookup(group_summaries: Array) -> Dictionary:
 		if not (entry_variant is Dictionary):
 			continue
 		var entry: Dictionary = entry_variant
-		var group_id := String(entry.get("group_id", "")).strip_edges()
+		var group_id := _stringify(entry.get("group_id", "")).strip_edges()
 		if group_id == "":
 			continue
 		lookup[group_id] = entry.duplicate(true)
