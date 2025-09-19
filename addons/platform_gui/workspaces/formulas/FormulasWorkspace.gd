@@ -217,23 +217,23 @@ func _ready() -> void:
 func set_controller_override(controller: Object) -> void:
     _controller_override = controller
     _cached_controller = null
-    if _hybrid_panel.has_method("set_controller_override"):
+    if _hybrid_panel != null and _hybrid_panel.has_method("set_controller_override"):
         _hybrid_panel.call("set_controller_override", controller)
-    if _template_panel.has_method("set_controller_override"):
+    if _template_panel != null and _template_panel.has_method("set_controller_override"):
         _template_panel.call("set_controller_override", controller)
 
 func set_metadata_service_override(service: Object) -> void:
     _metadata_service_override = service
     _cached_metadata_service = null
-    if _hybrid_panel.has_method("set_metadata_service_override"):
+    if _hybrid_panel != null and _hybrid_panel.has_method("set_metadata_service_override"):
         _hybrid_panel.call("set_metadata_service_override", service)
-    if _template_panel.has_method("set_metadata_service_override"):
+    if _template_panel != null and _template_panel.has_method("set_metadata_service_override"):
         _template_panel.call("set_metadata_service_override", service)
 
 func refresh() -> void:
-    if _hybrid_panel.has_method("refresh"):
+    if _hybrid_panel != null and _hybrid_panel.has_method("refresh"):
         _hybrid_panel.call("refresh")
-    if _template_panel.has_method("refresh"):
+    if _template_panel != null and _template_panel.has_method("refresh"):
         _template_panel.call("refresh")
     _rebuild_propagation_tree()
 
@@ -310,6 +310,8 @@ func _on_template_configuration_changed() -> void:
     _sync_template_step()
 
 func _rebuild_propagation_tree() -> void:
+    if _seed_tree == null:
+        return
     _seed_tree.clear()
     var root := _seed_tree.create_item()
     var pipeline_seed := "" if not _hybrid_panel.has_method("get_pipeline_seed") else String(_hybrid_panel.call("get_pipeline_seed"))

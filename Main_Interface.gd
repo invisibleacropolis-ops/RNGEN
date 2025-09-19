@@ -10,6 +10,9 @@ extends Control
 ## environment shipped with the add-on while keeping the editor hierarchy fully
 ## self-contained for tests and tooling.
 
+const _RNG_PROCESSOR_SINGLETON := StringName("RNGProcessor")
+const _RNGProcessor := preload("res://name_generator/RNGProcessor.gd")
+
 @onready var _event_bus: Node = $EventBus
 @onready var _controller: Node = $ProcessorController
 @onready var _metadata_service: Node = $StrategyMetadataService
@@ -28,9 +31,11 @@ extends Control
 ]
 
 var _registered_singletons: Array = []
+var _local_rng_processor: Node = null
 
 func _ready() -> void:
 	## Register middleware singletons and cascade overrides to the UI components.
+	_ensure_rng_processor_singleton()
 	_register_singleton("PlatformGUIEventBus", _event_bus)
 	_register_singleton("RNGProcessorController", _controller)
 	_register_singleton("StrategyMetadataService", _metadata_service)
@@ -60,6 +65,9 @@ func _exit_tree() -> void:
 		if Engine.has_singleton(name) and Engine.get_singleton(name) == node:
 			Engine.unregister_singleton(name)
 	_registered_singletons.clear()
+	if is_instance_valid(_local_rng_processor):
+		_local_rng_processor.queue_free()
+	_local_rng_processor = null
 
 func _register_singleton(name: StringName, node: Object) -> void:
 	## Register the provided node as a singleton if the slot is free.
@@ -73,3 +81,11 @@ func _register_singleton(name: StringName, node: Object) -> void:
 		"name": name,
 		"node": node,
 	})
+
+func _ensure_rng_processor_singleton() -> void:
+	## Instantiate a local RNGProcessor when the autoload is unavailable.
+	if Engine.has_singleton(_RNG_PROCESSOR_SINGLETON):
+		return
+	_local_rng_processor = _RNGProcessor.new()
+	add_child(_local_rng_processor)
+	_register_singleton(_RNG_PROCESSOR_SINGLETON, _local_rng_processor)
