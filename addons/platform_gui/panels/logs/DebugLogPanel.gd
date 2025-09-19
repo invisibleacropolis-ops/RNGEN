@@ -38,6 +38,13 @@ var _controller_override: Object = null
 var _cached_controller: Object = null
 var _report_cache: Dictionary = {}
 
+func _stringify(value: Variant) -> String:
+    if value is String:
+        return value
+    if value == null:
+        return ""
+    return str(value)
+
 
 func _ensure_nodes_ready() -> void:
     if _refresh_button == null:
@@ -99,7 +106,7 @@ func _on_download_pressed() -> void:
     if _report_cache.is_empty():
         _set_status("Attach DebugRNG before downloading.", "error")
         return
-    var source_path := String(_report_cache.get("log_path", ""))
+    var source_path := _stringify(_report_cache.get("log_path", ""))
     if source_path == "":
         _set_status("DebugRNG did not report a log path.", "error")
         return
@@ -176,8 +183,8 @@ func _update_display() -> void:
 func _render_session_header() -> PackedStringArray:
     _ensure_nodes_ready()
     var lines := PackedStringArray()
-    var started := String(_report_cache.get("session_started_at", "--"))
-    var ended := String(_report_cache.get("session_ended_at", "--"))
+    var started := _stringify(_report_cache.get("session_started_at", "--"))
+    var ended := _stringify(_report_cache.get("session_ended_at", "--"))
     var active := bool(_report_cache.get("session_open", false))
     lines.append("[b]Session started:[/b] %s" % started)
     var ended_label := "(active)" if active else ended
@@ -187,19 +194,19 @@ func _render_session_header() -> PackedStringArray:
     if metadata_variant is Dictionary and not (metadata_variant as Dictionary).is_empty():
         var metadata: Dictionary = metadata_variant
         var keys := metadata.keys()
-        keys.sort_custom(func(a, b): return String(a) < String(b))
+        keys.sort_custom(func(a, b): return _stringify(a) < _stringify(b))
         lines.append("[b]Metadata[/b]")
         for key in keys:
-            lines.append("• %s: %s" % [String(key), _stringify_value(metadata[key])])
+            lines.append("• %s: %s" % [_stringify(key), _stringify_value(metadata[key])])
 
     var stats_variant := _report_cache.get("stats", {})
     if stats_variant is Dictionary and not (stats_variant as Dictionary).is_empty():
         var stats: Dictionary = stats_variant
         lines.append("[b]Aggregate statistics[/b]")
         var stat_keys := stats.keys()
-        stat_keys.sort_custom(func(a, b): return String(a) < String(b))
+        stat_keys.sort_custom(func(a, b): return _stringify(a) < _stringify(b))
         for key in stat_keys:
-            lines.append("• %s: %s" % [String(key), _stringify_value(stats[key])])
+            lines.append("• %s: %s" % [_stringify(key), _stringify_value(stats[key])])
 
     return lines
 
@@ -239,7 +246,7 @@ func _render_section_entries(section: int) -> PackedStringArray:
 
 func _entry_matches_section(entry: Dictionary, section: int) -> bool:
     _ensure_nodes_ready()
-    var type_name := String(entry.get("type", ""))
+    var type_name := _stringify(entry.get("type", ""))
     match section:
         SECTION_WARNINGS:
             return type_name == "warning"
@@ -254,8 +261,8 @@ func _entry_matches_section(entry: Dictionary, section: int) -> bool:
 
 func _format_entry(entry: Dictionary) -> String:
     _ensure_nodes_ready()
-    var type_name := String(entry.get("type", ""))
-    var timestamp := String(entry.get("timestamp", ""))
+    var type_name := _stringify(entry.get("type", ""))
+    var timestamp := _stringify(entry.get("timestamp", ""))
     match type_name:
         "warning":
             return "[color=%s]⚠️ %s %s[/color]" % [_WARNING_COLOR.to_html(), timestamp, _stringify_value(entry.get("message", ""))]
@@ -263,14 +270,14 @@ func _format_entry(entry: Dictionary) -> String:
             return "[color=%s]‼ %s strategy=%s code=%s message=%s[/color]" % [
                 _ERROR_COLOR.to_html(),
                 timestamp,
-                String(entry.get("strategy_id", "")),
-                String(entry.get("code", "")),
+                _stringify(entry.get("strategy_id", "")),
+                _stringify(entry.get("code", "")),
                 _stringify_value(entry.get("message", "")),
             ]
         "stream_usage":
             return "%s stream=%s context=%s" % [
                 timestamp,
-                String(entry.get("stream", "")),
+                _stringify(entry.get("stream", "")),
                 _stringify_value(entry.get("context", {})),
             ]
         "generation_started":
