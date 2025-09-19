@@ -272,8 +272,8 @@ func _update_seed_helper() -> void:
     var latest_metadata := {}
     if controller != null and controller.has_method("get_latest_generation_metadata"):
         latest_metadata = controller.call("get_latest_generation_metadata")
-    var stream_hint := String(latest_metadata.get("rng_stream", ""))
-    var seed_hint := String(latest_metadata.get("seed", ""))
+    var stream_hint := _stringify(latest_metadata.get("rng_stream", ""))
+    var seed_hint := _stringify(latest_metadata.get("seed", ""))
     var helper_lines := ["Child seeds derive automatically as parent::token::occurrence."]
     if stream_hint != "" or seed_hint != "":
         helper_lines.append("Latest middleware seed: %s" % (seed_hint if seed_hint != "" else "—"))
@@ -694,6 +694,13 @@ func _extract_token(match: RegExMatch) -> String:
     if match.names.has("token"):
         return match.get_string("token")
     return match.get_string(1)
+
+func _stringify(value: Variant) -> String:
+    if value is String:
+        return value
+    if value == null:
+        return ""
+    return str(value)
 
 func _get_controller() -> Object:
     _ensure_nodes_ready()
