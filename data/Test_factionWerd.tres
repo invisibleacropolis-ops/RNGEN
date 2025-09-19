@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="WordListResource" load_steps=2 format=3 uid="uid://c1h5msr7k7rjc"]
+
+[ext_resource type="Script" uid="uid://cfixyxbf1y8g8" path="res://name_generator/resources/WordListResource.gd" id="1_q1h0r"]
+
+[resource]
+script = ExtResource("1_q1h0r")
+entries = PackedStringArray("gone", "today", "tomorrow")
+weights = PackedFloat32Array()
+weighted_entries = Array[Dictionary]([])
+locale = ""
+domain = ""
+metadata/_custom_type_script = "uid://cfixyxbf1y8g8"
