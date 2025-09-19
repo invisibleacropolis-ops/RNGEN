@@ -40,9 +40,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-horizontal_scroll_mode = 0
-vertical_scroll_mode = 1
 follow_focus = true
+horizontal_scroll_mode = 0
 
 [node name="MainLayout" type="VBoxContainer" parent="MainScrollContainer"]
 layout_mode = 2
