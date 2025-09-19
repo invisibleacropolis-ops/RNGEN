@@ -13,12 +13,12 @@ extends VBoxContainer
 
 const STDOUT_CHANNEL := StringName("stdout")
 const STDERR_CHANNEL := StringName("stderr")
-const WARNING_CHANNELS := [
+const WARNING_CHANNELS: Array[StringName] = [
     StringName("warning"),
     StringName("user_warning"),
     StringName("script_warning"),
 ]
-const ERROR_CHANNELS := [
+const ERROR_CHANNELS: Array[StringName] = [
     StringName("error"),
     StringName("user_error"),
     StringName("script_error"),
