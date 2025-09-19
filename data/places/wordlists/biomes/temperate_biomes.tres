@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class_name="WordListResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1_0"]
+
+[resource]
+entries = PackedStringArray(
+    "Vale",
+    "Forest",
+    "Grove",
+    "Heath",
+    "Moor",
+    "Fen",
+    "Marsh",
+    "Glade",
+    "Highlands",
+    "Lowlands",
+    "Riverlands",
+    "Foothills",
+    "Coast",
+    "Estuary",
+    "Isles",
+    "Wood",
+    "Copse",
+    "Thicket",
+    "Hollows",
+    "Pass",
+    "Ridge",
+    "Valley",
+    "Meadow",
+    "Wilds"
+)
+locale = "en"
+domain = "places:temperate_biomes"
