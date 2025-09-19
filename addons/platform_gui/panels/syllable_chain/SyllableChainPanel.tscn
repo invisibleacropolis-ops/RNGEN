@@ -22,6 +22,7 @@ text = "Syllable Chain Strategy"
 size_flags_horizontal = 3
 
 [node name="RefreshButton" type="Button" parent="Header"]
+unique_name_in_owner = true
 flat = true
 text = "Refresh"
 tooltip_text = "Reload strategy metadata and the resource catalogue."
