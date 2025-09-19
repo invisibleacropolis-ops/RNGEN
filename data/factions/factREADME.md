@@ -10,7 +10,7 @@ Author the faction dataset as three parallel resource lists so hybrid strategies
 - **Structure nouns** – Collective nouns that describe the organisation type (e.g. "Order", "Syndicate", "League"). Use singular forms to avoid subject-verb agreement issues when the template adds pluralisation.
 - **Location modifiers** – Geographic or cosmological anchors (e.g. "of the Sapphire Coast", "from Orion", "of Western Reach"). Store the leading preposition if one is required so templates can reuse the phrase verbatim.
 
-Maintain each category as a dedicated Godot Resource (`.tres` or `.res`) or compatible JSON/CSV surrogate that the data conversion step can ingest. Align resource naming with the category (for example, `ideology_terms.tres`).
+Maintain each category as a dedicated Godot Resource (`.tres` or `.res`) or compatible JSON/CSV surrogate that the data conversion step can ingest. Align resource naming with the category (for example, `ideology_terms.tres`). This repository now includes `ideology_terms.tres`, `structure_nouns.tres`, and `location_modifiers.tres` under `data/factions/` so designers have ready-to-wire exemplars for each bucket.
 
 ## Resource conversion workflow
 

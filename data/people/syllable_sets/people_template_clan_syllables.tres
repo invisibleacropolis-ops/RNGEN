@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/SyllableSetResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+prefixes = PackedStringArray("Bal", "Dor", "Fen", "Gar")
+middles = PackedStringArray("ri", "un", "al")
+suffixes = PackedStringArray("d", "in", "or", "ul")
+allow_empty_middle = false
+locale = "dwarven"
+domain = "people"

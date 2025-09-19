@@ -1,0 +1,24 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 2
+states = PackedStringArray("ba", "ld", "or", "in", "gar", "dok", "thor", "grim", "<END>")
+start_tokens = [{"token": "ba", "weight": 1.0}, {"token": "gar", "weight": 0.8}, {"token": "thor", "weight": 0.6}]
+transitions = {
+"ba": [{"token": "ld", "weight": 1.0}],
+"ld": [{"token": "or", "weight": 0.7}, {"token": "in", "weight": 0.3}],
+"or": [{"token": "<END>", "weight": 0.5}, {"token": "grim", "weight": 0.5}],
+"in": [{"token": "dok", "weight": 0.6}, {"token": "<END>", "weight": 0.4}],
+"gar": [{"token": "dok", "weight": 1.0}],
+"dok": [{"token": "<END>", "weight": 1.0}],
+"thor": [{"token": "grim", "weight": 1.0}],
+"grim": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+locale = "dwarven"
+domain = "people"
+notes = "Seed Markov chain demonstrating dwarven-flavoured name construction."
