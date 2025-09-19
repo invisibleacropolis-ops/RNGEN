@@ -1,0 +1,22 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("kra", "ghul", "ith", "vor", "nak", "gash", "ithk", "lur")
+start_tokens = [{"token": "kra", "weight": 1.0}, {"token": "ghul", "weight": 0.9}, {"token": "ith", "weight": 0.8}, {"token": "vor", "weight": 0.7}]
+transitions = {
+"kra": [{"token": "nak", "weight": 1.0}],
+"ghul": [{"token": "gash", "weight": 1.0}],
+"ith": [{"token": "lur", "weight": 1.0}],
+"vor": [{"token": "ithk", "weight": 1.0}],
+"nak": [{"token": "<END>", "weight": 1.0}],
+"gash": [{"token": "<END>", "weight": 1.0}],
+"lur": [{"token": "<END>", "weight": 1.0}],
+"ithk": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+notes = "Monster vocalisation model emphasising guttural syllable closures."

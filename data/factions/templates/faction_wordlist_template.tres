@@ -1,0 +1,8 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/WordListResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entries = PackedStringArray("Verdant Accord", "Iron Will", "Celestial Concord", "Shadow Treaty")
+weighted_entries = [{"value": "Verdant Accord", "weight": 1.0}, {"value": "Iron Will", "weight": 1.25}, {"value": "Celestial Concord", "weight": 0.8}, {"value": "Shadow Treaty", "weight": 0.6}]

@@ -34,6 +34,21 @@ This folder holds themed vocabularies for equipment, curios, relics, and other i
 - **Hybrid pipelines** (`steps` + optional `template`) shine when the name depends on staged decisions or needs interpolation from multiple sources (e.g. pick material → select item type → slot in an effect to yield "Auric Glaive of Drowning"). Use them for multi-sentence blurbs or when data must be reused later in the generation process.
 - For sentence-style or paragraph outputs, use the `template` key available to both TemplateStrategy and HybridStrategy. It provides full-string control ("Forged from $material, this $item_core hums with $effect"), keeping formatting consistent across locales.
 
+## Starter templates
+
+Reference the assets in `data/objects/templates/` when you need an immediate
+resource scaffold:
+
+- `object_wordlist_template.tres` stores a small equipment-flavoured
+  `WordListResource` with weighted entries.
+- `object_syllable_template.tres` shows how to distribute fragments across the
+  `SyllableSetResource` arrays while keeping the middle optional.
+- `object_markov_template.tres` is a `MarkovModelResource` configured with the
+  modern transition layout so new models can plug directly into the generator.
+
+Copy the relevant template, rename it, and replace the placeholder entries with
+your item vocabulary before committing the resource.
+
 ## Quality assurance checklist
 - Run the dataset inspector to confirm new `.tres` resources appear with the expected entry counts:
   ```

@@ -12,6 +12,10 @@ Provide `WordListResource` assets that catalogue:
 - **Textures and materials** – Skin, scale, fur, and exoskeleton descriptors, including colours and surface qualities.
 - **Anatomical modifiers** – Horn configurations, wing structures, tail types, sensory organs, and elemental infusions.
 
+Ready-made examples live under `data/monsters/templates/`. Copy the
+`monster_wordlist_template.tres` file to bootstrap a new list with weighting
+metadata already in place.
+
 Keep each list scoped to a single concept so Hybrid templates can mix and match descriptors without duplicating data. When curating entries, stick to lowercase tokens; Template and Hybrid strategies can capitalise or stylise as needed.
 
 ### Behaviour lexicon
@@ -27,12 +31,19 @@ Author complementary `WordListResource` files that describe behaviours, combat s
 3. In the Godot editor, create a new `SyllableSetResource` and paste the syllables into the exported arrays (prefix/mid/suffix). Group guttural, hissing, or shrieking patterns into separate resources when the species exhibits multiple vocal registers.
 4. Save the `.tres` files under `data/syllable_sets/monsters/` and reference them from this folder's documentation or Hybrid configs.
 
+The `monster_syllable_template.tres` example inside `data/monsters/templates/`
+shows a curated prefix/middle/suffix split you can duplicate for new species.
+
 ### Markov models
 
 1. Build a source list of canonical monster cries or name stems (game lore, tabletop bestiaries, audio transcripts).
 2. Normalise spellings so similar phonemes share the same characters—Markov quality depends on consistent tokens.
 3. Train a `MarkovModelResource` using the workflow in [`DevDoc.txt`](../../DevDoc.txt) Chapter 7 (Markov Chains). Export the resulting `.tres` into `data/markov_models/monsters/` and annotate its intent in this folder.
 4. Record the training corpus and parameters in a sibling Markdown file so QA can reproduce the model.
+
+For quick experiments, duplicate `monster_markov_template.tres` from
+`data/monsters/templates/`. It already follows the `states`/`start_tokens`
+layout required by the current `MarkovModelResource` implementation.
 
 ## Hybrid strategy examples
 

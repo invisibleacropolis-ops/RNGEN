@@ -99,6 +99,22 @@ Consume the model with the Markov strategy:
 }
 ```
 
+## Starter templates
+
+Clone the example resources in `data/people/templates/` whenever you need a
+baseline asset that already targets the expected resource type:
+
+- `people_wordlist_template.tres` – A `WordListResource` populated with a
+  handful of balanced given names and example weights.
+- `people_syllable_template.tres` – A `SyllableSetResource` that shows how to
+  split prefixes, middles, and suffixes for hybrid syllable strategies.
+- `people_markov_template.tres` – A `MarkovModelResource` configured with
+  explicit `states`, `start_tokens`, and transition weights compatible with the
+  modern Markov strategy implementation.
+
+Duplicate a template, rename it to match your dataset, and replace the sample
+values with your curated lists before committing the new resource.
+
 ## When to chain datasets with Hybrid configs
 
 Use `HybridStrategy` whenever a character concept spans multiple datasets or

@@ -10,6 +10,22 @@ This folder aggregates the resources required to assemble location names. Organi
 
 Store datasets as Godot `.tres` resources (or compatible formats) so they load through the existing data pipeline. Keep filenames descriptive—`temperate_biomes.tres` communicates intent better than a numeric ID and helps when debugging failed lookups.
 
+## Ready-to-use templates
+
+The `data/places/templates/` folder provides example resources that adhere to
+the structure described above:
+
+- `place_wordlist_template.tres` – `WordListResource` with balanced descriptor
+  and biome phrases.
+- `place_syllable_template.tres` – `SyllableSetResource` configured with
+  optional middle fragments to demonstrate compound place roots.
+- `place_markov_template.tres` – `MarkovModelResource` prepared with explicit
+  states, start tokens, and weighted transitions compatible with the current
+  generator runtime.
+
+Copy and rename a template when you need a quick starting point, then replace
+the placeholder entries with your curated data.
+
 ## Composing place names
 
 Several generation strategies can reference the datasets in this folder. The examples below mirror the configuration dictionaries passed to `NameGenerator.generate`.
