@@ -45,6 +45,9 @@ func _ready() -> void:
 	if is_instance_valid(_metadata_service) and _metadata_service.has_method("set_controller_override"):
 		_metadata_service.call("set_controller_override", _controller)
 
+	if is_instance_valid(_controller) and _controller.has_method("refresh_connections"):
+		_controller.call("refresh_connections")
+
 	for consumer in _middleware_consumers:
 		if consumer == null:
 			continue
