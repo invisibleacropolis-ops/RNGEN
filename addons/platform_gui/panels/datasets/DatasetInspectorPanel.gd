@@ -277,9 +277,13 @@ func _capture_messages(callable: Callable) -> Dictionary:
 
 func _capture_channels() -> Array[StringName]:
     _ensure_nodes_ready()
-    var channels := [STDERR_CHANNEL, STDOUT_CHANNEL]
-    channels.append_array(WARNING_CHANNELS)
-    channels.append_array(ERROR_CHANNELS)
+    var channels: Array[StringName] = []
+    channels.append(STDERR_CHANNEL)
+    channels.append(STDOUT_CHANNEL)
+    for warning_channel in WARNING_CHANNELS:
+        channels.append(warning_channel as StringName)
+    for error_channel in ERROR_CHANNELS:
+        channels.append(error_channel as StringName)
     return channels
 
 func _record_message(record: Dictionary, channel: StringName, message: String) -> void:
