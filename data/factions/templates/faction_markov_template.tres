@@ -1,0 +1,21 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://name_generator/resources/MarkovModelResource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+states = PackedStringArray("ar", "val", "syn", "or", "um", "dral", "ion")
+start_tokens = [{"token": "ar", "weight": 1.0}, {"token": "val", "weight": 1.0}, {"token": "syn", "weight": 0.8}, {"token": "or", "weight": 0.6}]
+transitions = {
+"ar": [{"token": "dral", "weight": 1.0}],
+"val": [{"token": "ion", "weight": 1.0}],
+"syn": [{"token": "dral", "weight": 0.6}, {"token": "ion", "weight": 0.4}],
+"or": [{"token": "um", "weight": 1.0}],
+"um": [{"token": "<END>", "weight": 1.0}],
+"dral": [{"token": "<END>", "weight": 1.0}],
+"ion": [{"token": "<END>", "weight": 1.0}]
+}
+end_tokens = PackedStringArray("<END>")
+default_temperature = 1.0
+notes = "Faction title stem model showcasing minimal state and transition definitions."

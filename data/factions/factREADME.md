@@ -21,6 +21,23 @@ Maintain each category as a dedicated Godot Resource (`.tres` or `.res`) or comp
 
 Document any bespoke conversion steps alongside the script you used so future updates can replicate the pipeline.
 
+## Ready-to-clone templates
+
+The `data/factions/templates/` directory ships with example `.tres` files for
+each resource type discussed above:
+
+- `faction_wordlist_template.tres` illustrates how to populate a
+  `WordListResource` with ideology terms and weighting metadata.
+- `faction_syllable_template.tres` demonstrates a lightweight
+  `SyllableSetResource` that mixes optional middle syllables.
+- `faction_markov_template.tres` captures a minimal
+  `MarkovModelResource` wired for the modern `states` + `start_tokens` layout
+  required by `MarkovModelResource.gd`.
+
+Duplicate these assets, rename them to match your content, and then swap the
+example entries for your curated vocabulary before wiring the resource into a
+strategy.
+
 ## Hybrid and template patterns
 
 Faction titles typically combine the three vocabularies using either hybrid chaining or templated substitution:
